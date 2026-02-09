@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class UserController extends Controller
+{
+    /**
+     * Get all users (CEO/Secretary filtered)
+     */
+    public function index()
+    {
+        $user = auth()->user();
+        
+        if ($user->hasRole('ceo')) {
+            $users = User::with('roles', 'branch')->get();
+        } else {
+            // Secretary can only see workers in their branch
+            $users = User::where('branch_id', $user->branch_id)
+                ->with('roles', 'branch')
+                ->get();
+        }
+
+        return response()->json($users);
+    }
+
+    /**
+     * Create a new user (CEO/Secretary)
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'nullable|string|max:20',
+            'password' => 'required|string|min:8|confirmed',
+            'branch_id' => 'required|exists:branches,id',
+            'role' => 'required|in:secretary,worker',
+            'status' => 'nullable|in:active,inactive,suspended'
+        ]);
+
+        // Authorization logic could be moved to Policy
+        // Only CEO can create Secretary
+        if ($validated['role'] === 'secretary' && !auth()->user()->hasRole('ceo')) {
+            abort(403, 'Only CEO can create secretaries.');
+        }
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'password' => Hash::make($validated['password']),
+            'branch_id' => $validated['branch_id'],
+            'status' => $validated['status'] ?? 'active',
+        ]);
+
+        $user->assignRole($validated['role']);
+
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user->load('roles', 'branch'),
+        ], 201);
+    }
+
+    /**
+     * Get single user
+     */
+    public function show($id)
+    {
+        $user = User::with('roles', 'branch')->findOrFail($id);
+        return response()->json($user);
+    }
+
+    /**
+     * Update user
+     */
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone' => 'nullable|string|max:20',
+            'password' => 'nullable|string|min:8|confirmed',
+            'branch_id' => 'sometimes|exists:branches,id',
+            'status' => 'sometimes|in:active,inactive,suspended',
+            'role' => 'sometimes|in:secretary,worker' // Careful with role updates
+        ]);
+
+        if (isset($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        }
+
+        $user->update($validated);
+
+        if (isset($validated['role']) && auth()->user()->hasRole('ceo')) {
+            $user->syncRoles([$validated['role']]);
+        }
+
+        return response()->json([
+            'message' => 'User updated successfully',
+            'user' => $user->load('roles', 'branch'),
+        ]);
+    }
+
+    /**
+     * Delete user
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            abort(403, 'Cannot delete yourself');
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+        ]);
+    }
+}

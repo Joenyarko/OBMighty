@@ -1,0 +1,332 @@
+/* Cards Page Styling - Dark Theme with Gold Accents */
+
+.cards-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.page-header h1 {
+    color: var(--primary-color);
+    font-size: 32px;
+    margin: 0;
+}
+
+/* Cards Grid */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.card-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(212, 175, 55, 0.2);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h3 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 20px;
+}
+
+.card-code {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--primary-color);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Card Images */
+.card-images {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.image-container {
+    position: relative;
+}
+
+.image-container label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.image-container img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.image-container img:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.02);
+}
+
+/* Card Details */
+.card-details {
+    margin-bottom: 16px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.detail-row .value {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.detail-row .value.amount {
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+/* Card Actions */
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit,
+.btn-delete {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-edit {
+    background-color: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+
+.btn-edit:hover {
+    background-color: var(--primary-color);
+    color: var(--black);
+}
+
+.btn-delete {
+    background-color: rgba(255, 68, 68, 0.2);
+    color: #FF4444;
+    border: 2px solid #FF4444;
+}
+
+.btn-delete:hover {
+    background-color: #FF4444;
+    color: white;
+}
+
+/* Modal Specific Styles */
+.card-modal {
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Image Preview */
+.image-preview {
+    margin-top: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    display: block;
+}
+
+/* File Input Styling */
+input[type="file"] {
+    padding: 10px;
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+input[type="file"]:hover {
+    border-color: var(--primary-color);
+}
+
+input[type="file"]::file-selector-button {
+    background-color: var(--primary-color);
+    color: var(--black);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-right: 12px;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Read-only Input */
+.readonly-input {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    cursor: not-allowed;
+    color: var(--text-secondary) !important;
+}
+
+/* Image Zoom Modal */
+.image-zoom-modal {
+    z-index: 2000;
+}
+
+.image-zoom-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: var(--card-bg);
+    border: 2px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.image-zoom-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    display: block;
+    border-radius: 8px;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--primary-color);
+    color: var(--black);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    z-index: 10;
+}
+
+.close-btn:hover {
+    transform: scale(1.1);
+}
+
+/* No Data State */
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.no-data p {
+    font-size: 18px;
+    margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cards-page {
+        padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .card-modal {
+        max-width: 95vw;
+        padding: 20px;
+    }
+
+    .image-zoom-content {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-images {
+        grid-template-columns: 1fr;
+    }
+
+    .card-actions {
+        flex-direction: column;
+    }
+}

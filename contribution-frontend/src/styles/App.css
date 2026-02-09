@@ -1,0 +1,194 @@
+/* Mobile-First Global Styles - Black & Yellow Theme */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Premium Gold & Dark Theme */
+  --primary-color: #D4AF37;
+  /* Premium Gold */
+  --primary-dark: #C5A009;
+  /* Darker Gold for hover */
+  --secondary-color: #F4D03F;
+  /* Lighter Gold */
+  --danger-color: #FF4444;
+  --warning-color: #FF8C00;
+  --bg-color: #121212;
+  /* Deep Matte Black */
+  --card-bg: #1E1E1E;
+  /* Dark Gray Card */
+  --sidebar-bg: #1A1A1A;
+  /* Dark Sidebar */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --border-color: #333333;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --glass: rgba(30, 30, 30, 0.8);
+  --yellow: #D4AF37;
+  /* Legacy var mapping */
+  --black: #000000;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Loading States */
+.loading,
+.loading-screen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 18px;
+  color: var(--primary-color);
+  background-color: var(--bg-color);
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary,
+.btn-logout {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: var(--black);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(253, 185, 19, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--primary-color);
+  color: var(--black);
+}
+
+.btn-logout {
+  background-color: var(--danger-color);
+  color: white;
+  width: 100%;
+}
+
+.btn-logout:hover {
+  background-color: #DD3333;
+}
+
+/* Forms */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+  min-height: 44px;
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(253, 185, 19, 0.1);
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Error Messages */
+.error-message {
+  padding: 12px;
+  background-color: rgba(255, 68, 68, 0.1);
+  color: var(--danger-color);
+  border: 1px solid var(--danger-color);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* No Data */
+.no-data {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-secondary);
+}
+
+/* Responsive Breakpoints */
+@media (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .customers-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .customers-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

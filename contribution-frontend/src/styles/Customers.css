@@ -1,0 +1,230 @@
+/* Black & Yellow Theme - Customers */
+.customers-page {
+    width: 100%;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.page-header h1 {
+    font-size: 24px;
+    color: var(--text-primary);
+}
+
+.customers-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+}
+
+.customer-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.customer-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.customer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.customer-header h3 {
+    font-size: 18px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.status-badge.in_progress {
+    background: rgba(253, 185, 19, 0.2);
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+.status-badge.completed {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22C55E;
+    border: 1px solid #22C55E;
+}
+
+.status-badge.defaulting {
+    background: rgba(255, 68, 68, 0.2);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.customer-details {
+    margin-bottom: 16px;
+}
+
+.customer-details p {
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.customer-details strong {
+    color: var(--text-primary);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: var(--bg-color);
+    border-radius: 5px;
+    overflow: hidden;
+    margin: 8px 0;
+    border: 1px solid var(--border-color);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    transition: width 0.3s;
+    box-shadow: 0 0 10px rgba(253, 185, 19, 0.5);
+}
+
+/* Customer Actions */
+.customer-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.customer-actions button {
+    flex: 1;
+}
+
+.btn-view-boxes {
+    background: linear-gradient(135deg, var(--primary-color), #FFD700);
+    color: var(--black);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-view-boxes:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 16px;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid var(--primary-color);
+    box-shadow: 0 0 30px rgba(253, 185, 19, 0.3);
+}
+
+.modal-content h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.customer-info {
+    background: var(--bg-color);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.customer-info p {
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+.customer-info strong {
+    color: var(--text-primary);
+}
+
+/* Card Preview in Modal */
+.card-preview {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid var(--primary-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.card-preview h4 {
+    color: var(--primary-color);
+    margin: 0 0 12px 0;
+    font-size: 16px;
+}
+
+.card-preview p {
+    color: var(--text-secondary);
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+.card-preview strong {
+    color: var(--text-primary);
+}
+
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.modal-actions button {
+    flex: 1;
+}
+
+@media (min-width: 768px) {
+    .page-header h1 {
+        font-size: 32px;
+    }
+}

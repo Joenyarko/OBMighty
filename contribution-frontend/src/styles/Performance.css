@@ -1,0 +1,339 @@
+.performance-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.btn-back {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-back:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.page-header h1 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+/* Worker Overview Card */
+.worker-overview-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.worker-info {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.worker-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    font-weight: bold;
+    color: white;
+}
+
+.worker-details h2 {
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    font-size: 28px;
+}
+
+.worker-role {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-transform: capitalize;
+    margin: 0 0 8px 0;
+}
+
+.worker-meta {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Performance Score Badge */
+.performance-score-badge {
+    text-align: center;
+    border: 3px solid;
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+}
+
+.score-inner {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-value {
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.score-max {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.performance-level {
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Score Breakdown */
+.score-breakdown-section {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+.score-breakdown-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+}
+
+.score-breakdown-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.breakdown-item {
+    background: var(--background-color);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.breakdown-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.breakdown-label {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.breakdown-score {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.breakdown-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.breakdown-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Metrics Section */
+.metrics-section {
+    margin-bottom: 32px;
+}
+
+.metrics-section h3 {
+    margin: 0 0 16px 0;
+    color: var(--text-primary);
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.metric-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-icon {
+    font-size: 32px;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0 0 8px 0;
+}
+
+.metric-value {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 0 4px 0;
+}
+
+.metric-sub {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Recent Activity */
+.recent-activity-section {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.recent-activity-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+}
+
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.no-activity {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 40px;
+}
+
+.activity-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: var(--background-color);
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.activity-item:hover {
+    background: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.activity-date {
+    color: var(--text-secondary);
+    font-size: 13px;
+    min-width: 100px;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-customer {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin: 0 0 4px 0;
+}
+
+.activity-amount {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Loading and Error States */
+.loading,
+.error {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    font-size: 18px;
+}
+
+.error {
+    color: var(--danger-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .worker-overview-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .worker-info {
+        flex-direction: column;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .activity-date {
+        min-width: auto;
+    }
+}

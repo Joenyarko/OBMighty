@@ -1,0 +1,98 @@
+/* Global Text Color Fixes - Ensure visibility on dark backgrounds */
+/* This file fixes text visibility issues caused by SweetAlert2 */
+
+/* CRITICAL: Force all text to be white with maximum specificity */
+body h1,
+body h2,
+body h3,
+body h4,
+body h5,
+body h6,
+body p,
+body span,
+body div,
+body td,
+body th,
+body label,
+body .page-header h1,
+body table th,
+body table td,
+body button:not(.btn-primary),
+body .form-group label,
+body .modal-content h2,
+body .modal-content label {
+    color: var(--text-primary) !important;
+}
+
+/* Button text colors - CRITICAL */
+body .btn-primary,
+body button.btn-primary {
+    color: var(--black) !important;
+    background-color: var(--primary-color) !important;
+}
+
+body .btn-secondary,
+body button.btn-secondary {
+    color: var(--primary-color) !important;
+}
+
+body .btn-secondary:hover,
+body button.btn-secondary:hover {
+    color: var(--black) !important;
+}
+
+body .btn-logout,
+body button.btn-logout {
+    color: white !important;
+}
+
+/* Input and form elements */
+body input,
+body textarea,
+body select {
+    color: var(--text-primary) !important;
+    background-color: var(--card-bg) !important;
+}
+
+body input::placeholder,
+body textarea::placeholder {
+    color: var(--text-secondary) !important;
+}
+
+/* Table specific - CRITICAL */
+body table {
+    color: var(--text-primary) !important;
+}
+
+body table th {
+    color: var(--primary-color) !important;
+}
+
+body table td {
+    color: var(--text-primary) !important;
+}
+
+/* Links */
+body a {
+    color: var(--primary-color) !important;
+}
+
+body a:hover {
+    color: var(--primary-dark) !important;
+}
+
+/* Loading text should remain gold */
+body .loading,
+body .loading-screen {
+    color: var(--primary-color) !important;
+}
+
+/* Page headers and titles */
+body .page-header,
+body .page-header * {
+    color: var(--text-primary) !important;
+}
+
+body .page-header h1 {
+    color: var(--primary-color) !important;
+}

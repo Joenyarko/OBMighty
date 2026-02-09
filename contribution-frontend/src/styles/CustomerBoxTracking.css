@@ -1,0 +1,327 @@
+/* Customer Box Tracking Page - Dark Theme with Gold Accents */
+
+.customer-box-tracking {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.btn-back {
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-bottom: 16px;
+}
+
+.btn-back:hover {
+    background: var(--primary-color);
+    color: var(--black);
+}
+
+/* Customer Details Card */
+.customer-details-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.customer-info h2 {
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+    font-size: 28px;
+}
+
+.customer-info p {
+    color: var(--text-secondary);
+    margin: 6px 0;
+}
+
+.card-info {
+    text-align: right;
+}
+
+.card-info h3 {
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.card-code {
+    background: rgba(212, 175, 55, 0.2);
+    color: var(--primary-color);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Summary Cards */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+.summary-label {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summary-value {
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: bold;
+    word-break: break-word;
+}
+
+.summary-value.checked {
+    color: #4CAF50;
+}
+
+.summary-value.remaining {
+    color: #FF9800;
+}
+
+.summary-value.amount {
+    color: var(--primary-color);
+}
+
+.summary-value.daily {
+    color: #2196F3;
+}
+
+/* Progress Section */
+.progress-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.progress-label {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), #FFD700);
+    transition: width 0.3s ease;
+}
+
+/* Quick Payment Section */
+.quick-payment-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.quick-payment-section h3 {
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+}
+
+.payment-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: end;
+}
+
+.form-divider {
+    color: var(--text-secondary);
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+.payment-form button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
+
+/* Box Grid Section */
+.box-grid-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.box-grid-section h3 {
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+}
+
+.box-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 8px;
+}
+
+.box {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: default;
+    transition: all 0.2s;
+}
+
+.box.checked {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+    border: 2px solid #4CAF50;
+}
+
+.box.unchecked {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+}
+
+.box:hover {
+    transform: scale(1.05);
+}
+
+/* Payment History Section */
+.payment-history-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.payment-history-section h3 {
+    color: var(--text-primary);
+    margin: 0 0 20px 0;
+}
+
+.payment-history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.payment-history-table thead {
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.payment-history-table th {
+    color: var(--primary-color);
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.payment-history-table td {
+    color: var(--text-primary);
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.payment-history-table td.amount {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.payment-history-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .customer-box-tracking {
+        padding: 16px;
+    }
+
+    .customer-details-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .card-info {
+        text-align: left;
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .payment-form .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-divider {
+        display: none;
+    }
+
+    .box-grid {
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 6px;
+    }
+
+    .payment-history-table {
+        font-size: 12px;
+    }
+
+    .payment-history-table th,
+    .payment-history-table td {
+        padding: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .box-grid {
+        grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+    }
+}

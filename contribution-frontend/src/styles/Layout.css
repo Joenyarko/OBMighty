@@ -1,0 +1,239 @@
+/* Black & Yellow Theme - Layout */
+.layout {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-color);
+}
+
+/* Mobile Header */
+.mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.mobile-header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.menu-toggle {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-primary);
+}
+
+.user-badge {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: 2px solid var(--primary-dark);
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    border-right: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+    font-size: 20px;
+    color: var(--primary-color);
+}
+
+.close-sidebar {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-secondary);
+}
+
+/* Logo in Sidebar */
+.sidebar-logo {
+    padding: 24px 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--bg-color) 100%);
+}
+
+.sidebar-logo img {
+    max-width: 100px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 16px 8px;
+    overflow-y: auto;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+    min-height: 48px;
+    font-weight: 500;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.nav-item:hover {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--primary-color);
+    padding-left: 20px;
+}
+
+.nav-item.active {
+    background: linear-gradient(90deg, rgba(212, 175, 55, 0.2) 0%, transparent 100%);
+    color: var(--primary-color);
+    border-left: 3px solid var(--primary-color);
+}
+
+.nav-icon {
+    font-size: 20px;
+    margin-right: 12px;
+}
+
+.nav-label {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-color);
+}
+
+.user-info {
+    margin-bottom: 12px;
+}
+
+.user-name {
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.user-role {
+    font-size: 12px;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(2px);
+    z-index: 150;
+}
+
+/* Main Content - Black Background */
+.main-content {
+    flex: 1;
+    padding: 16px;
+    max-width: 1600px;
+    margin: 0 auto;
+    width: 100%;
+    background-color: var(--bg-color);
+    overflow-x: hidden;
+}
+
+/* Desktop Sidebar */
+@media (min-width: 1024px) {
+    .mobile-header {
+        display: none;
+    }
+
+    .sidebar {
+        left: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+    }
+
+    .sidebar-header {
+        display: none;
+    }
+
+    .layout {
+        flex-direction: row;
+    }
+
+    .main-content {
+        padding: 32px;
+    }
+
+    .desktop-header {
+        height: 64px;
+        background: var(--card-bg);
+        display: flex !important;
+        /* Force display on desktop */
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 32px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .desktop-header .btn-logout {
+        width: auto;
+        padding: 8px 16px;
+        margin-left: 20px;
+        font-size: 14px;
+        border-radius: 6px;
+    }
+}
