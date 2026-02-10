@@ -186,4 +186,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/worker-performance', [ReportController::class, 'workerPerformance']);
         Route::get('/defaulting-customers', [ReportController::class, 'defaultingCustomers']);
     });
+    // Permission Management (CEO only)
+    Route::middleware('role:ceo')->group(function () {
+        Route::get('/permissions', [App\Http\Controllers\Api\PermissionController::class, 'index']);
+        Route::post('/users/{id}/permissions', [App\Http\Controllers\Api\PermissionController::class, 'syncUserPermissions']);
+        
+        // Role Management
+        Route::get('/roles', [App\Http\Controllers\Api\RoleController::class, 'index']);
+        Route::get('/roles/{id}', [App\Http\Controllers\Api\RoleController::class, 'show']);
+        Route::post('/roles/{id}/permissions', [App\Http\Controllers\Api\RoleController::class, 'syncPermissions']);
+    });
 });

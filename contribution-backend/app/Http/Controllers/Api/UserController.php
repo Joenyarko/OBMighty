@@ -53,7 +53,7 @@ class UserController extends Controller
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'phone' => $validated['phone'] ?? null,
             'password' => Hash::make($validated['password']),
             'branch_id' => $validated['branch_id'],
             'status' => $validated['status'] ?? 'active',

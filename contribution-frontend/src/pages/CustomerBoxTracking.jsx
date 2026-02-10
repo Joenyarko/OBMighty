@@ -101,6 +101,13 @@ function CustomerBoxTracking() {
             return;
         }
 
+        const confirmed = await showConfirm(
+            `Are you sure you want to record this payment of GHS${paymentForm.amount_paid || '0.00'}?`,
+            'Confirm Payment'
+        );
+
+        if (!confirmed.isConfirmed) return;
+
         try {
             await customerCardAPI.checkBoxes(customerCard.id, paymentForm);
             showSuccess('Payment recorded successfully!');
@@ -123,7 +130,7 @@ function CustomerBoxTracking() {
             'warning'
         );
 
-        if (!confirmed) return;
+        if (!confirmed.isConfirmed) return;
 
         try {
             await customerCardAPI.reversePayment(payment.id);
@@ -145,6 +152,13 @@ function CustomerBoxTracking() {
 
     const handleAdjustPayment = async (e) => {
         e.preventDefault();
+
+        const confirmed = await showConfirm(
+            `Are you sure you want to adjust this payment to GHS${adjustForm.new_amount}?`,
+            'Confirm Adjustment'
+        );
+
+        if (!confirmed.isConfirmed) return;
 
         try {
             await customerCardAPI.adjustPayment(selectedPayment.id, adjustForm);

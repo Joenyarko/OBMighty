@@ -197,8 +197,8 @@ function Sales() {
                             {workerDetails.payments.length === 0 ? (
                                 <p className="no-data">No payments recorded for this period.</p>
                             ) : (
-                                <div className="payments-table">
-                                    <table>
+                                <div className="table-container">
+                                    <table className="mobile-card-view">
                                         <thead>
                                             <tr>
                                                 <th>Customer</th>
@@ -213,17 +213,17 @@ function Sales() {
                                         <tbody>
                                             {workerDetails.payments.map((payment) => (
                                                 <tr key={payment.id}>
-                                                    <td>{payment.customer_name}</td>
-                                                    <td>{payment.customer_phone}</td>
-                                                    <td className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
-                                                    <td>{payment.boxes_filled}</td>
-                                                    <td>
+                                                    <td data-label="Customer">{payment.customer_name}</td>
+                                                    <td data-label="Phone">{payment.customer_phone}</td>
+                                                    <td data-label="Amount" className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
+                                                    <td data-label="Boxes">{payment.boxes_filled}</td>
+                                                    <td data-label="Method">
                                                         <span className={`payment-method ${payment.payment_method}`}>
                                                             {payment.payment_method.replace('_', ' ')}
                                                         </span>
                                                     </td>
-                                                    <td>{payment.payment_date}</td>
-                                                    <td>{payment.payment_time}</td>
+                                                    <td data-label="Date">{payment.payment_date}</td>
+                                                    <td data-label="Time">{payment.payment_time}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

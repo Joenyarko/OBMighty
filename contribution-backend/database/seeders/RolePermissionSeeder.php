@@ -16,41 +16,99 @@ class RolePermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create permissions
+        // 1. Define all permissions
         $permissions = [
-            'manage_branches',
-            'manage_users',
-            'manage_cards',
-            'view_all_branches',
-            'view_own_branch',
-            'manage_customers',
+            // Dashboard
+            'view_dashboard',
+            
+            // Customers
+            'view_customers',
+            'create_customers',
+            'edit_customers',
+            'delete_customers',
+            
+            // Payments
             'record_payments',
+            'view_payments',
+            'reverse_payments', // CEO/Secretary only
+            
+            // Sales
+            'view_sales',
+             
+            // Cards & Box Tracking
+            'view_cards',
+            'manage_cards', // CEO only
+            'track_boxes',
+            
+            // Inventory
+            'view_inventory',
+            'manage_inventory', // Add/Edit stock
+            'adjust_stock',     // CEO/Secretary
+            
+            // Branches
+            'view_branches',
+            'manage_branches', // CEO
+            
+            // Users
+            'view_users',
+            'manage_users', // CEO/Secretary
+            'manage_permissions', // CEO only
+            
+            // Accounting
+            'view_accounting',
+            'manage_expenses',
+            
+            // Payroll
+            'view_payroll',
+            'manage_payroll', // CEO
+            
+            // Surplus
+            'view_surplus',
+            'manage_surplus', // CEO/Secretary
+
+            // Reports
             'view_reports',
-            'manage_inventory',
-            'manage_accounting',
+            
+            // Settings
+            'view_settings',
+            'manage_settings',
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create roles and assign permissions
-        $ceo = Role::create(['name' => 'ceo']);
+        // 2. Create Roles
+        $ceo = Role::firstOrCreate(['name' => 'ceo']);
+        $secretary = Role::firstOrCreate(['name' => 'secretary']);
+        $worker = Role::firstOrCreate(['name' => 'worker']);
+
+        // 3. Assign Permissions to Roles
+
+        // CEO: All permissions
         $ceo->givePermissionTo(Permission::all());
 
-        $secretary = Role::create(['name' => 'secretary']);
+        // Secretary: Branch management, users (limited), all operational
         $secretary->givePermissionTo([
-            'view_own_branch',
-            'manage_customers',
-            'record_payments',
+            'view_dashboard',
+            'view_customers', 'create_customers', 'edit_customers',
+            'record_payments', 'view_payments', 'reverse_payments',
+            'view_sales',
+            'view_cards', 'track_boxes',
+            'view_inventory', 'manage_inventory', 'adjust_stock',
+            'view_users', 'manage_users', // Can create workers
+            'view_surplus', 'manage_surplus',
             'view_reports',
+            'view_branches', // View own branch details
         ]);
 
-        $worker = Role::create(['name' => 'worker']);
+        // Worker: Basic operations
         $worker->givePermissionTo([
-            'manage_customers',
+            'view_dashboard',
+            'view_customers', 'create_customers', // Can add customers
             'record_payments',
-            'view_reports',
+            'track_boxes',
+            'view_inventory', // View only
         ]);
     }
 }

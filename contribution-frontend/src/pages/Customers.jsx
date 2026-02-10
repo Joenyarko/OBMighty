@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerAPI, cardAPI, branchAPI, userAPI, customerCardAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { showSuccess, showError, showWarning } from '../utils/sweetalert';
+import { showSuccess, showError, showWarning, showConfirm } from '../utils/sweetalert';
 import '../styles/Customers.css';
-import '../styles/CustomersTable.css';
+
 
 function Customers() {
     const [customers, setCustomers] = useState([]);
@@ -46,6 +46,13 @@ function Customers() {
     };
 
     const handleUpdateCustomer = async (id, data) => {
+        const confirmed = await showConfirm(
+            'Are you sure you want to update this customer details?',
+            'Update Customer'
+        );
+
+        if (!confirmed.isConfirmed) return;
+
         try {
             const response = await customerAPI.update(id, data);
             // Update list without refetching
@@ -183,8 +190,8 @@ function Customers() {
             </div>
 
             {/* Simple Customer Table */}
-            <div className="customers-table-container">
-                <table className="customers-table">
+            <div className="table-container">
+                <table className="customers-table mobile-card-view">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -204,30 +211,40 @@ function Customers() {
                         ) : (
                             filteredCustomers.map((customer) => (
                                 <tr key={customer.id}>
-                                    <td>{customer.name}</td>
-                                    <td>{customer.phone}</td>
-                                    <td>{customer.location}</td>
-                                    <td>{customer.branch?.name || 'N/A'}</td>
-                                    <td>{customer.worker?.name || 'N/A'}</td>
-                                    <td>{customer.card?.card_name || 'N/A'}</td>
-                                    <td className="actions-cell">
-                                        <button
-                                            className="btn-icon-small edit"
-                                            onClick={() => {
-                                                setSelectedCustomer(customer);
-                                                setShowEditForm(true);
-                                            }}
-                                            title="Edit"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn-icon-small delete"
-                                            onClick={() => handleDeleteCustomer(customer.id)}
-                                            title="Delete"
-                                        >
-                                            Delete
-                                        </button>
+                                    <td data-label="Name" style={{ fontWeight: '500' }}>{customer.name}</td>
+                                    <td data-label="Phone">{customer.phone}</td>
+                                    <td data-label="Location">{customer.location}</td>
+                                    <td data-label="Branch">{customer.branch?.name || 'N/A'}</td>
+                                    <td data-label="Worker">{customer.worker?.name || 'N/A'}</td>
+                                    <td data-label="Card">{customer.card?.card_name || 'N/A'}</td>
+                                    <td data-label="Actions" className="actions-cell">
+                                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <button
+                                                className="btn-icon-small edit"
+                                                onClick={() => {
+                                                    setSelectedCustomer(customer);
+                                                    setShowEditForm(true);
+                                                }}
+                                                title="Edit"
+                                                style={{ padding: '8px', background: 'transparent', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer' }}
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                className="btn-icon-small delete"
+                                                onClick={() => {
+                                                    showConfirm('Are you sure you want to delete this customer?', 'Delete Customer').then((result) => {
+                                                        if (result.isConfirmed) {
+                                                            handleDeleteCustomer(customer.id);
+                                                        }
+                                                    });
+                                                }}
+                                                title="Delete"
+                                                style={{ padding: '8px', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', borderRadius: '4px', cursor: 'pointer' }}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))

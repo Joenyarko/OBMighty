@@ -50,7 +50,7 @@ class AuthController extends Controller
                 'branch_id' => $user->branch_id,
                 'branch' => $user->branch,
                 'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
             ],
             'token' => $token,
         ]);
@@ -86,7 +86,7 @@ class AuthController extends Controller
                 'branch' => $user->branch,
                 'status' => $user->status,
                 'roles' => $user->getRoleNames(),
-                'permissions' => $user->getAllPermissions()->pluck('name'),
+                'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
             ],
         ]);
     }

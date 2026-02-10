@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { accountingAPI, branchAPI } from '../services/api';
-import { showSuccess, showError } from '../utils/sweetalert';
+import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import Layout from '../components/Layout';
 import '../styles/App.css';
 
@@ -40,6 +40,14 @@ function Accounting() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const confirmed = await showConfirm(
+            `Are you sure you want to record this expense of ₵${formData.amount}?`,
+            'Confirm Expense'
+        );
+
+        if (!confirmed.isConfirmed) return;
+
         try {
             await accountingAPI.createExpense(formData);
             setShowModal(false);
@@ -49,6 +57,7 @@ function Accounting() {
                 payment_method: 'cash', branch_id: '', receipt_number: ''
             });
             fetchData();
+            showSuccess('Expense recorded successfully');
         } catch (error) {
             console.error('Failed to record expense', error);
             showError('Error recording expense');
@@ -64,39 +73,38 @@ function Accounting() {
                 </button>
             </div>
 
-            <div className="card" style={{ background: 'var(--card-bg)', borderRadius: '12px', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-primary)' }}>
+            <div className="table-container">
+                <table className="mobile-card-view">
                     <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Date</th>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Category</th>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Description</th>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Branch</th>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Amount</th>
-                            <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Method</th>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Branch</th>
+                            <th>Amount</th>
+                            <th>Method</th>
                         </tr>
                     </thead>
                     <tbody>
                         {expenses.length === 0 ? (
                             <tr>
-                                <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                <td colSpan="6" className="no-data">
                                     No expenses recorded yet.
                                 </td>
                             </tr>
                         ) : (
                             expenses.map(expense => (
-                                <tr key={expense.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                    <td style={{ padding: '16px' }}>{new Date(expense.expense_date).toLocaleDateString()}</td>
-                                    <td style={{ padding: '16px', textTransform: 'capitalize' }}>
-                                        {expense.category.replace('_', ' ')}
-                                    </td>
-                                    <td style={{ padding: '16px' }}>{expense.description}</td>
-                                    <td style={{ padding: '16px' }}>{expense.branch?.name || 'General'}</td>
-                                    <td style={{ padding: '16px', color: 'var(--danger-color)', fontWeight: 'bold' }}>
+                                <tr key={expense.id}>
+                                    <td data-label="Date">{new Date(expense.expense_date).toLocaleDateString()}</td>
+                                    <td data-label="Category" style={{ textTransform: 'capitalize' }}>
+                                        {expense.category?.replace(/_/g, ' ') || 'Unknown'}                                    </td>
+                                    <td data-label="Description">{expense.description}</td>
+                                    <td data-label="Branch">{expense.branch?.name || 'General'}</td>
+                                    <td data-label="Amount" style={{ color: 'var(--danger-color)', fontWeight: 'bold' }}>
                                         -₵{parseFloat(expense.amount).toFixed(2)}
                                     </td>
-                                    <td style={{ padding: '16px', fontSize: '12px' }}>
-                                        {expense.payment_method.replace('_', ' ')}
+                                    <td data-label="Method" style={{ fontSize: '12px' }}>
+                                        {expense.payment_method.replace(/_/g, ' ')}
                                     </td>
                                 </tr>
                             ))

@@ -126,4 +126,15 @@ export const customerCardAPI = {
     getWorkerDailySales: (date) => api.get('/customer-cards/worker/daily-sales', { params: { date } }),
 };
 
+export const permissionAPI = {
+    getAll: () => api.get('/permissions'),
+    syncUser: (userId, permissions) => api.post(`/users/${userId}/permissions`, { permissions }),
+};
+
+export const roleAPI = {
+    getAll: () => api.get('/roles'),
+    getOne: (id) => api.get(`/roles/${id}`),
+    syncPermissions: (roleId, permissions) => api.post(`/roles/${roleId}/permissions`, { permissions }),
+};
+
 export default api;

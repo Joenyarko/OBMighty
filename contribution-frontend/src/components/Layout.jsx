@@ -1,16 +1,36 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import {
+    LayoutDashboard, Users, UserPlus, ShoppingBag, Truck,
+    ClipboardList, Banknote, CreditCard, Building, UserCircle,
+    FileBarChart, Settings, LogOut, ChevronLeft, ChevronRight,
+    Menu, X, ChevronDown, ChevronUp, Package
+} from 'lucide-react';
 import '../styles/Layout.css';
 
-import { useLocation } from 'react-router-dom';
-
 function Layout({ children }) {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
+    const [collapsed, setCollapsed] = useState(false); // Desktop toggle
     const [openSubmenu, setOpenSubmenu] = useState('');
     const { user, logout, isCEO, isSecretary } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const mainContentRef = useRef(null);
+
+    // Persist collapsed state
+    useEffect(() => {
+        const savedState = localStorage.getItem('sidebar-collapsed');
+        if (savedState) setCollapsed(JSON.parse(savedState));
+    }, []);
+
+    const toggleCollapsed = () => {
+        const newState = !collapsed;
+        setCollapsed(newState);
+        localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+        // Close submenus when collapsing
+        if (newState) setOpenSubmenu('');
+    };
 
     const handleLogout = async () => {
         await logout();
@@ -18,151 +38,235 @@ function Layout({ children }) {
     };
 
     const toggleSubmenu = (label) => {
-        setOpenSubmenu(openSubmenu === label ? '' : label);
+        if (collapsed) {
+            setCollapsed(false); // Auto-expand if clicking a submenu trigger
+            setTimeout(() => setOpenSubmenu(label), 100);
+        } else {
+            setOpenSubmenu(openSubmenu === label ? '' : label);
+        }
     };
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: '📊', roles: ['ceo', 'secretary', 'worker'] },
+        { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} />, permission: 'view_dashboard', section: 'OVERVIEW' },
         {
-            label: 'Customers', icon: '👥', roles: ['ceo', 'secretary', 'worker'],
+            label: 'Customers', icon: <Users size={20} />, permission: 'view_customers', section: 'OVERVIEW',
             children: [
-                { path: '/customers', label: 'Add Customer' },
-                { path: '/customers/list', label: 'Customer Management' },
+                { path: '/customers', label: 'Add Customer', permission: 'create_customers' },
+                { path: '/customers/list', label: 'Management', permission: 'view_customers' },
             ]
         },
-        { path: '/sales', label: 'Sales', icon: '💰', roles: ['ceo', 'secretary', 'worker'] },
-        { path: '/surplus', label: 'Surplus', icon: '💵', roles: ['ceo', 'secretary'] },
-        { path: '/payroll', label: 'Payroll', icon: '💸', roles: ['ceo'] },
-        { path: '/workers', label: 'Workers', icon: '👷', roles: ['ceo', 'secretary'] },
-        { path: '/branch-managers', label: 'Branch Managers', icon: '👔', roles: ['ceo'] },
+        { path: '/sales', label: 'Sales', icon: <ShoppingBag size={20} />, permission: 'view_sales', section: 'OVERVIEW' },
         {
-            label: 'Inventory', icon: '📦', roles: ['ceo', 'secretary'],
+            label: 'Inventory', icon: <Package size={20} />, permission: 'view_inventory', section: 'OVERVIEW',
             children: [
-                { path: '/inventory', label: 'Stock List' },
-                { path: '/inventory?action=receive', label: 'Receive Stocks' },
-                { path: '/inventory?action=adjust', label: 'Adjust Stocks' },
+                { path: '/inventory', label: 'Stock List', permission: 'view_inventory' },
+                { path: '/inventory?action=receive', label: 'Receive Stocks', permission: 'manage_inventory' },
+                { path: '/inventory?action=adjust', label: 'Adjust Stocks', permission: 'adjust_stock' },
             ]
         },
-        { path: '/cards', label: 'Cards', icon: '💳', roles: ['ceo', 'secretary'] },
-        { path: '/branches', label: 'Branches', icon: '🏢', roles: ['ceo'] },
-        { path: '/users', label: 'Users', icon: '👤', roles: ['ceo'] },
-        { path: '/accounting', label: 'Accounting', icon: '📒', roles: ['ceo'] },
-        { path: '/reports', label: 'Reports', icon: '📈', roles: ['ceo', 'secretary'] },
-        { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['ceo'] },
+        { path: '/surplus', label: 'Surplus', icon: <Banknote size={20} />, permission: 'view_surplus', section: 'OVERVIEW' },
+        { path: '/payroll', label: 'Payroll', icon: <ClipboardList size={20} />, permission: 'view_payroll', section: 'OVERVIEW' },
+        { path: '/workers', label: 'Workers', icon: <UserCircle size={20} />, permission: 'view_users', section: 'OVERVIEW' },
+        { path: '/branch-managers', label: 'Managers', icon: <UserPlus size={20} />, permission: 'manage_branches', section: 'OVERVIEW' },
+        { path: '/cards', label: 'Cards', icon: <CreditCard size={20} />, permission: 'view_cards', section: 'OVERVIEW' },
+        { path: '/branches', label: 'Branches', icon: <Building size={20} />, permission: 'view_branches', section: 'OVERVIEW' },
+        { path: '/users', label: 'Users', icon: <Users size={20} />, permission: 'view_users', section: 'OVERVIEW' },
+        { path: '/accounting', label: 'Accounting', icon: <FileBarChart size={20} />, permission: 'view_accounting', section: 'OVERVIEW' },
+        { path: '/reports', label: 'Reports', icon: <FileBarChart size={20} />, permission: 'view_reports', section: 'OVERVIEW' },
+
+        // Account Section
+        { path: '/settings', label: 'Settings', icon: <Settings size={20} />, permission: 'view_settings', section: 'ACCOUNT' },
     ];
 
-    const visibleMenuItems = menuItems.filter(item =>
-        item.roles.includes(user?.roles?.[0])
-    );
+    const hasPermission = (requiredPermission) => {
+        if (!requiredPermission) return true;
+        return user?.permissions?.some(p => p.name === requiredPermission || p === requiredPermission)
+            || user?.roles?.some(r => r.name === 'ceo');
+    };
+
+    const visibleMenuItems = menuItems.filter(item => {
+        if (!hasPermission(item.permission)) return false;
+        if (item.children) {
+            item.children = item.children.filter(child => hasPermission(child.permission));
+            return item.children.length > 0;
+        }
+        return true;
+    });
+
+    const overviewItems = visibleMenuItems.filter(i => i.section === 'OVERVIEW');
+    const accountItems = visibleMenuItems.filter(i => i.section === 'ACCOUNT');
+
+    const renderMenuItem = (item) => {
+        const isActive = location.pathname.startsWith(item.path);
+        const hasChildren = item.children && item.children.length > 0;
+        const isSubmenuOpen = openSubmenu === item.label;
+
+        if (hasChildren) {
+            return (
+                <div key={item.label} className="nav-group">
+                    <div
+                        className={`nav-item ${isSubmenuOpen ? 'active-parent' : ''}`}
+                        onClick={() => toggleSubmenu(item.label)}
+                        title={collapsed ? item.label : ''}
+                    >
+                        <span className="nav-icon">{item.icon}</span>
+                        {!collapsed && (
+                            <>
+                                <span className="nav-label">{item.label}</span>
+                                <span className="nav-arrow">
+                                    {isSubmenuOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                </span>
+                            </>
+                        )}
+                    </div>
+                    {isSubmenuOpen && !collapsed && (
+                        <div className="submenu">
+                            {item.children.map(child => (
+                                <Link
+                                    key={child.label}
+                                    to={child.path}
+                                    className={`nav-sub-item ${location.pathname === child.path && location.search === (child.path.split('?')[1] ? '?' + child.path.split('?')[1] : '') ? 'active' : ''}`}
+                                >
+                                    <span className="sub-dot"></span>
+                                    <span>{child.label}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <Link
+                key={item.label}
+                to={item.path}
+                className={`nav-item ${isActive ? 'active' : ''}`}
+                title={collapsed ? item.label : ''}
+                onClick={() => setSidebarOpen(false)} // Mobile close
+            >
+                <span className="nav-icon">{item.icon}</span>
+                {!collapsed && <span className="nav-label">{item.label}</span>}
+            </Link>
+        );
+    };
 
     return (
         <div className="layout">
             {/* Mobile Header */}
             <header className="mobile-header">
-                <button
-                    className="menu-toggle"
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                    ☰
-                </button>
-                <h1>Contribution Manager</h1>
+                <div className="flex items-center gap-3">
+                    <button className="menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+                        <Menu size={24} />
+                    </button>
+                </div>
                 <div className="user-badge">{user?.name?.charAt(0)}</div>
             </header>
 
             {/* Sidebar */}
-            <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-                <div className="sidebar-logo">
-                    <img src="/logo.jpeg" alt="O.B. Mighty Logo" />
-                </div>
-
+            <aside className={`sidebar ${sidebarOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
                 <div className="sidebar-header">
-                    <h2>Menu</h2>
-                    <button
-                        className="close-sidebar"
-                        onClick={() => setSidebarOpen(false)}
-                    >
-                        ✕
+                    <div className="brand">
+                        <img src="/logo.jpeg" alt="Logo" className="logo" />
+                        {!collapsed && (
+                            <div className="brand-text">
+                                <h2>O.B.Mighty</h2>
+                                <span>Contribution Manager</span>
+                            </div>
+                        )}
+                    </div>
+                    {/* Desktop Toggle */}
+                    <button className="collapse-btn" onClick={toggleCollapsed}>
+                        {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    </button>
+                    {/* Mobile Close */}
+                    <button className="mobile-close" onClick={() => setSidebarOpen(false)}>
+                        <X size={24} />
                     </button>
                 </div>
 
                 <nav className="sidebar-nav">
-                    {visibleMenuItems.map((item) => (
-                        <div key={item.label}>
-                            {item.children ? (
-                                <>
-                                    <div
-                                        className={`nav-item ${location.pathname.startsWith('/inventory') && item.label === 'Inventory' ? 'active' : ''}`}
-                                        onClick={() => toggleSubmenu(item.label)}
-                                        style={{ cursor: 'pointer', justifyContent: 'space-between' }}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            <span className="nav-icon">{item.icon}</span>
-                                            <span className="nav-label">{item.label}</span>
-                                        </div>
-                                        <span>{openSubmenu === item.label ? '▲' : '▼'}</span>
-                                    </div>
-                                    {openSubmenu === item.label && (
-                                        <div className="submenu" style={{ paddingLeft: '20px', background: 'rgba(0,0,0,0.2)' }}>
-                                            {item.children.map(child => (
-                                                <Link
-                                                    key={child.label}
-                                                    to={child.path}
-                                                    className={`nav-item ${location.pathname === child.path && location.search === (child.path.split('?')[1] ? '?' + child.path.split('?')[1] : '') ? 'active' : ''}`}
-                                                    onClick={() => setSidebarOpen(false)}
-                                                    style={{ fontSize: '0.9em' }}
-                                                >
-                                                    <span className="nav-label">{child.label}</span>
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <Link
-                                    to={item.path}
-                                    className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                                    onClick={() => setSidebarOpen(false)}
-                                >
-                                    <span className="nav-icon">{item.icon}</span>
-                                    <span className="nav-label">{item.label}</span>
-                                </Link>
-                            )}
-                        </div>
-                    ))}
+                    {/* OVERVIEW SECTION */}
+                    <div className="nav-section">
+                        {!collapsed && <div className="section-title">OVERVIEW</div>}
+                        {overviewItems.map(renderMenuItem)}
+                    </div>
+
+                    {/* ACCOUNT SECTION */}
+                    <div className="nav-section">
+                        {!collapsed && <div className="section-title">ACCOUNT</div>}
+                        {accountItems.map(renderMenuItem)}
+
+                        <button className="nav-item logout-btn" onClick={handleLogout} title={collapsed ? 'Logout' : ''}>
+                            <span className="nav-icon"><LogOut size={20} /></span>
+                            {!collapsed && <span className="nav-label">Log out</span>}
+                        </button>
+                    </div>
                 </nav>
+
+                {/* User Profile (Optional Bottom Section) */}
+                {!collapsed && (
+                    <div className="sidebar-footer">
+                        <div className="user-profile">
+                            <div className="user-avatar">{user?.name?.charAt(0)}</div>
+                            <div className="user-details">
+                                <span className="name">{user?.name}</span>
+                                <span className="email">{user?.email}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </aside>
 
             {/* Overlay for mobile */}
-            {
-                sidebarOpen && (
-                    <div
-                        className="sidebar-overlay"
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                )
-            }
+            {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
             {/* Main Content Area */}
-            <div className="main-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-
+            <div className={`main-wrapper ${collapsed ? 'expanded' : ''}`}>
                 {/* Desktop Top Header */}
                 <header className="desktop-header">
-                    <div className="user-info" style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{user?.name}</span>
-                        <span style={{ fontSize: '11px', color: 'var(--primary-color)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{user?.roles?.[0]}</span>
+                    <div className="user-info">
+                        <span className="greeting">Welcomeback, <strong>{user?.name}</strong></span>
+                        <span className="role-badge">{user?.roles?.[0]}</span>
                     </div>
-                    <button className="btn-logout" onClick={handleLogout}>
-                        Logout
-                    </button>
                 </header>
 
-                {/* Main Content */}
-                <main className="main-content" style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                <main className="main-content" ref={mainContentRef}>
                     {children}
                 </main>
+
+                <ScrollToTop scrollContainerRef={mainContentRef} />
             </div>
-        </div >
+        </div>
     );
 }
 
+function ScrollToTop({ scrollContainerRef }) {
+    const [isVisible, setIsVisible] = useState(false);
+
+    const toggleVisibility = () => {
+        const target = scrollContainerRef?.current || window;
+        const scrollTop = target === window ? window.scrollY : target.scrollTop;
+        setIsVisible(scrollTop > 300);
+    };
+
+    const scrollToTop = () => {
+        const target = scrollContainerRef?.current || window;
+        target.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        const target = scrollContainerRef?.current || window;
+        target.addEventListener('scroll', toggleVisibility);
+        return () => target.removeEventListener('scroll', toggleVisibility);
+    }, [scrollContainerRef]);
+
+    return isVisible ? (
+        <button onClick={scrollToTop} className="scroll-to-top">
+            <ChevronUp size={24} />
+        </button>
+    ) : null;
+}
+
 export default Layout;
+

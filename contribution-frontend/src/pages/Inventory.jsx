@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { inventoryAPI } from '../services/api';
-import { showSuccess, showError } from '../utils/sweetalert';
+import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import Layout from '../components/Layout';
 import '../styles/App.css';
 
@@ -60,6 +60,24 @@ function Inventory() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        let confirmMessage = 'Are you sure you want to save this?';
+        let confirmTitle = 'Confirm Action';
+
+        if (modalType === 'add') {
+            confirmMessage = `Are you sure you want to add new item "${formData.name}"?`;
+            confirmTitle = 'Add New Item';
+        } else if (modalType === 'receive') {
+            confirmMessage = `Confirm adding ${movementData.quantity} qty to stock?`;
+            confirmTitle = 'Receive Stock';
+        } else if (modalType === 'adjust') {
+            confirmMessage = `Confirm ${movementData.movement_type === 'in' ? 'adding' : 'removing'} ${movementData.quantity} qty?`;
+            confirmTitle = 'Adjust Stock';
+        }
+
+        const result = await showConfirm(confirmMessage, confirmTitle);
+        if (!result.isConfirmed) return;
+
         try {
             if (modalType === 'add') {
                 await inventoryAPI.create(formData);
@@ -71,6 +89,7 @@ function Inventory() {
             }
             setShowModal(false);
             fetchInventory();
+            showSuccess('Operation completed successfully');
         } catch (error) {
             console.error('Failed to save', error);
             showError('Error saving data');
@@ -111,65 +130,63 @@ function Inventory() {
             {loading ? (
                 <div className="loading">Loading stock...</div>
             ) : (
-                <div className="card" style={{ background: 'var(--card-bg)', borderRadius: '12px', overflow: 'hidden' }}>
-                    <div className="table-responsive">
-                        <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-primary)' }}>
-                            <thead>
-                                <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Item Name</th>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>SKU</th>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Qty</th>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Unit Price</th>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Status</th>
-                                    <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Actions</th>
+                <div className="table-container">
+                    <table className="mobile-card-view">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>SKU</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {items.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="no-data">
+                                        No stock items found.
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {items.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                            No stock items found.
+                            ) : (
+                                items.map(item => (
+                                    <tr key={item.id}>
+                                        <td data-label="Item Name" style={{ fontWeight: '500' }}>{item.name}</td>
+                                        <td data-label="SKU" style={{ fontFamily: 'monospace' }}>{item.sku || '-'}</td>
+                                        <td data-label="Qty">
+                                            <span style={{
+                                                color: item.quantity <= item.reorder_level ? 'var(--danger-color)' : 'var(--text-primary)',
+                                                fontWeight: 'bold'
+                                            }}>
+                                                {item.quantity} {item.unit}
+                                            </span>
+                                        </td>
+                                        <td data-label="Unit Price">₵{item.unit_price}</td>
+                                        <td data-label="Status">
+                                            <span style={{
+                                                padding: '4px 8px',
+                                                borderRadius: '4px',
+                                                background: item.status === 'active' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 68, 68, 0.2)',
+                                                color: item.status === 'active' ? '#4CAF50' : '#FF4444',
+                                                fontSize: '12px'
+                                            }}>
+                                                {item.status}
+                                            </span>
+                                        </td>
+                                        <td data-label="Actions">
+                                            <button
+                                                onClick={() => openAdjustModal(item)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px 8px' }}
+                                            >
+                                                🔄 Adjust
+                                            </button>
                                         </td>
                                     </tr>
-                                ) : (
-                                    items.map(item => (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                            <td style={{ padding: '16px', fontWeight: '500' }}>{item.name}</td>
-                                            <td style={{ padding: '16px', fontFamily: 'monospace' }}>{item.sku || '-'}</td>
-                                            <td style={{ padding: '16px' }}>
-                                                <span style={{
-                                                    color: item.quantity <= item.reorder_level ? 'var(--danger-color)' : 'var(--text-primary)',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {item.quantity} {item.unit}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '16px' }}>₵{item.unit_price}</td>
-                                            <td style={{ padding: '16px' }}>
-                                                <span style={{
-                                                    padding: '4px 8px',
-                                                    borderRadius: '4px',
-                                                    background: item.status === 'active' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 68, 68, 0.2)',
-                                                    color: item.status === 'active' ? '#4CAF50' : '#FF4444',
-                                                    fontSize: '12px'
-                                                }}>
-                                                    {item.status}
-                                                </span>
-                                            </td>
-                                            <td style={{ padding: '16px', display: 'flex', gap: '8px' }}>
-                                                <button
-                                                    onClick={() => openAdjustModal(item)}
-                                                    style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '4px 8px' }}
-                                                >
-                                                    🔄 Adjust
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             )}
 

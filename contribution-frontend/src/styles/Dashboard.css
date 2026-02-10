@@ -162,3 +162,19 @@
         font-size: 36px;
     }
 }
+
+/* Mobile Adjustments */
+@media (max-width: 767px) {
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-card h3 {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+}

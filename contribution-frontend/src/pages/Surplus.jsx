@@ -173,11 +173,11 @@ function Surplus() {
             </div>
 
             {/* Entries Table */}
-            <div className="surplus-table">
+            <div className="table-container surplus-table">
                 {entries.length === 0 ? (
                     <p className="no-data">No surplus entries found.</p>
                 ) : (
-                    <table>
+                    <table className="mobile-card-view">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -193,18 +193,18 @@ function Surplus() {
                         <tbody>
                             {entries.map((entry) => (
                                 <tr key={entry.id}>
-                                    <td>{entry.entry_date}</td>
-                                    <td>{entry.branch?.name || 'N/A'}</td>
-                                    <td>{entry.worker?.name || 'N/A'}</td>
-                                    <td className="amount">GHS{parseFloat(entry.amount).toFixed(2)}</td>
-                                    <td>{entry.description}</td>
-                                    <td>
+                                    <td data-label="Date">{entry.entry_date}</td>
+                                    <td data-label="Branch">{entry.branch?.name || 'N/A'}</td>
+                                    <td data-label="Worker">{entry.worker?.name || 'N/A'}</td>
+                                    <td data-label="Amount" className="amount">GHS{parseFloat(entry.amount).toFixed(2)}</td>
+                                    <td data-label="Description">{entry.description}</td>
+                                    <td data-label="Status">
                                         <span className={`status-badge ${entry.status}`}>
                                             {entry.status}
                                         </span>
                                     </td>
-                                    <td>{entry.creator?.name || 'N/A'}</td>
-                                    <td>
+                                    <td data-label="Created By">{entry.creator?.name || 'N/A'}</td>
+                                    <td data-label="Actions">
                                         {entry.status === 'available' && user.role === 'ceo' && (
                                             <button
                                                 className="btn-small btn-danger"

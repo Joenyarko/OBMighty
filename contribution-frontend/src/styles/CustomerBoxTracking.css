@@ -199,6 +199,25 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
     gap: 8px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+    /* Custom Scrollbar for box grid */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--card-bg);
+}
+
+.box-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.box-grid::-webkit-scrollbar-track {
+    background: var(--card-bg);
+}
+
+.box-grid::-webkit-scrollbar-thumb {
+    background-color: var(--primary-color);
+    border-radius: 3px;
 }
 
 .box {
@@ -235,6 +254,8 @@
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 24px;
+    overflow-x: auto;
+    /* Ensure table scrolls horizontally */
 }
 
 .payment-history-section h3 {
@@ -245,6 +266,8 @@
 .payment-history-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
+    /* Force minimum width for table */
 }
 
 .payment-history-table thead {
@@ -287,6 +310,7 @@
 
     .card-info {
         text-align: left;
+        width: 100%;
     }
 
     .summary-cards {
@@ -304,6 +328,8 @@
     .box-grid {
         grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
         gap: 6px;
+        max-height: 60vh;
+        /* Responsive height for mobile */
     }
 
     .payment-history-table {

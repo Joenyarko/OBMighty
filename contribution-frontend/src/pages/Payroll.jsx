@@ -241,8 +241,8 @@ function Payroll() {
             </div>
 
             {/* Employee Table */}
-            <div className="payroll-table-container">
-                <table className="payroll-table">
+            <div className="table-container">
+                <table className="mobile-card-view">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -256,10 +256,10 @@ function Payroll() {
                     <tbody>
                         {filteredEmployees.map(employee => (
                             <tr key={employee.id}>
-                                <td>{employee.name}</td>
-                                <td style={{ textTransform: 'capitalize' }}>{employee.role}</td>
-                                <td>{employee.branch}</td>
-                                <td>
+                                <td data-label="Name">{employee.name}</td>
+                                <td data-label="Role" style={{ textTransform: 'capitalize' }}>{employee.role}</td>
+                                <td data-label="Branch">{employee.branch}</td>
+                                <td data-label="Monthly Salary">
                                     {employee.salary ? (
                                         <span className="salary-amount">
                                             ₵{parseFloat(employee.salary.total_compensation).toFixed(2)}
@@ -268,12 +268,12 @@ function Payroll() {
                                         <span className="no-salary">Not Set</span>
                                     )}
                                 </td>
-                                <td>
+                                <td data-label="Status">
                                     <span className={`status-badge ${employee.isPaid ? 'paid' : 'unpaid'}`}>
                                         {employee.isPaid ? 'Paid' : 'Unpaid'}
                                     </span>
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     <div className="action-buttons">
                                         <button
                                             className="btn-small btn-secondary"
