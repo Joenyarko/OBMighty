@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, UserPlus, ShoppingBag, Truck,
     ClipboardList, Banknote, CreditCard, Building, UserCircle,
     FileBarChart, Settings, LogOut, ChevronLeft, ChevronRight,
-    Menu, X, ChevronDown, ChevronUp, Package
+    Menu, X, ChevronDown, ChevronUp, Package, Layers
 } from 'lucide-react';
 import '../styles/Layout.css';
 
@@ -73,6 +73,8 @@ function Layout({ children }) {
         { path: '/users', label: 'Users', icon: <Users size={20} />, permission: 'view_users', section: 'OVERVIEW' },
         { path: '/accounting', label: 'Accounting', icon: <FileBarChart size={20} />, permission: 'view_accounting', section: 'OVERVIEW' },
         { path: '/reports', label: 'Reports', icon: <FileBarChart size={20} />, permission: 'view_reports', section: 'OVERVIEW' },
+        { path: '/payments', label: 'Payments', icon: <CreditCard size={20} />, permission: 'view_payments', section: 'OVERVIEW' },
+        { path: '/bulk-entry', label: 'Bulk Entry', icon: <Layers size={20} />, permission: 'record_payments', section: 'OVERVIEW' }, // Visible to workers/secretary
 
         // Account Section
         { path: '/settings', label: 'Settings', icon: <Settings size={20} />, permission: 'view_settings', section: 'ACCOUNT' },

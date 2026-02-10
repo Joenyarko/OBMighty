@@ -101,8 +101,8 @@ function Cards() {
         e.preventDefault();
 
         // Validation
-        if (!editMode && (!frontImageFile || !backImageFile)) {
-            showError('Please upload both front and back images');
+        if (!editMode && !frontImageFile) {
+            showError('Please upload a front image');
             return;
         }
 
@@ -313,12 +313,11 @@ function Cards() {
                                     )}
                                 </div>
                                 <div className="form-group">
-                                    <label>Back Image (Boxes) {!editMode && '*'}</label>
+                                    <label>Back Image (Boxes)</label>
                                     <input
                                         type="file"
                                         accept="image/jpeg,image/jpg,image/png"
                                         onChange={(e) => handleImageChange(e, 'back')}
-                                        required={!editMode}
                                     />
                                     {backImagePreview && (
                                         <div className="image-preview">

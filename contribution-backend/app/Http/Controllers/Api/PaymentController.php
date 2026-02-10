@@ -115,4 +115,63 @@ class PaymentController extends Controller
             ], 422);
         }
     }
+    /**
+     * Record multiple payments
+     */
+    public function bulkStore(Request $request)
+    {
+        $validated = $request->validate([
+            'payments' => 'required|array|min:1',
+            'payments.*.customer_id' => 'required|exists:customers,id',
+            'payments.*.payment_amount' => 'required|numeric|min:0.01',
+            'payments.*.payment_date' => 'nullable|date',
+            'payments.*.payment_method' => 'nullable|in:cash,mobile_money,bank_transfer',
+            'payments.*.reference_number' => 'nullable|string|max:255',
+            'payments.*.notes' => 'nullable|string',
+        ]);
+
+        $results = [
+            'successful' => [],
+            'failed' => [],
+        ];
+
+        $user = $request->user();
+
+        foreach ($validated['payments'] as $index => $paymentData) {
+            try {
+                $customer = Customer::findOrFail($paymentData['customer_id']);
+
+                // Authorization Check
+                if ($user->hasRole('worker') && $customer->worker_id !== $user->id) {
+                    throw new Exception("Unauthorized: Not your customer.");
+                }
+
+                if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
+                    throw new Exception("Unauthorized: Customer not in your branch.");
+                }
+
+                // Call service
+                $payment = $this->paymentService->recordPayment($customer, $paymentData);
+
+                $results['successful'][] = [
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->name,
+                    'amount' => $payment->payment_amount,
+                    'payment_id' => $payment->id,
+                ];
+
+            } catch (Exception $e) {
+                $results['failed'][] = [
+                    'customer_id' => $paymentData['customer_id'] ?? null,
+                    'error' => $e->getMessage(),
+                    'index' => $index,
+                ];
+            }
+        }
+
+        return response()->json([
+            'message' => 'Bulk processing completed',
+            'results' => $results,
+        ], 200);
+    }
 }

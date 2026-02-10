@@ -86,15 +86,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('users', UserController::class);
     });
 
-    // Branches & System (CEO only)
-    Route::middleware('role:ceo')->group(function () {
-        Route::apiResource('branches', BranchController::class)->except(['index', 'show']);
-        Route::apiResource('cards', CardController::class);
-        
-        // Inventory
-        Route::apiResource('inventory', InventoryController::class);
-        Route::post('/inventory/{id}/movement', [InventoryController::class, 'recordMovement']);
-        Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock']);
+    // Branches & System (CEO & Secretary)
+    Route::middleware('role:ceo|secretary')->group(function () {
+        Route::apiResource('branches', BranchController::class)->except(['index', 'show']); // Create/Edit/Delete
         
         // Accounting & Expenses
         Route::get('/expenses', [AccountingController::class, 'index']);
@@ -103,11 +97,32 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/accounting/profit-loss', [AccountingController::class, 'profitLoss']);
     });
 
+    // CEO Only Routes
+    Route::middleware('role:ceo')->group(function () {
+        // Card Management (Create/Update/Delete)
+        Route::post('/cards', [CardController::class, 'store']);
+        Route::put('/cards/{card}', [CardController::class, 'update']);
+        Route::delete('/cards/{card}', [CardController::class, 'destroy']);
+        
+        // Inventory
+        Route::apiResource('inventory', InventoryController::class);
+        Route::post('/inventory/{id}/movement', [InventoryController::class, 'recordMovement']);
+        Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock']);
+    });
+
     // Customers (All roles, scoped by policy)
     Route::apiResource('customers', CustomerController::class);
+
+    // Cards (View All - Accessible to Workers/Secretary/CEO for selection)
+    Route::get('/cards', [CardController::class, 'index']);
+    Route::get('/cards/{card}', [CardController::class, 'show']);
     
     // Payments (All roles, scoped by policy)
+    Route::post('/payments/bulk', [PaymentController::class, 'bulkStore']);
     Route::apiResource('payments', PaymentController::class)->only(['index', 'store']);
+    
+    // Customer Transfer (CEO only)
+    Route::post('/customers/{id}/transfer', [CustomerController::class, 'transfer'])->middleware('role:ceo');
     
     // Sales (All roles, scoped by controller logic)
     Route::prefix('sales')->group(function () {

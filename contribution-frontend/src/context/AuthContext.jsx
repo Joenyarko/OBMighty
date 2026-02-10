@@ -63,7 +63,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     const hasRole = (role) => {
-        return user?.roles?.includes(role);
+        if (!user || !user.roles) return false;
+        // Check if roles is array of strings or objects
+        return user.roles.some(r => (typeof r === 'string' ? r === role : r.name === role));
     };
 
     const hasPermission = (permission) => {

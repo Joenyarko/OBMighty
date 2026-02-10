@@ -29,20 +29,59 @@ class PaymentService
             $paymentDate = $data['payment_date'] ?? Carbon::today();
             
             
-            // Validate price_per_box
-            if (!$customer->price_per_box || $customer->price_per_box <= 0) {
-                throw new Exception('Invalid card pricing. Please update the customer card information.');
-            }
-            
+            // Find Active Card
+            $customerCard = \App\Models\CustomerCard::where('customer_id', $customer->id)
+                ->where('status', 'active')
+                ->first();
+
             // Calculate boxes to mark
-            $boxesToMark = $paymentAmount / $customer->price_per_box;
+            $boxesToMark = 0;
+            $boxPrice = $customer->price_per_box; 
             
+            // If card exists, prioritize its pricing
+            if ($customerCard) {
+                // Ensure box price is available
+                $customerCard->append('box_price');
+                if ($customerCard->box_price > 0) {
+                     $boxPrice = $customerCard->box_price;
+                }
+            } else {
+                 // Fallback validation for price
+                 if (!$boxPrice || $boxPrice <= 0) {
+                     throw new Exception('Invalid card pricing. Please update the customer card information.');
+                 }
+            }
+
+            // Calculate boxes
+            if ($boxPrice > 0) {
+                 $boxesToMark = floor($paymentAmount / $boxPrice);
+            }
+
             // Validation: Prevent overpayment
             $newBoxesFilled = $customer->boxes_filled + $boxesToMark;
             if ($newBoxesFilled > $customer->total_boxes) {
-                throw new Exception('Payment amount exceeds remaining balance. Maximum allowed: ' . 
-                    ($customer->total_boxes - $customer->boxes_filled) * $customer->price_per_box);
+                // Allow small overpayments or handle gracefully? For now, strict check.
+                // Actually, if using Card, check card limit
+                $maxBoxes = $customerCard ? $customerCard->total_boxes : $customer->total_boxes;
+                $currentFilled = $customerCard ? $customerCard->boxes_checked : $customer->boxes_filled;
+                
+                if (($currentFilled + $boxesToMark) > $maxBoxes) {
+                     throw new Exception('Payment amount exceeds remaining balance.');
+                }
             }
+            
+            // --- 1. HANDLE BOX STATE UPDATES (Granular) ---
+            if ($customerCard) {
+                // This updates BoxState, BoxPayment, and CustomerCard totals
+                $customerCard->checkBoxes(
+                    $boxesToMark, 
+                    auth()->id() ?? $customer->worker_id, 
+                    $data['payment_method'] ?? 'cash',
+                    $data['notes'] ?? null
+                );
+            }
+
+            // --- 2. HANDLE CUSTOMER & LEDGER UPDATES (High Level) ---
             
             // Store old customer values for audit
             $oldCustomerValues = $customer->only(['boxes_filled', 'amount_paid', 'status', 'last_payment_date']);
@@ -61,7 +100,8 @@ class PaymentService
             
             $customer->save();
             
-            // Create payment record
+            // Create payment record (Ledger)
+            // This is required for "Recent Payments" view and reporting
             $payment = Payment::create([
                 'customer_id' => $customer->id,
                 'worker_id' => $customer->worker_id,

@@ -16,6 +16,7 @@ function Customers() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showEditForm, setShowEditForm] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [preSelectedCardId, setPreSelectedCardId] = useState(null);
     const { user, isCEO, isSecretary } = useAuth();
     const navigate = useNavigate();
 
@@ -253,12 +254,67 @@ function Customers() {
                 </table>
             </div>
 
+            {/* Available Cards Grid */}
+            <div className="available-cards-section" style={{ marginTop: '40px' }}>
+                <h2>Available Cards</h2>
+                <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Click on a card to add a new customer with that card pre-selected.</p>
+
+                <div className="card-selection-grid">
+                    {cards.map(card => (
+                        <div
+                            key={card.id}
+                            className="card-selection-item"
+                            onClick={() => {
+                                setPreSelectedCardId(card.id);
+                                setShowAddForm(true);
+                            }}
+                        >
+                            {card.front_image_url ? (
+                                <img
+                                    src={card.front_image_url}
+                                    alt={card.card_name}
+                                    className="card-item-image"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                />
+                            ) : null}
+                            <div className="card-item-placeholder" style={{ display: card.front_image_url ? 'none' : 'flex' }}>
+                                💳
+                            </div>
+
+                            <div className="card-item-content">
+                                <h4 className="card-item-title">{card.card_name}</h4>
+                                <span className="card-item-code">{card.card_code}</span>
+
+                                <div className="card-item-stats">
+                                    <div className="card-stat-box">
+                                        <span className="card-stat-label">Price</span>
+                                        <span className="card-stat-value">GHS{card.amount}</span>
+                                    </div>
+                                    <div className="card-stat-box">
+                                        <span className="card-stat-label">Boxes</span>
+                                        <span className="card-stat-value">{card.number_of_boxes}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             {showAddForm && (
                 <AddCustomerModal
                     cards={cards}
                     branches={branches}
                     workers={workers}
-                    onClose={() => setShowAddForm(false)}
+                    preSelectedCardId={preSelectedCardId}
+                    onClose={() => {
+                        setShowAddForm(false);
+                        setPreSelectedCardId(null);
+                    }}
                     onSubmit={handleAddCustomer}
                 />
             )}
@@ -277,7 +333,7 @@ function Customers() {
     );
 }
 
-function AddCustomerModal({ cards, branches, workers, onClose, onSubmit }) {
+function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSelectedCardId }) {
     const { user, isCEO, isSecretary, isWorker } = useAuth();
 
     // Safety check
@@ -287,13 +343,22 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit }) {
         name: '',
         phone: '',
         location: '',
-        card_id: '',
+        card_id: preSelectedCardId || '',
         branch_id: '',
         worker_id: '',
     });
     const [selectedCard, setSelectedCard] = useState(null);
 
     // Initialize fields based on role
+    useEffect(() => {
+        if (preSelectedCardId && cards.length > 0) {
+            const card = cards.find(c => c.id === parseInt(preSelectedCardId));
+            if (card) {
+                setSelectedCard(card);
+            }
+        }
+    }, [preSelectedCardId, cards]);
+
     useEffect(() => {
         if (isWorker()) {
             setFormData(prev => ({
@@ -348,7 +413,11 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit }) {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Add New Customer</h2>
+
                 <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>2. Customer Details</label>
+                    </div>
                     <div className="form-group">
                         <label>Name</label>
                         <input
@@ -448,6 +517,15 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit }) {
                     {selectedCard && (
                         <div className="card-preview">
                             <h4>Card Details:</h4>
+                            {selectedCard.front_image_url && (
+                                <div style={{ marginBottom: '12px', textAlign: 'center' }}>
+                                    <img
+                                        src={selectedCard.front_image_url}
+                                        alt={selectedCard.card_name}
+                                        style={{ maxWidth: '100%', maxHeight: '150px', objectFit: 'contain', borderRadius: '8px', border: '1px solid var(--border-color)' }}
+                                    />
+                                </div>
+                            )}
                             <p><strong>Name:</strong> {selectedCard.card_name}</p>
                             <p><strong>Code:</strong> {selectedCard.card_code}</p>
                             <p><strong>Total Boxes:</strong> {selectedCard.number_of_boxes}</p>

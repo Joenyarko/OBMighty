@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerAPI } from '../services/api';
-import { showSuccess, showError, showWarning } from '../utils/sweetalert';
+import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Search, Filter, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
+import TransferCustomerModal from '../components/TransferCustomerModal';
 import '../styles/CustomerList.css';
 
 function CustomerList() {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [customerToTransfer, setCustomerToTransfer] = useState(null); // For transfer modal
+
     const navigate = useNavigate();
+    const { isCEO } = useAuth();
 
     useEffect(() => {
         fetchCustomers();
@@ -68,13 +75,13 @@ function CustomerList() {
 
     const filteredCustomers = customers.filter(customer => {
         if (!customer) return false;
-        const query = searchQuery.toLowerCase();
+        const query = searchTerm.toLowerCase();
         const name = customer.name || '';
         const phone = customer.phone || '';
         const location = customer.location || '';
 
         return name.toLowerCase().includes(query) ||
-            phone.includes(searchQuery) ||
+            phone.includes(searchTerm) ||
             location.toLowerCase().includes(query);
     });
 
@@ -95,8 +102,8 @@ function CustomerList() {
                     <input
                         type="text"
                         placeholder="Search by name, phone, or location..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
                     />
                 </div>
@@ -203,6 +210,17 @@ function CustomerList() {
                                 >
                                     🗑️ Delete
                                 </button>
+                                {/* Transfer Button - CEO Only */}
+                                {isCEO() && (
+                                    <button
+                                        className="btn-icon"
+                                        title="Transfer"
+                                        style={{ color: 'var(--primary-color)' }}
+                                        onClick={() => setCustomerToTransfer(customer)}
+                                    >
+                                        <ArrowRightLeft size={16} />
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))
@@ -218,6 +236,15 @@ function CustomerList() {
                         setSelectedCustomer(null);
                     }}
                     onSubmit={handleUpdateCustomer}
+                />
+            )}
+
+            {/* Transfer Customer Modal */}
+            {customerToTransfer && (
+                <TransferCustomerModal
+                    customer={customerToTransfer}
+                    onClose={() => setCustomerToTransfer(null)}
+                    onSuccess={fetchCustomers}
                 />
             )}
         </div>

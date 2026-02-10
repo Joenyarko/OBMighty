@@ -12,6 +12,7 @@ import Accounting from './pages/Accounting';
 import Users from './pages/Users'; // Renamed from Settings
 import Settings from './pages/Settings'; // New Settings page
 import Payments from './pages/Payments';
+import BulkPayment from './pages/BulkPayment';
 import Cards from './pages/Cards';
 import Sales from './pages/Sales';
 import Surplus from './pages/Surplus';
@@ -90,6 +91,7 @@ function App() {
 
                     <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                     <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
+                    <Route path="/bulk-entry" element={<ProtectedRoute><BulkPayment /></ProtectedRoute>} />
                     <Route path="/cards" element={<ProtectedRoute><Cards /></ProtectedRoute>} />
                     <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
                     <Route path="/performance/:workerId" element={<ProtectedRoute><Performance /></ProtectedRoute>} />

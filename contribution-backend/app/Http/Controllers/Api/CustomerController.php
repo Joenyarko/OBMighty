@@ -226,4 +226,35 @@ class CustomerController extends Controller
             'message' => 'Customer deleted successfully',
         ]);
     }
+    /**
+     * Transfer customer to another worker (CEO only)
+     */
+    public function transfer(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'new_worker_id' => 'required|exists:users,id',
+        ]);
+
+        $customer = Customer::findOrFail($id);
+        $newWorker = \App\Models\User::with('roles')->findOrFail($validated['new_worker_id']);
+
+        // Verify new worker has worker role or similar? Not strictly necessary if CEO decides.
+        
+        $oldWorkerId = $customer->worker_id;
+        $customer->worker_id = $newWorker->id;
+        
+        // Also update branch if the new worker is in a different branch
+        if ($newWorker->branch_id) {
+            $customer->branch_id = $newWorker->branch_id;
+        }
+
+        $customer->save();
+
+        return response()->json([
+            'message' => 'Customer transferred successfully',
+            'customer' => $customer->load(['branch', 'worker', 'card']),
+            'previous_worker_id' => $oldWorkerId,
+            'new_worker_id' => $newWorker->id,
+        ]);
+    }
 }

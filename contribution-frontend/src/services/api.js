@@ -55,12 +55,14 @@ export const customerAPI = {
     create: (data) => api.post('/customers', data),
     update: (id, data) => api.put(`/customers/${id}`, data),
     delete: (id) => api.delete(`/customers/${id}`),
+    transfer: (id, newWorkerId) => api.post(`/customers/${id}/transfer`, { new_worker_id: newWorkerId }),
 };
 
 // Payment API
 export const paymentAPI = {
     getAll: (params) => api.get('/payments', { params }),
     create: (data) => api.post('/payments', data),
+    bulkCreate: (data) => api.post('/payments/bulk', data),
 };
 
 // Report API
