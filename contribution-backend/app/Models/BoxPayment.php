@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class BoxPayment extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'customer_card_id',
         'worker_id',
         'payment_date',

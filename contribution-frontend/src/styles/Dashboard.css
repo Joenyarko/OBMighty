@@ -52,7 +52,7 @@
 }
 
 .stat-card.highlight {
-    background: linear-gradient(135deg, var(--yellow) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: var(--black);
     border: none;
 }

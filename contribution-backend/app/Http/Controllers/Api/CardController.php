@@ -14,7 +14,7 @@ class CardController extends Controller
      */
     public function index()
     {
-        $cards = Card::active()->orderBy('card_name')->get();
+        $cards = Card::active()->orderBy('card_name')->paginate(10);
         return response()->json($cards);
     }
 

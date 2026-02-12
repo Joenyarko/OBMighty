@@ -5,8 +5,11 @@ import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
 import '../styles/App.css';
 
+import { useNavigate } from 'react-router-dom';
+
 function Users({ roleFilter, title }) {
-    const { isCEO } = useAuth();
+    const { isCEO, isSecretary } = useAuth();
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -127,9 +130,11 @@ function Users({ roleFilter, title }) {
         <div className="users-page">
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h1 style={{ color: 'var(--primary-color)' }}>{title || 'User Management'}</h1>
-                <button className="btn-primary" onClick={() => setShowModal(true)}>
-                    + Create New {roleFilter === 'worker' ? 'Worker' : roleFilter === 'secretary' ? 'Manager' : 'User'}
-                </button>
+                {isCEO && (
+                    <button className="btn-primary" onClick={() => setShowModal(true)}>
+                        + Create New {roleFilter === 'worker' ? 'Worker' : roleFilter === 'secretary' ? 'Manager' : 'User'}
+                    </button>
+                )}
             </div>
 
             <div className="table-container">
@@ -140,7 +145,7 @@ function Users({ roleFilter, title }) {
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Role</th>
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Branch</th>
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Status</th>
-                            {isCEO && <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Actions</th>}
+                            {(isCEO || isSecretary) && <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -164,15 +169,26 @@ function Users({ roleFilter, title }) {
                                 <td style={{ padding: '16px' }}>
                                     <span style={{ color: '#4CAF50' }}>{user.status || 'Active'}</span>
                                 </td>
-                                {isCEO && (
-                                    <td style={{ padding: '16px' }}>
-                                        <button
-                                            className="btn-secondary"
-                                            style={{ padding: '6px 12px', fontSize: '12px' }}
-                                            onClick={() => handleOpenPermissions(user)}
-                                        >
-                                            Permissions
-                                        </button>
+                                {(isCEO || isSecretary) && (
+                                    <td style={{ padding: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                        {isCEO && (
+                                            <button
+                                                className="btn-secondary"
+                                                style={{ padding: '6px 12px', fontSize: '12px' }}
+                                                onClick={() => handleOpenPermissions(user)}
+                                            >
+                                                Permissions
+                                            </button>
+                                        )}
+                                        {user.roles?.[0]?.name === 'worker' && (
+                                            <button
+                                                className="btn-secondary"
+                                                style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(33, 150, 243, 0.1)', color: '#2196f3', border: '1px solid rgba(33, 150, 243, 0.3)' }}
+                                                onClick={() => navigate(`/performance/${user.id}`)}
+                                            >
+                                                Performance
+                                            </button>
+                                        )}
                                     </td>
                                 )}
                             </tr>

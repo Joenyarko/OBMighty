@@ -20,7 +20,15 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
+        \Illuminate\Support\Facades\Log::info('Login Attempt', [
+            'email' => $request->email,
+            'tenant_id' => config('app.company_id'),
+            'host' => $request->getHost(),
+        ]);
+
         $user = User::where('email', $request->email)->first();
+
+        \Illuminate\Support\Facades\Log::info('User Found?', ['found' => $user ? 'yes' : 'no']);
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -37,6 +45,9 @@ class AuthController extends Controller
         // Update last login
         $user->last_login_at = now();
         $user->save();
+
+        // Create audit log
+        \App\Models\AuditLog::log('login', $user, null, null, $user->id);
 
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
@@ -61,6 +72,7 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        \App\Models\AuditLog::log('logout', $request->user());
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([

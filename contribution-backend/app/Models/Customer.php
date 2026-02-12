@@ -9,9 +9,10 @@ use Carbon\Carbon;
 
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'name',
         'phone',
         'location',
@@ -160,10 +161,18 @@ class Customer extends Model
     }
 
     /**
-     * Scope to get defaulting customers
+     * Scope to get defaulting customers (No payment in > 7 days AND not completed)
      */
     public function scopeDefaulting($query)
     {
-        return $query->where('status', 'defaulting');
+        return $query->where('status', '!=', 'completed')
+                     ->where(function($q) {
+                         $q->where('last_payment_date', '<', Carbon::now()->subDays(7))
+                           ->orWhereNull('last_payment_date'); // Optional: treat never paid as defaulting? let's stick to last_payment for now or maybe just those who started but stopped. 
+                           // actually, if they never paid, last_payment_date is null. 
+                           // Let's assume defaulting means they HAVE paid before but stopped.
+                           // If we want "never paid" to be defaulting, we'd add orWhereNull.
+                           // For now, let's stick to the user's definition: "not made a payment in 7 days".
+                     });
     }
 }

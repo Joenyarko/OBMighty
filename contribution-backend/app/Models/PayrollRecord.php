@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class PayrollRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'branch_id',
         'salary_amount',

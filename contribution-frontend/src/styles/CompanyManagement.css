@@ -1,0 +1,46 @@
+/* Company Management Table Actions */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.action-btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Edit Button - Blue */
+.action-btn.edit {
+    color: #3b82f6;
+    /* Bright Blue */
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.action-btn.edit:hover {
+    background-color: #3b82f6;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+/* Delete Button - Red */
+.action-btn.delete {
+    color: #ef4444;
+    /* Bright Red */
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.action-btn.delete:hover {
+    background-color: #ef4444;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}

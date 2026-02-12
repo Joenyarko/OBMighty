@@ -11,11 +11,16 @@ class BranchController extends Controller
     /**
      * Get all branches (CEO only)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $branches = Branch::withCount('users', 'customers')
-            ->orderBy('name')
-            ->get();
+        $user = $request->user();
+        $query = Branch::withCount('users', 'customers')->orderBy('name');
+
+        if ($user->hasRole('secretary')) {
+            $query->where('id', $user->branch_id);
+        }
+
+        $branches = $query->get();
         
         return response()->json($branches);
     }
@@ -44,8 +49,15 @@ class BranchController extends Controller
     /**
      * Get a single branch (CEO only)
      */
-    public function show($id)
+    public function show($id, Request $request)
     {
+        $user = $request->user();
+        
+        // Authorization check
+        if ($user->hasRole('secretary') && $id != $user->branch_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         $branch = Branch::withCount('users', 'customers')->findOrFail($id);
         return response()->json($branch);
     }

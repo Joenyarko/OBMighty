@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTenant } from '../context/TenantContext'; // Import hook
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
@@ -10,6 +11,7 @@ function Login() {
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
+    const { tenant } = useTenant(); // Get tenant config
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -32,8 +34,12 @@ function Login() {
         <div className="login-container">
             <div className="login-card">
                 <div className="login-header">
-                    <img src="/logo.jpeg" alt="O.B. Mighty Logo" className="login-logo" />
-                    <h1>Daily Contribution Manager</h1>
+                    <img
+                        src={tenant?.logo_url || "/logo.jpeg"}
+                        alt={`${tenant?.app_name || 'O.B. Mighty'} Logo`}
+                        className="login-logo"
+                    />
+                    <h1>{tenant?.app_name || 'Daily Contribution Manager'}</h1>
                     <p>Sign in to your account</p>
                 </div>
 

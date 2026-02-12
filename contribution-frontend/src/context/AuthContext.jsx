@@ -72,10 +72,6 @@ export const AuthProvider = ({ children }) => {
         return user?.permissions?.includes(permission);
     };
 
-    const isCEO = () => hasRole('ceo');
-    const isSecretary = () => hasRole('secretary');
-    const isWorker = () => hasRole('worker');
-
     const value = {
         user,
         token,
@@ -84,9 +80,9 @@ export const AuthProvider = ({ children }) => {
         logout,
         hasRole,
         hasPermission,
-        isCEO,
-        isSecretary,
-        isWorker,
+        isCEO: hasRole('ceo'),
+        isSecretary: hasRole('secretary'),
+        isWorker: hasRole('worker'),
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

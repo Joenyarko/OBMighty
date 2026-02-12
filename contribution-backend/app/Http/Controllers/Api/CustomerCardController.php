@@ -88,8 +88,31 @@ class CustomerCardController extends Controller
     /**
      * Get customer's card details
      */
+    /**
+     * Helper to authorize access to customer data
+     */
+    private function authorizeCustomerAccess($customer)
+    {
+        $user = request()->user();
+        if (!$customer) return;
+
+        if ($user->hasRole('worker') && $customer->worker_id !== $user->id) {
+            abort(403, 'Unauthorized access to this customer.');
+        }
+
+        if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
+            abort(403, 'Unauthorized access to customer in another branch.');
+        }
+    }
+
+    /**
+     * Get customer's card details
+     */
     public function getCustomerCard($customerId)
     {
+        $customer = \App\Models\Customer::findOrFail($customerId);
+        $this->authorizeCustomerAccess($customer);
+
         // \Log::info("Fetching card for customer ID: " . $customerId);
 
         $customerCard = CustomerCard::with(['customer', 'card'])
@@ -103,7 +126,7 @@ class CustomerCardController extends Controller
             
             if (!$anyCard) {
                 // SELF-HEALING: Customer exists but has no card record (likely from bad creation)
-                $customer = \App\Models\Customer::find($customerId);
+                // $customer = \App\Models\Customer::find($customerId); // Already fetched above
                 
                 if ($customer && $customer->card_id) {
                     \Log::info("Self-healing: Creating missing card for customer ID: " . $customerId);
@@ -169,18 +192,16 @@ class CustomerCardController extends Controller
     /**
      * Check boxes (record payment)
      */
-    /**
-     * Check boxes (record payment)
-     */
     public function checkBoxes(Request $request, $id)
     {
         \Log::info('checkBoxes called', ['customer_card_id' => $id, 'request_data' => $request->all()]);
         
         try {
-            $customerCard = CustomerCard::findOrFail($id);
+            $customerCard = CustomerCard::with('customer')->findOrFail($id);
+            $this->authorizeCustomerAccess($customerCard->customer);
             \Log::info('CustomerCard found', ['id' => $customerCard->id, 'total_amount' => $customerCard->total_amount, 'total_boxes' => $customerCard->total_boxes]);
         } catch (\Exception $e) {
-            \Log::error('CustomerCard not found', ['id' => $id, 'error' => $e->getMessage()]);
+            \Log::error('CustomerCard not found or unauthorized', ['id' => $id, 'error' => $e->getMessage()]);
             throw $e;
         }
 
@@ -372,7 +393,8 @@ class CustomerCardController extends Controller
      */
     public function getBoxStates($id)
     {
-        $customerCard = CustomerCard::findOrFail($id);
+        $customerCard = CustomerCard::with('customer')->findOrFail($id);
+        $this->authorizeCustomerAccess($customerCard->customer);
 
         $boxStates = BoxState::where('customer_card_id', $id)
             ->orderBy('box_number')
@@ -389,7 +411,9 @@ class CustomerCardController extends Controller
      */
     public function getDailySales($id, Request $request)
     {
-        $customerCard = CustomerCard::findOrFail($id);
+        $customerCard = CustomerCard::with('customer')->findOrFail($id);
+        $this->authorizeCustomerAccess($customerCard->customer);
+
         $date = $request->input('date', now()->toDateString());
 
         $dailySales = $customerCard->getDailySales($date);
@@ -405,7 +429,8 @@ class CustomerCardController extends Controller
      */
     public function getPaymentHistory($id)
     {
-        $customerCard = CustomerCard::findOrFail($id);
+        $customerCard = CustomerCard::with('customer')->findOrFail($id);
+        $this->authorizeCustomerAccess($customerCard->customer);
 
         $payments = BoxPayment::with('worker')
             ->where('customer_card_id', $id)
@@ -421,7 +446,21 @@ class CustomerCardController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
         $query = CustomerCard::with(['customer', 'card']);
+
+        // RESTRICT BY ROLE
+        if ($user->hasRole('worker')) {
+            // Only show cards where the CUSTOMER is assigned to this worker
+            // Filtering by 'assigned_by' is not enough, as a worker could have been reassigned
+            $query->whereHas('customer', function($q) use ($user) {
+                $q->where('worker_id', $user->id);
+            });
+        } elseif ($user->hasRole('secretary')) {
+            $query->whereHas('customer', function($q) use ($user) {
+                $q->where('branch_id', $user->branch_id);
+            });
+        }
 
         // Filter by status
         if ($request->has('status')) {

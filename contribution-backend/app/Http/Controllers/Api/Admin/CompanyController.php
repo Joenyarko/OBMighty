@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Company;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+
+class CompanyController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        // Only return active (non-deleted) companies
+        return response()->json(Company::all());
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'domain' => 'nullable|string|unique:companies,domain',
+            'subdomain' => 'nullable|string|unique:companies,subdomain',
+            'primary_color' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048',
+            'is_active' => 'boolean',
+            // CEO Details
+            'ceo_name' => 'required|string|max:255',
+            'ceo_email' => 'required|email|max:255', // Unique check is complex due to multi-tenancy, but for a NEW company CEO, it should probably be unique globally or at least we catch the error if not
+            'ceo_password' => 'required|string|min:8',
+        ]);
+
+        return DB::transaction(function () use ($request, $validated) {
+            
+            // 1. Create Company
+            // Handle File Upload
+            if ($request->hasFile('logo')) {
+                $path = $request->file('logo')->store('companies', 'public');
+                $validated['logo_url'] = url('storage/' . $path);
+            }
+            
+            // Remove CEO fields from company data
+            $companyData = collect($validated)->except(['ceo_name', 'ceo_email', 'ceo_password', 'logo'])->toArray();
+            if(isset($validated['logo_url'])) $companyData['logo_url'] = $validated['logo_url'];
+
+            $company = Company::create($companyData);
+
+            // 2. Create CEO User
+            $user = User::create([
+                'name' => $request->ceo_name,
+                'email' => $request->ceo_email,
+                'password' => Hash::make($request->ceo_password),
+                'company_id' => $company->id,
+                'status' => 'active',
+                'phone' => $request->ceo_phone ?? null, // Optional
+            ]);
+
+            // 3. Assign Role
+            $user->assignRole('ceo');
+
+            return response()->json($company, 201);
+        });
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id)
+    {
+        $company = Company::withTrashed()->findOrFail($id);
+        return response()->json($company);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        $company = Company::withTrashed()->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'domain' => 'nullable|string|unique:companies,domain,' . $id,
+            'subdomain' => 'nullable|string|unique:companies,subdomain,' . $id,
+            'primary_color' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048', // 2MB Max
+            'is_active' => 'boolean',
+        ]);
+
+        // Handle File Upload
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('companies', 'public');
+            $validated['logo_url'] = url('storage/' . $path);
+        }
+
+        $company->update($validated);
+        
+        // If restoring
+        if ($request->has('restore') && $request->restore) {
+            $company->restore();
+        }
+
+        return response()->json($company);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($id)
+    {
+        $company = Company::findOrFail($id);
+        $company->delete();
+
+        return response()->json(['message' => 'Company deactivated successfully']);
+    }
+}

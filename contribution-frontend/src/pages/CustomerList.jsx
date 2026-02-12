@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { customerAPI } from '../services/api';
+import { customerAPI, userAPI, branchAPI } from '../services/api';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Filter, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
@@ -16,23 +16,96 @@ function CustomerList() {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customerToTransfer, setCustomerToTransfer] = useState(null); // For transfer modal
 
+
+
+    const [workerFilter, setWorkerFilter] = useState('');
+    const [branchFilter, setBranchFilter] = useState('');
+    const [workers, setWorkers] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const { isCEO, isSecretary, user } = useAuth();
     const navigate = useNavigate();
-    const { isCEO } = useAuth();
+
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        from: 0,
+        to: 0
+    });
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        fetchCustomers(1);
+        if (isCEO || isSecretary) {
+            fetchFilterOptions();
+        }
+    }, [statusFilter, workerFilter, branchFilter, isCEO, isSecretary]);
 
-    const fetchCustomers = async () => {
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCustomers(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    const fetchFilterOptions = async () => {
+        try {
+            const [workerRes, branchRes] = await Promise.all([
+                userAPI.getAll(),
+                branchAPI.getAll()
+            ]);
+
+            const workerList = Array.isArray(workerRes.data) ? workerRes.data : (workerRes.data?.data || []);
+            // Filter workers if secretary (Use function result)
+            if (isSecretary && user) {
+                setWorkers(workerList.filter(w => w.branch_id === user.branch_id));
+            } else {
+                setWorkers(workerList);
+            }
+
+            const branchList = Array.isArray(branchRes.data) ? branchRes.data : (branchRes.data?.data || []);
+            setBranches(branchList);
+        } catch (error) {
+            console.error('Failed to load filter options', error);
+        }
+    };
+
+    const fetchCustomers = async (page = 1) => {
         try {
             setLoading(true);
-            const response = await customerAPI.getAll();
-            setCustomers(response.data.data || response.data);
+            const params = {
+                page,
+                search: searchTerm,
+                status: statusFilter,
+                worker_id: workerFilter,
+                branch_id: branchFilter
+            };
+
+            // Remove empty params
+            Object.keys(params).forEach(key => params[key] === '' && delete params[key]);
+
+            const response = await customerAPI.getAll(params);
+            const data = response.data;
+
+            setCustomers(data.data || []);
+            setPagination({
+                current_page: data.current_page,
+                last_page: data.last_page,
+                total: data.total,
+                from: data.from,
+                to: data.to
+            });
         } catch (error) {
             showError('Failed to fetch customers');
             console.error('Error fetching customers:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= pagination.last_page) {
+            fetchCustomers(newPage);
         }
     };
 
@@ -73,17 +146,7 @@ function CustomerList() {
         }
     };
 
-    const filteredCustomers = customers.filter(customer => {
-        if (!customer) return false;
-        const query = searchTerm.toLowerCase();
-        const name = customer.name || '';
-        const phone = customer.phone || '';
-        const location = customer.location || '';
 
-        return name.toLowerCase().includes(query) ||
-            phone.includes(searchTerm) ||
-            location.toLowerCase().includes(query);
-    });
 
     if (loading) {
         return <div className="loading">Loading customers...</div>;
@@ -96,17 +159,56 @@ function CustomerList() {
                 <p>View and manage all customers with box tracking</p>
             </div>
 
-            {/* Search Bar */}
-            <div className="controls-section">
-                <div className="search-form">
+            {/* Filter Controls */}
+            <div className="controls-section" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                <div className="search-form" style={{ flex: 1, minWidth: '200px' }}>
+                    <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                     <input
                         type="text"
                         placeholder="Search by name, phone, or location..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
+                        style={{ paddingLeft: '36px', width: '100%' }}
                     />
                 </div>
+
+                <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="filter-select"
+                >
+                    <option value="">All Statuses</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="defaulting">Defaulting</option>
+                </select>
+
+                {(isCEO || isSecretary) && (
+                    <select
+                        value={workerFilter}
+                        onChange={(e) => setWorkerFilter(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Workers</option>
+                        {workers.map(w => (
+                            <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                    </select>
+                )}
+
+                {isCEO && (
+                    <select
+                        value={branchFilter}
+                        onChange={(e) => setBranchFilter(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Branches</option>
+                        {branches.map(b => (
+                            <option key={b.id} value={b.id}>{b.name}</option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             {/* Customer Stats */}
@@ -149,12 +251,12 @@ function CustomerList() {
 
             {/* Customer List */}
             <div className="customers-grid">
-                {filteredCustomers.length === 0 ? (
+                {customers.length === 0 ? (
                     <div className="no-customers">
                         <p>No customers found matching your search.</p>
                     </div>
                 ) : (
-                    filteredCustomers.map((customer) => (
+                    customers.map((customer) => (
                         <div key={customer.id} className="customer-card">
                             <div className="customer-header">
                                 <h3>{customer.name}</h3>
@@ -211,7 +313,7 @@ function CustomerList() {
                                     🗑️ Delete
                                 </button>
                                 {/* Transfer Button - CEO Only */}
-                                {isCEO() && (
+                                {isCEO && (
                                     <button
                                         className="btn-icon"
                                         title="Transfer"
@@ -226,6 +328,49 @@ function CustomerList() {
                     ))
                 )}
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.total > 0 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                        Showing {pagination.from}–{pagination.to} of {pagination.total} customers
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            onClick={() => handlePageChange(1)}
+                            disabled={pagination.current_page === 1}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            First
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Next
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.last_page)}
+                            disabled={pagination.current_page === pagination.last_page}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Last
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Edit Modal */}
             {showEditModal && selectedCustomer && (

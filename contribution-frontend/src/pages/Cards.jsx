@@ -33,18 +33,43 @@ function Cards() {
     const [showImageModal, setShowImageModal] = useState(false);
     const [modalImage, setModalImage] = useState(null);
 
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        from: 0,
+        to: 0
+    });
+
     useEffect(() => {
-        fetchCards();
+        fetchCards(1);
     }, []);
 
-    const fetchCards = async () => {
+    const fetchCards = async (page = 1) => {
         try {
-            const response = await cardAPI.getAll();
-            setCards(response.data);
+            setLoading(true); // Ensure loading state is set
+            const response = await api.get(`/cards?page=${page}`); // Use direct API call to include params
+            const data = response.data;
+
+            setCards(data.data || []);
+            setPagination({
+                current_page: data.current_page,
+                last_page: data.last_page,
+                total: data.total,
+                from: data.from,
+                to: data.to
+            });
         } catch (error) {
             showError('Failed to fetch cards');
+            console.error(error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= pagination.last_page) {
+            fetchCards(newPage);
         }
     };
 
@@ -252,6 +277,49 @@ function Cards() {
                 )}
             </div>
 
+            {/* Pagination Controls */}
+            {pagination.total > 0 && (
+                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
+                    <div style={{ color: 'var(--text-secondary)' }}>
+                        Showing {pagination.from}–{pagination.to} of {pagination.total} cards
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            onClick={() => handlePageChange(1)}
+                            disabled={pagination.current_page === 1}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            First
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page - 1)}
+                            disabled={pagination.current_page === 1}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Previous
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.current_page + 1)}
+                            disabled={pagination.current_page === pagination.last_page}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Next
+                        </button>
+                        <button
+                            onClick={() => handlePageChange(pagination.last_page)}
+                            disabled={pagination.current_page === pagination.last_page}
+                            className="btn-secondary"
+                            style={{ padding: '6px 12px' }}
+                        >
+                            Last
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Add/Edit Card Modal */}
             {showModal && (
                 <div className="modal-overlay" onClick={() => { setShowModal(false); resetForm(); }}>
@@ -312,19 +380,7 @@ function Cards() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="form-group">
-                                    <label>Back Image (Boxes)</label>
-                                    <input
-                                        type="file"
-                                        accept="image/jpeg,image/jpg,image/png"
-                                        onChange={(e) => handleImageChange(e, 'back')}
-                                    />
-                                    {backImagePreview && (
-                                        <div className="image-preview">
-                                            <img src={backImagePreview} alt="Back Preview" />
-                                        </div>
-                                    )}
-                                </div>
+
                             </div>
 
                             {editMode && (

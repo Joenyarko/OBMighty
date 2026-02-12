@@ -1,16 +1,28 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { reportAPI } from '../services/api';
+import SimpleBarChart from '../components/Charts/SimpleBarChart';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
     const { user, isCEO, isSecretary, isWorker } = useAuth();
     const [dailyData, setDailyData] = useState(null);
+    const [weeklyData, setWeeklyData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDailyReport();
+        fetchWeeklyReport();
     }, []);
+
+    const fetchWeeklyReport = async () => {
+        try {
+            const response = await reportAPI.weekly();
+            setWeeklyData(response.data);
+        } catch (error) {
+            console.error('Failed to fetch weekly report:', error);
+        }
+    };
 
     const fetchDailyReport = async () => {
         try {
@@ -34,18 +46,45 @@ function Dashboard() {
                 <p className="role-badge">{user?.roles?.[0]?.toUpperCase()}</p>
             </div>
 
-            {isWorker() && (
-                <WorkerDashboard data={dailyData} />
-            )}
+            {/* Weekly Trend Chart for all users */}
+            {
+                weeklyData && weeklyData.daily_breakdown && (
+                    <div className="dashboard-chart-section" style={{ marginBottom: '24px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px' }}>
+                        <h3 style={{ marginBottom: '16px', fontSize: '16px', color: 'var(--text-secondary)' }}>Weekly Collections Trend</h3>
+                        <div style={{ height: '250px' }}>
+                            <SimpleBarChart
+                                data={weeklyData.daily_breakdown.map(d => ({
+                                    date: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
+                                    amount: d.total_collections
+                                }))}
+                                xKey="date"
+                                yKey="amount"
+                                color="var(--primary-color)"
+                                height={250}
+                            />
+                        </div>
+                    </div>
+                )
+            }
 
-            {isSecretary() && (
-                <SecretaryDashboard data={dailyData} />
-            )}
+            {
+                isWorker && (
+                    <WorkerDashboard data={dailyData} />
+                )
+            }
 
-            {isCEO() && (
-                <CEODashboard data={dailyData} />
-            )}
-        </div>
+            {
+                isSecretary && (
+                    <SecretaryDashboard data={dailyData} />
+                )
+            }
+
+            {
+                isCEO && (
+                    <CEODashboard data={dailyData} />
+                )
+            }
+        </div >
     );
 }
 

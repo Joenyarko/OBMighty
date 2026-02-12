@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use \App\Traits\BelongsToCompany;
+
 class StockMovement extends Model
 {
+    use BelongsToCompany;
+
     protected $fillable = [
+        'company_id',
         'stock_item_id',
         'movement_type',
         'quantity',

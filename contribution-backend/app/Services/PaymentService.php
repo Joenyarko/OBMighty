@@ -32,6 +32,7 @@ class PaymentService
             // Find Active Card
             $customerCard = \App\Models\CustomerCard::where('customer_id', $customer->id)
                 ->where('status', 'active')
+                ->lockForUpdate() // PREVENT RACE CONDITIONS
                 ->first();
 
             // Calculate boxes to mark
@@ -141,7 +142,10 @@ class PaymentService
                 [
                     'payment_amount' => $paymentAmount,
                     'boxes_filled' => $boxesToMark,
+                    'customer' => $customer->name, // Added readable name
                     'customer_id' => $customer->id,
+                    'card' => $customerCard ? ($customerCard->card ? $customerCard->card->name : 'Custom Card') : 'N/A', // Added card name
+                    'payment_method' => ucfirst(str_replace('_', ' ', $data['payment_method'] ?? 'cash')), // Formatted method
                     'customer_old_values' => $oldCustomerValues,
                     'customer_new_values' => $customer->only(['boxes_filled', 'amount_paid', 'status']),
                 ]

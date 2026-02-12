@@ -24,57 +24,21 @@ use App\Http\Controllers\Api\CustomerCardController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);
 
-// Debug Fix Route (Temporary) - Public
-Route::get('/debug/fix-data', function () {
-    $log = [];
-    
-    // 1. Fix Cards (Definitions)
-    $cards = \App\Models\Card::all();
-    foreach ($cards as $card) {
-        if ($card->amount <= 50 && $card->number_of_boxes > 50) {
-            $oldAmount = $card->amount;
-            $newAmount = $oldAmount * $card->number_of_boxes;
-            $card->amount = $newAmount;
-            $card->save();
-            $log[] = "Updated Card {$card->card_name}: Amount {$oldAmount} -> {$newAmount}";
-        }
-    }
-    
-    // 2. Fix Customers
-    $customers = \App\Models\Customer::with('card')->get();
-    foreach ($customers as $customer) {
-        if (!$customer->card) continue;
-        if ($customer->total_amount <= 50 && $customer->total_boxes > 50) {
-            $correctAmount = $customer->card->amount;
-            if ($correctAmount > 50) {
-                $customer->total_amount = $correctAmount;
-                $customer->balance = $correctAmount - $customer->amount_paid;
-                $customer->save();
-                $log[] = "Updated Customer {$customer->name}: Total {$customer->total_amount}";
-            }
-        }
-    }
-    
-    // 3. Fix CustomerCards
-    $customerCards = \App\Models\CustomerCard::all();
-    foreach ($customerCards as $cc) {
-        if ($cc->total_amount <= 50 && $cc->total_boxes > 50) {
-            $card = \App\Models\Card::find($cc->card_id);
-            if ($card && $card->amount > 50) {
-                 $cc->total_amount = $card->amount;
-                 $cc->amount_remaining = $card->amount - $cc->amount_paid;
-                 $cc->save();
-                 $log[] = "Updated CustomerCard #{$cc->id}: Total {$cc->total_amount}";
-            }
-        }
-    }
-    
-    return response()->json(['status' => 'success', 'log' => $log]);
-});
+
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
+    
+    // Super Admin Routes (Global Access)
+    Route::prefix('admin')
+        ->middleware(['role:super_admin', 'super_admin']) // Check role AND set context
+        ->group(function () {
+            Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
+            // Future dashboard stats for super admin could go here
+    });
+
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
@@ -94,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/expenses', [AccountingController::class, 'index']);
         Route::post('/expenses', [AccountingController::class, 'store']);
         Route::get('/accounting/summary', [AccountingController::class, 'summary']);
+        Route::get('/accounting/ledger', [AccountingController::class, 'ledger']);
         Route::get('/accounting/profit-loss', [AccountingController::class, 'profitLoss']);
     });
 
@@ -193,6 +158,9 @@ Route::middleware('auth:sanctum')->group(function () {
              ], 403);
          });
     
+    // Audit Logs
+    Route::get('/audit-logs', [App\Http\Controllers\Api\AuditLogController::class, 'index']);
+
     // Reports
     Route::prefix('reports')->group(function () {
         Route::get('/daily', [ReportController::class, 'daily']);

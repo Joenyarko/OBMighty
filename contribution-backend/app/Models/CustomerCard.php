@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomerCard extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'customer_id',
         'card_id',
         'assigned_date',

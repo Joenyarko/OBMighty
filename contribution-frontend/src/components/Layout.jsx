@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTenant } from '../context/TenantContext'; // Import hook
 import {
     LayoutDashboard, Users, UserPlus, ShoppingBag, Truck,
     ClipboardList, Banknote, CreditCard, Building, UserCircle,
     FileBarChart, Settings, LogOut, ChevronLeft, ChevronRight,
-    Menu, X, ChevronDown, ChevronUp, Package, Layers
+    Menu, X, ChevronDown, ChevronUp, Package, Layers, Shield
 } from 'lucide-react';
 import '../styles/Layout.css';
 
@@ -13,7 +14,8 @@ function Layout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
     const [collapsed, setCollapsed] = useState(false); // Desktop toggle
     const [openSubmenu, setOpenSubmenu] = useState('');
-    const { user, logout, isCEO, isSecretary } = useAuth();
+    const { user, logout, isCEO, isSecretary, hasRole } = useAuth();
+    const { tenant } = useTenant(); // Get tenant config
     const navigate = useNavigate();
     const location = useLocation();
     const mainContentRef = useRef(null);
@@ -73,11 +75,29 @@ function Layout({ children }) {
         { path: '/users', label: 'Users', icon: <Users size={20} />, permission: 'view_users', section: 'OVERVIEW' },
         { path: '/accounting', label: 'Accounting', icon: <FileBarChart size={20} />, permission: 'view_accounting', section: 'OVERVIEW' },
         { path: '/reports', label: 'Reports', icon: <FileBarChart size={20} />, permission: 'view_reports', section: 'OVERVIEW' },
+        { path: '/activity-log', label: 'Activity Log', icon: <FileBarChart size={20} />, permission: 'view_reports', section: 'OVERVIEW' },
         { path: '/payments', label: 'Payments', icon: <CreditCard size={20} />, permission: 'view_payments', section: 'OVERVIEW' },
         { path: '/bulk-entry', label: 'Bulk Entry', icon: <Layers size={20} />, permission: 'record_payments', section: 'OVERVIEW' }, // Visible to workers/secretary
 
         // Account Section
         { path: '/settings', label: 'Settings', icon: <Settings size={20} />, permission: 'view_settings', section: 'ACCOUNT' },
+        // Worker Performance Link
+        ...(user?.roles?.some(r => r.name === 'worker') ? [{
+            path: `/performance/${user.id}`,
+            label: 'My Performance',
+            icon: <FileBarChart size={20} />,
+            permission: null,
+            section: 'ACCOUNT'
+        }] : []),
+
+        // Super Admin Link
+        ...(hasRole('super_admin') ? [{
+            path: '/admin/dashboard',
+            label: 'Super Admin',
+            icon: <Shield size={20} />,
+            permission: null,
+            section: 'ACCOUNT'
+        }] : []),
     ];
 
     const hasPermission = (requiredPermission) => {
@@ -169,10 +189,14 @@ function Layout({ children }) {
             <aside className={`sidebar ${sidebarOpen ? 'mobile-open' : ''} ${collapsed ? 'collapsed' : ''}`}>
                 <div className="sidebar-header">
                     <div className="brand">
-                        <img src="/logo.jpeg" alt="Logo" className="logo" />
+                        <img
+                            src={tenant?.logo_url || "/logo.jpeg"}
+                            alt="Logo"
+                            className="logo"
+                        />
                         {!collapsed && (
                             <div className="brand-text">
-                                <h2>O.B.Mighty</h2>
+                                <h2>{tenant?.app_name || 'O.B.Mighty'}</h2>
                                 <span>Contribution Manager</span>
                             </div>
                         )}

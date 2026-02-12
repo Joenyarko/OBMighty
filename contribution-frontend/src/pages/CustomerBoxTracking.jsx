@@ -183,8 +183,8 @@ function CustomerBoxTracking() {
         <div className="customer-box-tracking">
             {/* Header */}
             <div className="page-header">
-                <button className="btn-back" onClick={() => navigate('/customers')}>
-                    ← Back to Customers
+                <button className="btn-back" onClick={() => navigate('/customers/list')}>
+                    ← Back to Management
                 </button>
                 <h1>📦 Box Payment Tracking</h1>
             </div>
@@ -309,15 +309,34 @@ function CustomerBoxTracking() {
             <div className="box-grid-section">
                 <h3>📋 Box Template ({customerCard.total_boxes} boxes @ GHS{customerCard.box_price} each)</h3>
                 <div className="box-grid">
-                    {boxStates.map(box => (
-                        <div
-                            key={box.id}
-                            className={`box ${box.is_checked ? 'checked' : 'unchecked'}`}
-                            title={box.is_checked ? `Checked on ${box.checked_date}` : 'Unchecked'}
-                        >
-                            {box.box_number}
-                        </div>
-                    ))}
+                    {boxStates.map(box => {
+                        // Calculate color based on payment sequence
+                        let colorClass = 'unchecked';
+                        if (box.is_checked) {
+                            if (box.payment_id) {
+                                // specific logic to alternate colors based on sorted unique payment IDs
+                                const paymentIds = [...new Set(boxStates
+                                    .filter(b => b.payment_id)
+                                    .map(b => b.payment_id)
+                                )].sort((a, b) => a - b);
+
+                                const index = paymentIds.indexOf(box.payment_id);
+                                colorClass = index % 2 === 0 ? 'red' : 'blue';
+                            } else {
+                                colorClass = 'checked'; // Fallback for legacy/manual checks without payment ID
+                            }
+                        }
+
+                        return (
+                            <div
+                                key={box.id}
+                                className={`box ${colorClass}`}
+                                title={box.is_checked ? `Checked on ${box.checked_date}` : 'Unchecked'}
+                            >
+                                {box.box_number}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 

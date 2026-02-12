@@ -48,6 +48,16 @@ class PaymentController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
 
+        // Apply worker filter
+        if ($request->has('worker_id')) {
+            $query->where('worker_id', $request->worker_id);
+        }
+
+        // Apply branch filter
+        if ($request->has('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
         $payments = $query->orderBy('payment_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);

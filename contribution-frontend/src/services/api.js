@@ -39,7 +39,7 @@ api.interceptors.response.use(
     }
 );
 // Derive root URL from API_URL (remove /api)
-const ROOT_URL = API_URL.replace('/api', '');
+const ROOT_URL = API_URL.replace(/\/api\/?$/, '');
 
 // Auth API
 export const authAPI = {
@@ -115,6 +115,7 @@ export const accountingAPI = {
     getExpenses: (params) => api.get('/expenses', { params }),
     createExpense: (data) => api.post('/expenses', data),
     getSummary: (params) => api.get('/accounting/summary', { params }),
+    getLedger: (params) => api.get('/accounting/ledger', { params }),
     getProfitLoss: (params) => api.get('/accounting/profit-loss', { params }),
 };
 
@@ -137,6 +138,10 @@ export const roleAPI = {
     getAll: () => api.get('/roles'),
     getOne: (id) => api.get(`/roles/${id}`),
     syncPermissions: (roleId, permissions) => api.post(`/roles/${roleId}/permissions`, { permissions }),
+};
+
+export const auditLogAPI = {
+    getAll: (params) => api.get('/audit-logs', { params }),
 };
 
 export default api;

@@ -108,4 +108,22 @@ class AccountingController extends Controller
         // Implementation for detailed categorization would go here
         return $this->summary(request());
     }
+    /**
+     * Get General Ledger (All transactions)
+     */
+    public function ledger(Request $request)
+    {
+        $query = LedgerEntry::with('creator')->orderBy('entry_date', 'desc')->orderBy('created_at', 'desc');
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('entry_date', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->has('account_type')) {
+            $query->where('account_type', $request->account_type); // income/expense
+        }
+
+        $entries = $query->paginate(30);
+        return response()->json($entries);
+    }
 }

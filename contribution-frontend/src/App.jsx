@@ -8,6 +8,7 @@ import Layout from './components/Layout';
 import Inventory from './pages/Inventory';
 import Branches from './pages/Branches';
 import Reports from './pages/Reports';
+import ActivityLog from './pages/ActivityLog';
 import Accounting from './pages/Accounting';
 import Users from './pages/Users'; // Renamed from Settings
 import Settings from './pages/Settings'; // New Settings page
@@ -19,6 +20,8 @@ import Surplus from './pages/Surplus';
 import Payroll from './pages/Payroll';
 import Performance from './pages/Performance';
 import CustomerBoxTracking from './pages/CustomerBoxTracking';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import CompanyManagement from './pages/admin/CompanyManagement';
 import './styles/App.css';
 import './styles/TextColorFix.css';
 
@@ -82,6 +85,7 @@ function App() {
                     <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
                     <Route path="/branches" element={<ProtectedRoute><Branches /></ProtectedRoute>} />
                     <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+                    <Route path="/activity-log" element={<ProtectedRoute><ActivityLog /></ProtectedRoute>} />
                     <Route path="/accounting" element={<ProtectedRoute><Accounting /></ProtectedRoute>} />
 
                     {/* Reusing Users component for different roles */}
@@ -97,6 +101,9 @@ function App() {
                     <Route path="/performance/:workerId" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
                     <Route path="/surplus" element={<ProtectedRoute><Surplus /></ProtectedRoute>} />
                     <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
+
+                    <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/companies" element={<ProtectedRoute><CompanyManagement /></ProtectedRoute>} />
 
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

@@ -72,6 +72,10 @@ class RolePermissionSeeder extends Seeder
             // Settings
             'view_settings',
             'manage_settings',
+
+            // Super Admin
+            'manage_companies',
+            'view_all_tenants',
         ];
 
         foreach ($permissions as $permission) {
@@ -79,17 +83,24 @@ class RolePermissionSeeder extends Seeder
         }
 
         // 2. Create Roles
+        $superAdmin = Role::firstOrCreate(['name' => 'super_admin']);
         $ceo = Role::firstOrCreate(['name' => 'ceo']);
         $secretary = Role::firstOrCreate(['name' => 'secretary']);
         $worker = Role::firstOrCreate(['name' => 'worker']);
 
         // 3. Assign Permissions to Roles
 
-        // CEO: All permissions
-        $ceo->givePermissionTo(Permission::all());
+        // Super Admin: All permissions + manage_companies
+        $superAdmin->givePermissionTo(Permission::all());
+
+        // CEO: All permissions except super admin specific (if any, but for now give all except manage_companies explicitly if needed, but easier to just give all)
+        // Ideally CEO of a tenant shouldn't satisfy manage_companies. 
+        // Let's be specific.
+        $tenantPermissions = Permission::whereNotIn('name', ['manage_companies', 'view_all_tenants'])->get();
+        $ceo->syncPermissions($tenantPermissions); // CEO has full control of *their* tenant
 
         // Secretary: Branch management, users (limited), all operational
-        $secretary->givePermissionTo([
+        $secretary->syncPermissions([
             'view_dashboard',
             'view_customers', 'create_customers', 'edit_customers',
             'record_payments', 'view_payments', 'reverse_payments',
@@ -103,7 +114,7 @@ class RolePermissionSeeder extends Seeder
         ]);
 
         // Worker: Basic operations
-        $worker->givePermissionTo([
+        $worker->syncPermissions([
             'view_dashboard',
             'view_customers', 'create_customers', // Can add customers
             'record_payments',

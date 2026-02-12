@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
         'name',
@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'phone',
         'branch_id',
+        'company_id',
         'status',
         'last_login_at',
     ];

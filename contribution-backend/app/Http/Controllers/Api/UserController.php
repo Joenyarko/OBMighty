@@ -46,20 +46,24 @@ class UserController extends Controller
 
         // Authorization logic could be moved to Policy
         // Only CEO can create Secretary
-        if ($validated['role'] === 'secretary' && !auth()->user()->hasRole('ceo')) {
-            abort(403, 'Only CEO can create secretaries.');
+        // Only CEO can create new users
+        if (!auth()->user()->hasRole('ceo')) {
+            abort(403, 'Unauthorized. Only CEO can create new users.');
         }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'],
             'branch_id' => $validated['branch_id'],
             'status' => $validated['status'] ?? 'active',
         ]);
 
         $user->assignRole($validated['role']);
+
+        // Create audit log
+        \App\Models\AuditLog::log('user_created', $user, null, $user->toArray());
 
         return response()->json([
             'message' => 'User created successfully',
@@ -82,6 +86,11 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        
+        // Only CEO can update users
+        if (!auth()->user()->hasRole('ceo')) {
+            abort(403, 'Unauthorized. Only CEO can update users.');
+        }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
@@ -94,10 +103,14 @@ class UserController extends Controller
         ]);
 
         if (isset($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
+            $validated['password'] = $validated['password'];
         }
 
+        $oldValues = $user->toArray();
         $user->update($validated);
+
+        // Create audit log
+        \App\Models\AuditLog::log('user_updated', $user, $oldValues, $user->getChanges());
 
         if (isset($validated['role']) && auth()->user()->hasRole('ceo')) {
             $user->syncRoles([$validated['role']]);
@@ -116,12 +129,21 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
         
+        // Only CEO can delete users
+        if (!auth()->user()->hasRole('ceo')) {
+            abort(403, 'Unauthorized. Only CEO can delete users.');
+        }
+        
         // Prevent deleting yourself
         if ($user->id === auth()->id()) {
             abort(403, 'Cannot delete yourself');
         }
 
+        $oldValues = $user->toArray();
         $user->delete();
+
+        // Create audit log
+        \App\Models\AuditLog::log('user_deleted', $user, $oldValues, null);
 
         return response()->json([
             'message' => 'User deleted successfully',

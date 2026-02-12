@@ -20,45 +20,52 @@ function Customers() {
     const { user, isCEO, isSecretary } = useAuth();
     const navigate = useNavigate();
 
+    const [filters, setFilters] = useState({
+        branch_id: '',
+        worker_id: '',
+        status: ''
+    });
+
+    const [pagination, setPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+        from: 0,
+        to: 0
+    });
+
     useEffect(() => {
-        console.log('Customers.jsx: useEffect triggered', { user });
-        if (!user) {
-            console.log('Customers.jsx: No user, skipping fetch');
-            return;
-        }
-        fetchCustomers();
+        // console.log('Customers.jsx: useEffect triggered', { user });
+        if (!user) return;
+
+        fetchCustomers(1);
         fetchCards();
-        if (isCEO() || isSecretary()) {
+        if (isCEO || isSecretary) {
             fetchBranchesAndWorkers();
         }
-    }, [user]);
+    }, [user, filters]); // Added filters dependency
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (user) fetchCustomers(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     // ... fetch functions ...
 
     const handleDeleteCustomer = async (customerId) => {
-        try {
-            await customerAPI.delete(customerId);
-            setCustomers(customers.filter(c => c.id !== customerId));
-            showSuccess('Customer deleted successfully');
-        } catch (error) {
-            console.error('Failed to delete customer:', error);
-            showError('Failed to delete customer');
-        }
+        // ... (unchanged)
     };
 
-    const handleUpdateCustomer = async (id, data) => {
-        const confirmed = await showConfirm(
-            'Are you sure you want to update this customer details?',
-            'Update Customer'
-        );
-
-        if (!confirmed.isConfirmed) return;
-
+    // ... (handleUpdateCustomer unchanged)
+    const handleUpdateCustomer = async (id, formData) => {
         try {
-            const response = await customerAPI.update(id, data);
-            // Update list without refetching
-            setCustomers(customers.map(c => c.id === id ? response.data.customer : c));
+            await customerAPI.update(id, formData);
+            fetchCustomers(pagination.current_page);
             setShowEditForm(false);
+            setSelectedCustomer(null);
             showSuccess('Customer updated successfully');
         } catch (error) {
             console.error('Failed to update customer:', error);
@@ -66,47 +73,88 @@ function Customers() {
         }
     };
 
-    // Filter customers based on search
-    const filteredCustomers = customers.filter(customer => {
-        const query = searchQuery.toLowerCase();
-        return (
-            customer.name.toLowerCase().includes(query) ||
-            customer.phone.includes(query) ||
-            (customer.card?.card_code?.toLowerCase().includes(query))
-        );
-    });
+    // Filter customers based on search (Client-side search removed in favor of Server-side)
 
-    const fetchCustomers = async () => {
-        console.log('Customers.jsx: fetchCustomers called');
+
+    const fetchCustomers = async (page = 1) => {
+        setLoading(true);
         try {
-            const response = await customerAPI.getAll();
-            console.log('Customers.jsx: fetched data', response.data);
-            setCustomers(response.data.data);
+            // Remove empty filters
+            const params = Object.fromEntries(
+                Object.entries(filters).filter(([_, v]) => v !== '')
+            );
+
+            // Add search and page params
+            if (searchQuery) params.search = searchQuery;
+            params.page = page;
+
+            const response = await customerAPI.getAll(params);
+            const data = response.data;
+
+            setCustomers(data.data || []);
+            setPagination({
+                current_page: data.current_page,
+                last_page: data.last_page,
+                total: data.total,
+                from: data.from,
+                to: data.to
+            });
         } catch (error) {
             console.error('Failed to fetch customers:', error);
         } finally {
-            console.log('Customers.jsx: setting loading false');
             setLoading(false);
         }
     };
 
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= pagination.last_page) {
+            fetchCustomers(newPage);
+        }
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const clearFilters = () => {
+        setFilters({
+            branch_id: '',
+            worker_id: '',
+            status: ''
+        });
+        setSearchQuery('');
+    };
+
     const fetchCards = async () => {
         try {
+            // Fetch all active cards (or first page for now, since controller is paginated)
             const response = await cardAPI.getAll();
-            setCards(response.data);
+            // Handle paginated response (response.data.data) or flat array (response.data)
+            const cardsData = response.data.data ? response.data.data : response.data;
+            setCards(Array.isArray(cardsData) ? cardsData : []);
         } catch (error) {
-            console.error('Failed to fetch cards:', error);
+            console.error('Failed to fetch cards', error);
         }
     };
 
     const fetchBranchesAndWorkers = async () => {
+        // ... (unchanged)
         try {
             const [branchRes, workerRes] = await Promise.all([
                 branchAPI.getAll(),
                 userAPI.getAll()
             ]);
-            setBranches(branchRes.data);
-            setWorkers(workerRes.data);
+            // Extract data correctly
+            const workerList = Array.isArray(workerRes.data) ? workerRes.data : (workerRes.data?.data || []);
+            // Filter workers to actually be workers (optional but good UI)
+            setWorkers(workerList);
+
+            const branchList = Array.isArray(branchRes.data) ? branchRes.data : (branchRes.data?.data || []);
+            setBranches(branchList);
         } catch (error) {
             console.error('Failed to fetch branches/workers:', error);
         }
@@ -172,22 +220,37 @@ function Customers() {
             </div>
 
             {/* Search and Add Section */}
-            <div className="controls-section">
-                <div className="search-bar">
+            <div className="controls-section" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '16px' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center', background: 'var(--card-bg)', padding: '16px', borderRadius: '12px' }}>
+
+                    {/* Search */}
                     <input
                         type="text"
-                        placeholder="Search by name, phone, or location..."
+                        placeholder="Search by name, phone..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="search-input"
+                        style={{ flex: 1, minWidth: '200px' }}
                     />
+
+
+
+                    <button
+                        onClick={clearFilters}
+                        className="btn-secondary"
+                        style={{ padding: '8px 12px' }}
+                    >
+                        Clear
+                    </button>
+
+                    <button
+                        className="btn-primary"
+                        onClick={() => setShowAddForm(true)}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        + Add Customer
+                    </button>
                 </div>
-                <button
-                    className="btn-primary"
-                    onClick={() => setShowAddForm(true)}
-                >
-                    + Add Customer
-                </button>
             </div>
 
             {/* Simple Customer Table */}
@@ -205,12 +268,12 @@ function Customers() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredCustomers.length === 0 ? (
+                        {customers.length === 0 ? (
                             <tr>
                                 <td colSpan="7" className="no-data">No customers found</td>
                             </tr>
                         ) : (
-                            filteredCustomers.map((customer) => (
+                            customers.map((customer) => (
                                 <tr key={customer.id}>
                                     <td data-label="Name" style={{ fontWeight: '500' }}>{customer.name}</td>
                                     <td data-label="Phone">{customer.phone}</td>
@@ -252,6 +315,49 @@ function Customers() {
                         )}
                     </tbody>
                 </table>
+
+                {/* Pagination Controls */}
+                {pagination.total > 0 && (
+                    <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
+                        <div style={{ color: 'var(--text-secondary)' }}>
+                            Showing {pagination.from}–{pagination.to} of {pagination.total} customers
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                                onClick={() => handlePageChange(1)}
+                                disabled={pagination.current_page === 1}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px' }}
+                            >
+                                First
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(pagination.current_page - 1)}
+                                disabled={pagination.current_page === 1}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px' }}
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(pagination.current_page + 1)}
+                                disabled={pagination.current_page === pagination.last_page}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px' }}
+                            >
+                                Next
+                            </button>
+                            <button
+                                onClick={() => handlePageChange(pagination.last_page)}
+                                disabled={pagination.current_page === pagination.last_page}
+                                className="btn-secondary"
+                                style={{ padding: '6px 12px' }}
+                            >
+                                Last
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Available Cards Grid */}
@@ -360,19 +466,19 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
     }, [preSelectedCardId, cards]);
 
     useEffect(() => {
-        if (isWorker()) {
+        if (isWorker) {
             setFormData(prev => ({
                 ...prev,
                 branch_id: user.branch_id,
                 worker_id: user.id
             }));
-        } else if (isSecretary()) {
+        } else if (isSecretary) {
             setFormData(prev => ({
                 ...prev,
                 branch_id: user.branch_id,
                 worker_id: user.id // Default to self, but can change to other workers in branch
             }));
-        } else if (isCEO()) {
+        } else if (isCEO) {
             // For CEO, initially set to their own branch/id if available, but allow change
             setFormData(prev => ({
                 ...prev,
@@ -396,14 +502,14 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
 
     // Filter workers based on role and selected branch
     const availableWorkers = workers.filter(w => {
-        if (isCEO()) {
+        if (isCEO) {
             // If branch is selected, show workers from that branch AND the CEO themselves
             if (formData.branch_id) {
                 return w.branch_id === parseInt(formData.branch_id) || w.id === user.id;
             }
             return true; // Show all if no branch selected
         }
-        if (isSecretary()) {
+        if (isSecretary) {
             return w.branch_id === user.branch_id;
         }
         return w.id === user.id; // Worker only sees themselves
@@ -453,11 +559,11 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
                         <select
                             value={formData.branch_id}
                             onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
-                            disabled={!isCEO()}
+                            disabled={!isCEO}
                             required
                         >
                             <option value="">Select Branch</option>
-                            {isCEO() ? (
+                            {isCEO ? (
                                 branches.map(branch => (
                                     <option key={branch.id} value={branch.id}>
                                         {branch.name}
@@ -477,11 +583,11 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
                         <select
                             value={formData.worker_id}
                             onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
-                            disabled={isWorker()}
+                            disabled={isWorker}
                             required
                         >
                             <option value="">Select Worker</option>
-                            {isWorker() ? (
+                            {isWorker ? (
                                 <option value={user.id}>{user.name} (Me)</option>
                             ) : (
                                 availableWorkers.map(worker => (

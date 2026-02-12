@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmployeeSalary extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'monthly_salary',
         'allowances',

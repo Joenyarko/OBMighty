@@ -18,6 +18,14 @@ class RoleController extends Controller
         // but here we just return the main ones.
         // We load permissions with them so the UI knows current state.
         $roles = Role::with('permissions')->get();
+        
+        // Hide super_admin role if current user is not a super_admin
+        if (!auth()->user() || !auth()->user()->hasRole('super_admin')) {
+            $roles = $roles->reject(function ($role) {
+                return $role->name === 'super_admin';
+            })->values();
+        }
+
         return response()->json($roles);
     }
 

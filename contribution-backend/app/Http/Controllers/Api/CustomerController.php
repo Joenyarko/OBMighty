@@ -26,8 +26,27 @@ class CustomerController extends Controller
         // CEO sees all
 
         // Apply status filter
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        if ($request->has('status') && $request->status !== '') {
+            $status = $request->status;
+            if ($status === 'defaulting') {
+                $query->defaulting();
+            } elseif ($status === 'completed') {
+                $query->completed();
+            } elseif ($status === 'in_progress') {
+                $query->inProgress();
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        // Apply worker filter
+        if ($request->has('worker_id')) {
+            $query->where('worker_id', $request->worker_id);
+        }
+
+        // Apply branch filter
+        if ($request->has('branch_id')) {
+            $query->where('branch_id', $request->branch_id);
         }
 
         // Apply search filter
@@ -40,7 +59,7 @@ class CustomerController extends Controller
             });
         }
 
-        $customers = $query->orderBy('created_at', 'desc')->paginate(15);
+        $customers = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return response()->json($customers);
     }
@@ -139,6 +158,9 @@ class CustomerController extends Controller
 
             $customer = Customer::create($validated);
 
+            // Create audit log
+            \App\Models\AuditLog::log('customer_created', $customer, null, $customer->toArray());
+
             return response()->json([
                 'message' => 'Customer created successfully',
                 'customer' => $customer->load(['branch', 'worker', 'card']),
@@ -195,7 +217,11 @@ class CustomerController extends Controller
             'location' => 'sometimes|string',
         ]);
 
+        $oldValues = $customer->toArray();
         $customer->update($validated);
+        
+        // Create audit log
+        \App\Models\AuditLog::log('customer_updated', $customer, $oldValues, $customer->getChanges());
 
         return response()->json([
             'message' => 'Customer updated successfully',
@@ -220,7 +246,11 @@ class CustomerController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        $oldValues = $customer->toArray();
         $customer->delete();
+
+        // Create audit log
+        \App\Models\AuditLog::log('customer_deleted', $customer, $oldValues, null);
 
         return response()->json([
             'message' => 'Customer deleted successfully',
@@ -249,6 +279,9 @@ class CustomerController extends Controller
         }
 
         $customer->save();
+
+        // Create audit log
+        \App\Models\AuditLog::log('customer_transferred', $customer, ['worker_id' => $oldWorkerId], ['worker_id' => $newWorker->id]);
 
         return response()->json([
             'message' => 'Customer transferred successfully',
