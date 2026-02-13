@@ -30,16 +30,36 @@ function Payments() {
 
     const fetchInitialData = async () => {
         try {
-            const [workersRes, branchesRes] = await Promise.all([
-                userAPI.getAll(),
-                branchAPI.getAll()
-            ]);
+            if (!user) return;
 
-            // Normalize data (handle if wrapped in .data or not)
-            const workerList = Array.isArray(workersRes.data) ? workersRes.data : (workersRes.data?.data || []);
-            setWorkers(workerList.filter(u => u.roles?.some(r => r.name === 'worker')));
+            const isCEO = user?.roles?.some(r => r.name === 'ceo');
+            const isSecretary = user?.roles?.some(r => r.name === 'secretary');
 
-            const branchList = Array.isArray(branchesRes.data) ? branchesRes.data : (branchesRes.data?.data || []);
+            let workerList = [];
+            let branchList = [];
+
+            // Only fetch workers if CEO or Secretary
+            if (isCEO || isSecretary) {
+                try {
+                    const workersRes = await userAPI.getAll();
+                    const rawWorkers = Array.isArray(workersRes.data) ? workersRes.data : (workersRes.data?.data || []);
+                    workerList = rawWorkers.filter(u => u.roles?.some(r => r.name === 'worker'));
+                } catch (err) {
+                    console.error('Failed to load workers', err);
+                }
+            }
+
+            // Only fetch branches if CEO
+            if (isCEO) {
+                try {
+                    const branchesRes = await branchAPI.getAll();
+                    branchList = Array.isArray(branchesRes.data) ? branchesRes.data : (branchesRes.data?.data || []);
+                } catch (err) {
+                    console.error('Failed to load branches', err);
+                }
+            }
+
+            setWorkers(workerList);
             setBranches(branchList);
         } catch (error) {
             console.error('Failed to load filter options', error);

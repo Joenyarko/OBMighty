@@ -80,7 +80,7 @@ function Layout({ children }) {
         { path: '/bulk-entry', label: 'Bulk Entry', icon: <Layers size={20} />, permission: 'record_payments', section: 'OVERVIEW' }, // Visible to workers/secretary
 
         // Account Section
-        { path: '/settings', label: 'Settings', icon: <Settings size={20} />, permission: 'view_settings', section: 'ACCOUNT' },
+        { path: '/settings', label: 'Settings', icon: <Settings size={20} />, permission: null, section: 'ACCOUNT' },
         // Worker Performance Link
         ...(user?.roles?.some(r => r.name === 'worker') ? [{
             path: `/performance/${user.id}`,
@@ -196,7 +196,7 @@ function Layout({ children }) {
                         />
                         {!collapsed && (
                             <div className="brand-text">
-                                <h2>{tenant?.app_name || 'O.B.Mighty'}</h2>
+                                <h2>{tenant?.app_name || 'Contribution Manager'}</h2>
                                 <span>Contribution Manager</span>
                             </div>
                         )}

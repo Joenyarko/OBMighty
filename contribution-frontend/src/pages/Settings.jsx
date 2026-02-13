@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { roleAPI } from '../services/api';
+import api from '../services/api'; // Add general api import for profile update
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
+import { useAuth } from '../context/AuthContext'; // Import useAuth
+import { User, Lock, Mail, Save, AlertCircle, Shield, Sliders } from 'lucide-react'; // Import icons
+import Swal from 'sweetalert2'; // Import Swal for profile alerts
 import '../styles/App.css';
 
-// Define the Permission Schema
+// ... (MODULES constant remains the same, no changes needed there)
 const MODULES = [
     {
         name: 'Dashboard',
@@ -68,7 +72,19 @@ const MODULES = [
 ];
 
 function Settings() {
-    const [activeTab, setActiveTab] = useState('user_permissions');
+    const { user, setUser, hasPermission, isCEO } = useAuth(); // Get auth context
+    const [activeTab, setActiveTab] = useState('profile'); // Default to profile
+
+    // Profile State
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [profileData, setProfileData] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        password_confirmation: ''
+    });
+
     const [colors, setColors] = useState({
         primary: '#D4AF37',
         sidebar: '#1A1A1A'
@@ -79,6 +95,18 @@ function Settings() {
     const [selectedRoleId, setSelectedRoleId] = useState('');
     const [currentPermissions, setCurrentPermissions] = useState([]);
     const [loadingRoles, setLoadingRoles] = useState(false);
+
+    // Initialize Profile Data
+    useEffect(() => {
+        if (user) {
+            setProfileData(prev => ({
+                ...prev,
+                name: user.name || '',
+                email: user.email || '',
+                phone: user.phone || ''
+            }));
+        }
+    }, [user]);
 
     useEffect(() => {
         if (activeTab === 'user_permissions') {
@@ -99,17 +127,76 @@ function Settings() {
         }
     };
 
+    // --- Profile Handlers ---
+    const handleProfileSubmit = async (e) => {
+        e.preventDefault();
+        setProfileLoading(true);
+
+        // Validation for password
+        if (profileData.password && profileData.password !== profileData.password_confirmation) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Password Mismatch',
+                text: 'Passwords do not match.',
+                confirmButtonColor: 'var(--primary-color)'
+            });
+            setProfileLoading(false);
+            return;
+        }
+
+        try {
+            const dataToUpdate = {
+                name: profileData.name,
+                email: profileData.email,
+                phone: profileData.phone
+            };
+
+            if (profileData.password) {
+                dataToUpdate.password = profileData.password;
+                dataToUpdate.password_confirmation = profileData.password_confirmation;
+            }
+
+            const response = await api.post('/profile', dataToUpdate);
+
+            // Update context
+            setUser(response.data.user);
+
+            // Update local storage
+            const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+            localStorage.setItem('user', JSON.stringify({ ...storedUser, ...response.data.user }));
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Profile updated successfully',
+                timer: 1500,
+                showConfirmButton: false,
+                confirmButtonColor: 'var(--primary-color)'
+            });
+
+            // Clear password fields
+            setProfileData(prev => ({ ...prev, password: '', password_confirmation: '' }));
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || 'Failed to update profile',
+                confirmButtonColor: 'var(--primary-color)'
+            });
+        } finally {
+            setProfileLoading(false);
+        }
+    };
+
+
+    // --- Permission Handlers ---
     const handleRoleChange = async (e) => {
         const roleId = e.target.value;
         setSelectedRoleId(roleId);
         if (roleId) {
             const role = roles.find(r => r.id === parseInt(roleId));
-            // Assuming role.permissions is loaded (eager loaded in controller)
-            // If strictly needing fresh, we can call getOne, but getAll likely returned it.
-            // Let's use what we have or fetch if missing.
             if (role) {
-                // Determine effectively checked permissions
-                // Map object details to array of names
                 const permNames = role.permissions.map(p => p.name);
                 setCurrentPermissions(permNames);
             }
@@ -135,13 +222,7 @@ function Settings() {
         const modulePerms = Object.values(module.permissions).filter(Boolean);
 
         if (isChecked) {
-            // Remove all permissions for this module
             setCurrentPermissions(prev => prev.filter(p => !modulePerms.includes(p)));
-        } else {
-            // Unchecking "No Access" doesn't strictly mean "Give All Access", 
-            // usually it just means "Allow editing again". 
-            // But logic-wise, if it was checked (No Access), permissions were empty.
-            // Unchecking it does nothing until user checks a specific permission.
         }
     };
 
@@ -150,13 +231,11 @@ function Settings() {
         const modulePerms = Object.values(module.permissions).filter(Boolean);
 
         if (isChecked) {
-            // Add all permissions for this module
             setCurrentPermissions(prev => {
                 const unique = new Set([...prev, ...modulePerms]);
                 return [...unique];
             });
         } else {
-            // Remove all permissions for this module
             setCurrentPermissions(prev => prev.filter(p => !modulePerms.includes(p)));
         }
     };
@@ -174,7 +253,7 @@ function Settings() {
         try {
             await roleAPI.syncPermissions(selectedRoleId, currentPermissions);
             showSuccess('Permissions updated successfully!');
-            fetchRoles(); // Refresh to ensure sync
+            fetchRoles();
         } catch (error) {
             showError('Failed to save permissions');
             console.error(error);
@@ -202,37 +281,211 @@ function Settings() {
         return modulePerms.every(p => currentPermissions.includes(p));
     };
 
+    const canManagePermissions = hasPermission('manage_settings') || isCEO;
+
     return (
         <div className="settings-page">
-            <h1 style={{ color: 'var(--primary-color)', marginBottom: '24px' }}>General Settings</h1>
+            <h1 style={{ color: 'var(--primary-color)', marginBottom: '24px' }}>Settings</h1>
 
             {/* Tabs */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '32px', overflowX: 'auto' }}>
-                {['General', 'User Accounts', 'Notifications', 'User Permissions', 'Theme'].map(tab => {
-                    const tabKey = tab.toLowerCase().replace(' ', '_');
-                    return (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tabKey)}
-                            style={{
-                                padding: '12px 24px',
-                                background: 'none',
-                                border: 'none',
-                                borderBottom: activeTab === tabKey ? '2px solid var(--primary-color)' : '2px solid transparent',
-                                color: activeTab === tabKey ? 'var(--primary-color)' : 'var(--text-secondary)',
-                                cursor: 'pointer',
-                                fontWeight: activeTab === tabKey ? '700' : '500',
-                                whiteSpace: 'nowrap'
-                            }}
-                        >
-                            {tab}
-                        </button>
-                    );
-                })}
+                <button
+                    onClick={() => setActiveTab('profile')}
+                    style={{
+                        padding: '12px 24px',
+                        background: 'none',
+                        border: 'none',
+                        borderBottom: activeTab === 'profile' ? '2px solid var(--primary-color)' : '2px solid transparent',
+                        color: activeTab === 'profile' ? 'var(--primary-color)' : 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        fontWeight: activeTab === 'profile' ? '700' : '500',
+                        whiteSpace: 'nowrap',
+                        display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                >
+                    <User size={18} />
+                    Profile & Security
+                </button>
+
+                {canManagePermissions && (
+                    <button
+                        onClick={() => setActiveTab('user_permissions')}
+                        style={{
+                            padding: '12px 24px',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'user_permissions' ? '2px solid var(--primary-color)' : '2px solid transparent',
+                            color: activeTab === 'user_permissions' ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontWeight: activeTab === 'user_permissions' ? '700' : '500',
+                            whiteSpace: 'nowrap',
+                            display: 'flex', alignItems: 'center', gap: '8px'
+                        }}
+                    >
+                        <Shield size={18} />
+                        User Permissions
+                    </button>
+                )}
+
+                {canManagePermissions && (
+                    <button
+                        onClick={() => setActiveTab('theme')}
+                        style={{
+                            padding: '12px 24px',
+                            background: 'none',
+                            border: 'none',
+                            borderBottom: activeTab === 'theme' ? '2px solid var(--primary-color)' : '2px solid transparent',
+                            color: activeTab === 'theme' ? 'var(--primary-color)' : 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            fontWeight: activeTab === 'theme' ? '700' : '500',
+                            whiteSpace: 'nowrap',
+                            display: 'flex', alignItems: 'center', gap: '8px'
+                        }}
+                    >
+                        <Sliders size={18} />
+                        Appearance
+                    </button>
+                )}
             </div>
 
+            {/* Profile Tab */}
+            {activeTab === 'profile' && (
+                <div style={{ maxWidth: '600px' }}>
+                    <div className="card" style={{ background: 'var(--card-bg)', padding: '32px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                        <form onSubmit={handleProfileSubmit}>
+                            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px', color: 'var(--text-primary)' }}>Profile Information</h3>
+
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>Full Name</label>
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
+                                    <User size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                    <input
+                                        type="text"
+                                        value={profileData.name}
+                                        onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 10px 10px 40px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>Email Address</label>
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
+                                    <Mail size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                    <input
+                                        type="email"
+                                        value={profileData.email}
+                                        onChange={e => setProfileData({ ...profileData, email: e.target.value })}
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 10px 10px 40px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="divider" style={{ width: '100%', height: '1px', backgroundColor: 'var(--border-color)', margin: '32px 0' }}></div>
+
+                            <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '24px', color: 'var(--text-primary)' }}>Security</h3>
+
+                            <div className="info-box" style={{
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                border: '1px solid rgba(59, 130, 246, 0.2)',
+                                padding: '16px',
+                                borderRadius: '8px',
+                                marginBottom: '24px',
+                                display: 'flex',
+                                gap: '12px'
+                            }}>
+                                <AlertCircle size={20} color="#3b82f6" style={{ flexShrink: 0 }} />
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                                    Leave password fields empty if you don't want to change your password.
+                                </p>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>New Password</label>
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
+                                    <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                    <input
+                                        type="password"
+                                        value={profileData.password}
+                                        onChange={e => setProfileData({ ...profileData, password: e.target.value })}
+                                        placeholder="Min. 8 characters"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 10px 10px 40px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '32px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>Confirm New Password</label>
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
+                                    <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                    <input
+                                        type="password"
+                                        value={profileData.password_confirmation}
+                                        onChange={e => setProfileData({ ...profileData, password_confirmation: e.target.value })}
+                                        placeholder="Confirm new password"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 10px 10px 40px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    disabled={profileLoading}
+                                    style={{
+                                        minWidth: '140px',
+                                        justifyContent: 'center',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                    }}
+                                >
+                                    {profileLoading ? 'Saving...' : (
+                                        <>
+                                            <Save size={18} />
+                                            Save Changes
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {/* Theme Customizer */}
-            {activeTab === 'theme' && (
+            {activeTab === 'theme' && canManagePermissions && (
                 <div className="card" style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '12px', maxWidth: '600px', border: '1px solid var(--border-color)' }}>
                     <h3 style={{ marginBottom: '16px', color: 'var(--primary-color)' }}>Appearance</h3>
                     <div className="form-group" style={{ marginBottom: '16px' }}>
@@ -251,7 +504,7 @@ function Settings() {
             )}
 
             {/* Permission Matrix */}
-            {activeTab === 'user_permissions' && (
+            {activeTab === 'user_permissions' && canManagePermissions && (
                 <div className="card" style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-color)', width: '100%', overflowX: 'auto' }}>
 
                     <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
@@ -311,8 +564,7 @@ function Settings() {
                                                             checked={currentPermissions.includes(module.permissions[action])}
                                                             onChange={() => togglePermission(module.permissions[action])}
                                                             style={{ transform: 'scale(1.2)', accentColor: 'var(--primary-color)', cursor: 'pointer' }}
-                                                            disabled={noAccess && !currentPermissions.includes(module.permissions[action])} // Optional: logic to disable if noAccess checked? 
-                                                        // Actually, if No Access is checked, everything is unchecked. User must uncheck "No Access" (or check something else) to re-enable.
+                                                            disabled={noAccess && !currentPermissions.includes(module.permissions[action])}
                                                         />
                                                     ) : (
                                                         <span style={{ color: 'var(--text-secondary)', opacity: 0.3 }}>-</span>
@@ -355,14 +607,6 @@ function Settings() {
                             <button className="btn-primary" onClick={savePermissions}>Save Permissions</button>
                         </div>
                     )}
-                </div>
-            )}
-
-            {/* General Placeholder */}
-            {activeTab === 'general' && (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                    <h3>General Application Settings</h3>
-                    <p>Configure company details, logo, and defaults here.</p>
                 </div>
             )}
         </div>

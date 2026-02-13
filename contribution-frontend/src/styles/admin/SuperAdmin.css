@@ -1,0 +1,449 @@
+:root {
+    --nex-bg-dark: #0f1115;
+    --nex-bg-card: #161920;
+    --nex-bg-hover: #1c1f26;
+    --nex-border: #242830;
+    --nex-text-primary: #ffffff;
+    --nex-text-secondary: #9ca3af;
+    --nex-text-muted: #6b7280;
+    --nex-accent: #6d28d9;
+    /* Deep Purple like image */
+    --nex-accent-hover: #5b21b6;
+    --nex-success: #10b981;
+    --nex-success-bg: rgba(16, 185, 129, 0.1);
+    --nex-danger: #ef4444;
+    --nex-danger-bg: rgba(239, 68, 68, 0.1);
+    --nex-sidebar-width: 260px;
+}
+
+.nex-app {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--nex-bg-dark);
+    color: var(--nex-text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Sidebar */
+.nex-sidebar {
+    width: var(--nex-sidebar-width);
+    background-color: var(--nex-bg-card);
+    border-right: 1px solid var(--nex-border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    z-index: 50;
+}
+
+.nex-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 40px;
+}
+
+.nex-brand-logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.nex-menu-group {
+    margin-bottom: 32px;
+}
+
+.nex-menu-title {
+    color: var(--nex-text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    padding-left: 12px;
+}
+
+.nex-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: var(--nex-text-secondary);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.nex-nav-item:hover {
+    color: var(--nex-text-primary);
+    background-color: var(--nex-bg-hover);
+}
+
+.nex-nav-item.active {
+    background-color: var(--nex-bg-hover);
+    color: var(--nex-text-primary);
+    position: relative;
+}
+
+.nex-user-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-top: 1px solid var(--nex-border);
+    cursor: pointer;
+}
+
+/* Main Content */
+.nex-main {
+    flex: 1;
+    margin-left: var(--nex-sidebar-width);
+    padding: 32px;
+    overflow-y: auto;
+}
+
+/* Header */
+.nex-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.nex-page-title h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.nex-page-title span {
+    color: var(--nex-text-secondary);
+    margin-left: 8px;
+    font-weight: normal;
+}
+
+/* Controls Bar */
+.nex-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.nex-search {
+    position: relative;
+    max-width: 320px;
+    flex: 1;
+}
+
+.nex-search input {
+    width: 100%;
+    background-color: var(--nex-bg-card);
+    border: 1px solid var(--nex-border);
+    border-radius: 8px;
+    padding: 10px 16px 10px 40px;
+    color: var(--nex-text-primary);
+    outline: none;
+}
+
+.nex-search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--nex-text-muted);
+}
+
+.nex-filter-group {
+    display: flex;
+    gap: 12px;
+}
+
+.nex-select {
+    background-color: var(--nex-bg-card);
+    border: 1px solid var(--nex-border);
+    color: var(--nex-text-secondary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+}
+
+/* Table */
+.nex-table-container {
+    background-color: var(--nex-bg-card);
+    /* Should match card bg? Or transparent? Image shows distinct rows */
+    /* Actually in Nexify image, headers are dark, rows have distinct border or bg */
+    border-radius: 12px;
+    border: 1px solid var(--nex-border);
+    overflow: hidden;
+}
+
+.nex-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.nex-table th {
+    text-align: left;
+    padding: 16px 24px;
+    color: var(--nex-text-secondary);
+    font-weight: 500;
+    border-bottom: 1px solid var(--nex-border);
+}
+
+.nex-table td {
+    padding: 16px 24px;
+    color: var(--nex-text-primary);
+    border-bottom: 1px solid var(--nex-border);
+    vertical-align: middle;
+}
+
+.nex-table tr:last-child td {
+    border-bottom: none;
+}
+
+.nex-org-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nex-org-logo {
+    width: 24px;
+    height: 24px;
+    background-color: #333;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* Badges */
+.nex-badge {
+    padding: 4px 10px;
+    border-radius: 99px;
+    /* Pill shape */
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid transparent;
+}
+
+.nex-badge-active {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.nex-badge-inactive {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.nex-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+}
+
+/* Buttons */
+/* Buttons */
+.nex-btn-primary {
+    background-color: var(--nex-accent) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--nex-accent);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nex-btn-primary svg {
+    color: #ffffff !important;
+}
+
+.nex-btn-primary:hover {
+    background-color: var(--nex-accent-hover) !important;
+    border-color: var(--nex-accent-hover);
+    opacity: 1;
+}
+
+.nex-btn-purple {
+    background-color: var(--nex-accent);
+    color: white !important;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.nex-btn-icon {
+    background: transparent;
+    border: 1px solid var(--nex-border);
+    color: var(--nex-text-secondary);
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nex-btn-icon:hover {
+    background-color: var(--nex-bg-hover);
+    color: var(--nex-text-primary);
+}
+
+/* Pagination */
+.nex-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 0;
+    color: var(--nex-text-secondary);
+    font-size: 14px;
+}
+
+.nex-page-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.nex-page-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--nex-border);
+    background-color: var(--nex-bg-card);
+    color: var(--nex-text-secondary);
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.nex-page-btn.active {
+    background-color: var(--nex-text-primary);
+    color: var(--nex-bg-dark) !important;
+    border-color: var(--nex-text-primary);
+    font-weight: 600;
+}
+
+/* ... existing styles ... */
+
+/* Mobile Sidebar Toggle Button - Default Hidden */
+.nex-mobile-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--nex-text-primary);
+    padding: 0;
+    cursor: pointer;
+}
+
+/* Sidebar Close Button - Default Hidden */
+.nex-sidebar-close {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--nex-text-muted);
+    cursor: pointer;
+}
+
+/* Sidebar Overlay */
+.nex-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+    backdrop-filter: blur(2px);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .nex-sidebar {
+        left: -260px;
+        /* Hide by default */
+        transition: left 0.3s ease-in-out;
+        box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .nex-sidebar.open {
+        left: 0;
+        /* Show when open */
+    }
+
+    .nex-main {
+        margin-left: 0;
+        /* Remove margin */
+        padding: 20px;
+    }
+
+    .nex-mobile-toggle {
+        display: block;
+        /* Show menu button */
+    }
+
+    .nex-sidebar-close {
+        display: block;
+        /* Show close button */
+    }
+
+    .nex-page-title h1 {
+        font-size: 20px;
+    }
+
+    .nex-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nex-search {
+        max-width: 100%;
+    }
+
+    .nex-filter-group {
+        flex-wrap: wrap;
+    }
+
+    .nex-select,
+    .nex-btn-purple,
+    .nex-btn-primary {
+        flex: 1;
+    }
+
+    /* Hide some table columns on mobile for better fit if needed, or allow scroll */
+    .nex-table-container {
+        overflow-x: auto;
+    }
+}

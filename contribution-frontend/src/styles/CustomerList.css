@@ -93,6 +93,38 @@
     border-color: var(--primary-color);
 }
 
+/* Served Toggle */
+.served-toggle {
+    display: flex;
+    background: var(--card-bg);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+}
+
+.toggle-btn {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.toggle-btn.active {
+    background: var(--primary-color);
+    color: var(--bg-primary);
+    font-weight: 600;
+}
+
+.toggle-btn:hover:not(.active) {
+    background: rgba(212, 175, 55, 0.1);
+    color: var(--primary-color);
+}
+
 /* Stats Grid */
 .stats-grid {
     display: grid;
@@ -200,6 +232,11 @@
 .status-badge.defaulting {
     background: rgba(244, 67, 54, 0.2);
     color: #f44336;
+}
+
+.status-badge.served {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
 }
 
 .customer-details {

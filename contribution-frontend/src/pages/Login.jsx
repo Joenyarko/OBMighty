@@ -36,7 +36,7 @@ function Login() {
                 <div className="login-header">
                     <img
                         src={tenant?.logo_url || "/logo.jpeg"}
-                        alt={`${tenant?.app_name || 'O.B. Mighty'} Logo`}
+                        alt={`${tenant?.app_name || 'Contribution Manager'} Logo`}
                         className="login-logo"
                     />
                     <h1>{tenant?.app_name || 'Daily Contribution Manager'}</h1>

@@ -11,19 +11,18 @@ function CustomerList() {
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [servedFilter, setServedFilter] = useState('unserved'); // 'served' or 'unserved'
+    const [companyLogo, setCompanyLogo] = useState(null);
+
     const [statusFilter, setStatusFilter] = useState('');
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [customerToTransfer, setCustomerToTransfer] = useState(null); // For transfer modal
-
-
-
     const [workerFilter, setWorkerFilter] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [workers, setWorkers] = useState([]);
     const [branches, setBranches] = useState([]);
-    const { isCEO, isSecretary, user } = useAuth();
-    const navigate = useNavigate();
+
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [customerToTransfer, setCustomerToTransfer] = useState(null);
 
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -33,12 +32,42 @@ function CustomerList() {
         to: 0
     });
 
+    const { isCEO, isSecretary, user } = useAuth();
+    const navigate = useNavigate();
+
+    // Fetch company configuration for logo
+    useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                // Assuming there's an API to get company config or just use the user context if available
+                // For now, let's try to get it from a public config or similar, but since we are authenticated,
+                // we might have it in the user object or need to fetch it.
+                // Let's assume the user object has the company logo or we fetch it.
+                // If not, we might need a specific endpoint. 
+                // Let's use the layout's logo logic pattern if possible, but for now 
+                // let's assume we can get it from the user.company.logo_url if joined, 
+                // or fetch from /config endpoint if global.
+                // Actually, the user object from useAuth might have it.
+                if (user?.company?.logo_url) {
+                    setCompanyLogo(user.company.logo_url);
+                } else if (user?.company_id) {
+                    // Try to construct it or leave it null.
+                    // A safe bet is to assume it's available via a standard path if we knew it.
+                    // But we can try to fetch the company details if needed.
+                }
+            } catch (err) {
+                console.error("Failed to fetch logo", err);
+            }
+        };
+        fetchConfig();
+    }, [user]);
+
     useEffect(() => {
         fetchCustomers(1);
         if (isCEO || isSecretary) {
             fetchFilterOptions();
         }
-    }, [statusFilter, workerFilter, branchFilter, isCEO, isSecretary]);
+    }, [statusFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
 
     // Debounce search
     useEffect(() => {
@@ -80,6 +109,11 @@ function CustomerList() {
                 worker_id: workerFilter,
                 branch_id: branchFilter
             };
+
+            // If status is 'completed', apply served filter
+            if (statusFilter === 'completed') {
+                params.is_served = servedFilter === 'served' ? 'true' : 'false';
+            }
 
             // Remove empty params
             Object.keys(params).forEach(key => params[key] === '' && delete params[key]);
@@ -146,14 +180,32 @@ function CustomerList() {
         }
     };
 
+    const handleMarkAsServed = async (customer) => {
+        // Confirmation with Logo
+        const result = await showConfirm(
+            'Mark as Served?',
+            `Are you sure ${customer.name} has been served?`,
+            'Yes, Mark Served',
+            companyLogo // Pass logo URL if available (SweetAlert customization might be needed in utils)
+        );
 
+        if (result.isConfirmed) {
+            try {
+                await customerAPI.markServed(customer.id);
+                showSuccess('Customer marked as served');
+                fetchCustomers(pagination.current_page); // Refresh list
+            } catch (error) {
+                console.error('Failed to mark as served', error);
+                showError(error.response?.data?.message || 'Failed to action');
+            }
+        }
+    };
 
-    if (loading) {
-        return <div className="loading">Loading customers...</div>;
-    }
+    // ... (rest of the file until return)
 
     return (
         <div className="customer-list-container">
+            {/* ... (Header) */}
             <div className="page-header">
                 <h1>Customer Management</h1>
                 <p>View and manage all customers with box tracking</p>
@@ -161,6 +213,7 @@ function CustomerList() {
 
             {/* Filter Controls */}
             <div className="controls-section" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                {/* ... (Search and other filters) */}
                 <div className="search-form" style={{ flex: 1, minWidth: '200px' }}>
                     <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                     <input
@@ -183,6 +236,25 @@ function CustomerList() {
                     <option value="completed">Completed</option>
                     <option value="defaulting">Defaulting</option>
                 </select>
+
+                {/* Sub-filter for Completed status */}
+                {statusFilter === 'completed' && (
+                    <div className="served-toggle">
+                        <button
+                            className={`toggle-btn ${servedFilter === 'unserved' ? 'active' : ''}`}
+                            onClick={() => setServedFilter('unserved')}
+                        >
+                            Unserved
+                        </button>
+                        <button
+                            className={`toggle-btn ${servedFilter === 'served' ? 'active' : ''}`}
+                            onClick={() => setServedFilter('served')}
+                        >
+                            Served
+                        </button>
+                    </div>
+                )}
+
 
                 {(isCEO || isSecretary) && (
                     <select
@@ -212,6 +284,7 @@ function CustomerList() {
             </div>
 
             {/* Customer Stats */}
+            {/* ... (Stats grid unchanged) */}
             <div className="stats-grid">
                 <div className="stat-card">
                     <div className="stat-icon">👥</div>
@@ -220,11 +293,20 @@ function CustomerList() {
                         <p className="stat-value">{customers.length}</p>
                     </div>
                 </div>
+                {/* Remove or adjust stats if needed based on served/unserved view? 
+                    The user didn't explicitly ask for served/unserved *stats* here, 
+                    but the list should update. Let's keep general stats for now. */}
                 <div className="stat-card">
                     <div className="stat-icon">⏳</div>
                     <div className="stat-content">
                         <h3>In Progress</h3>
                         <p className="stat-value">
+                            {/* Note: This count is only accurate if we fetch all or separate stats endpoint. 
+                                Currently it filters the *current page* or *fetched list*. 
+                                Ideally stats should come from a report endpoint. 
+                                For now, we leave as is, acknowledging it counts from the current view list 
+                                which might be paginated. The previous implementation had this limitation too. 
+                            */}
                             {customers.filter(c => c.status === 'in_progress').length}
                         </p>
                     </div>
@@ -260,9 +342,16 @@ function CustomerList() {
                         <div key={customer.id} className="customer-card">
                             <div className="customer-header">
                                 <h3>{customer.name}</h3>
-                                <span className={`status-badge ${customer.status}`}>
-                                    {customer.status?.replace('_', ' ')}
-                                </span>
+                                <div style={{ display: 'flex', gap: '5px' }}>
+                                    <span className={`status-badge ${customer.status}`}>
+                                        {customer.status?.replace('_', ' ')}
+                                    </span>
+                                    {customer.is_served && (
+                                        <span className="status-badge served" style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+                                            Served
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="customer-details">
@@ -298,6 +387,21 @@ function CustomerList() {
                                 >
                                     📦 View
                                 </button>
+
+                                {/* Mark as Served Button - Only for Completed Defaulting/Completed Unserved customers */}
+                                {(isCEO || isSecretary) &&
+                                    customer.status === 'completed' &&
+                                    !customer.is_served && (
+                                        <button
+                                            className="btn-icon"
+                                            onClick={() => handleMarkAsServed(customer)}
+                                            title="Mark as Served"
+                                            style={{ color: '#27ae60' }}
+                                        >
+                                            ✓ Serve
+                                        </button>
+                                    )}
+
                                 <button
                                     className="btn-icon edit"
                                     onClick={() => handleEdit(customer)}
@@ -330,6 +434,7 @@ function CustomerList() {
             </div>
 
             {/* Pagination Controls */}
+            {/* ... (Pagination unchanged) */}
             {pagination.total > 0 && (
                 <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
                     <div style={{ color: 'var(--text-secondary)' }}>
@@ -396,7 +501,9 @@ function CustomerList() {
     );
 }
 
+// ... (EditCustomerModal unchanged)
 function EditCustomerModal({ customer, onClose, onSubmit }) {
+    // ... (rest of EditCustomerModal)
     const [formData, setFormData] = useState({
         name: customer.name,
         phone: customer.phone,

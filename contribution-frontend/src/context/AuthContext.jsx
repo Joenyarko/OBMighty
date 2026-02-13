@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }) => {
         isCEO: hasRole('ceo'),
         isSecretary: hasRole('secretary'),
         isWorker: hasRole('worker'),
+        setUser, // Expose setUser for profile updates
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

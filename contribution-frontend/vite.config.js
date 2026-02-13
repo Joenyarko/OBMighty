@@ -49,7 +49,7 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0', // Listen on all addresses (needed for custom domains)
-    allowedHosts: ['neziz.com', 'nezizbiz.com', 'test.obmighty.com', 'localhost', '127.0.0.1'], // Allow these hosts
+    allowedHosts: true, // Allow all hosts for multi-tenant dev
     port: 5173,
     proxy: {
       '/api': {

@@ -1,6 +1,6 @@
 {
-    "name": "O.B.Mighty Contribution Manager",
-    "short_name": "ContribManager",
+    "name": "Contribution Manager",
+    "short_name": "ContribMgr",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",

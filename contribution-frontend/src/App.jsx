@@ -22,6 +22,8 @@ import Performance from './pages/Performance';
 import CustomerBoxTracking from './pages/CustomerBoxTracking';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CompanyManagement from './pages/admin/CompanyManagement';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminSettings from './pages/admin/AdminSettings';
 import './styles/App.css';
 import './styles/TextColorFix.css';
 
@@ -37,6 +39,21 @@ function ProtectedRoute({ children }) {
     }
 
     return <Layout>{children}</Layout>;
+}
+
+function AdminRoute({ children }) {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div className="loading-screen">Loading...</div>;
+    }
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    // AdminRoute does NOT wrap in <Layout> because Admin pages use <AdminLayout>
+    return children;
 }
 
 function App() {
@@ -102,8 +119,10 @@ function App() {
                     <Route path="/surplus" element={<ProtectedRoute><Surplus /></ProtectedRoute>} />
                     <Route path="/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
 
-                    <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                    <Route path="/admin/companies" element={<ProtectedRoute><CompanyManagement /></ProtectedRoute>} />
+                    <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                    <Route path="/admin/companies" element={<AdminRoute><CompanyManagement /></AdminRoute>} />
+                    <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+                    <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
 
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

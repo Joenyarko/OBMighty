@@ -56,6 +56,7 @@ export const customerAPI = {
     update: (id, data) => api.put(`/customers/${id}`, data),
     delete: (id) => api.delete(`/customers/${id}`),
     transfer: (id, newWorkerId) => api.post(`/customers/${id}/transfer`, { new_worker_id: newWorkerId }),
+    markServed: (id) => api.post(`/customers/${id}/serve`),
 };
 
 // Payment API
