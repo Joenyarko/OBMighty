@@ -103,11 +103,8 @@ function Branches() {
 
             {/* Branch Modal */}
             {showModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                }}>
-                    <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '500px' }}>
+                <div className="custom-modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
                         <h2 style={{ marginBottom: '16px', color: 'var(--primary-color)' }}>Create New Branch</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">

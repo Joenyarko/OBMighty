@@ -26,6 +26,9 @@ function ActivityLog() {
     }, [filters]);
 
     const fetchUsers = async () => {
+        // Only fetch users if CEO or Secretary
+        if (!isCEO && !isSecretary) return;
+
         try {
             const response = await userAPI.getAll();
             setUsers(response.data || response.data.data || []);
@@ -63,27 +66,71 @@ function ActivityLog() {
 
     const formatValues = (values) => {
         if (!values) return '-';
-        try {
-            // Check if it's our custom payment log format
-            if (values.customer || values.payment_amount) {
-                let details = [];
-                if (values.payment_amount) details.push(`Payment: GHS${values.payment_amount}`);
-                if (values.card && values.card !== 'N/A') details.push(`Card: ${values.card}`);
-                if (values.boxes_filled) details.push(`Boxes Filled: ${values.boxes_filled}`);
-                if (values.customer) details.push(`Customer: ${values.customer}`);
-                if (values.payment_method) details.push(`Method: ${values.payment_method}`);
 
-                if (details.length > 0) return details.join(', ');
+        let data = values;
+
+        // internal recursive formatter
+        const formatObject = (obj) => {
+            if (!obj) return '';
+
+            return Object.entries(obj)
+                .filter(([key]) => !['password', 'password_confirmation', 'remember_token'].includes(key))
+                .map(([key, value]) => {
+                    // Format Key: snake_case to Title Case
+                    const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                    // Format Value
+                    let displayValue = value;
+                    if (typeof value === 'boolean') displayValue = value ? 'Yes' : 'No';
+                    if (value === null) displayValue = 'None';
+
+                    // Handle Dates (ISO strings)
+                    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+                        displayValue = new Date(value).toLocaleString();
+                    }
+
+                    // Handle Roles Array
+                    if (key === 'roles' && Array.isArray(value)) {
+                        displayValue = value.map(r => r.name || r).join(', ');
+                    } else if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value).substring(0, 30) + '...';
+                    }
+
+                    return `${label}: ${displayValue}`;
+                })
+                .join(', ');
+        };
+
+        try {
+            // Check if it's already an object
+            if (typeof values === 'object') {
+                // Handle specific custom log formats first
+                if (values.customer || values.payment_amount) {
+                    let details = [];
+                    if (values.payment_amount) details.push(`Payment: GHS${values.payment_amount}`);
+                    if (values.card && values.card !== 'N/A') details.push(`Card: ${values.card}`);
+                    if (values.boxes_filled) details.push(`Boxes Filled: ${values.boxes_filled}`);
+                    if (values.customer) details.push(`Customer: ${values.customer}`);
+                    if (values.payment_method) details.push(`Method: ${values.payment_method}`);
+                    if (details.length > 0) return details.join(', ');
+                }
+                return formatObject(values);
             }
 
-            // Fallback for other logs or raw JSON
-            const str = JSON.stringify(values);
-            // Clean up JSON syntax for readability if it's simple
-            if (str.length < 100) return str.replace(/[{}"]/g, '').replace(/,/g, ', ').replace(/:/g, ': ');
+            // If it's a string, try to parse it
+            if (typeof values === 'string') {
+                // If it looks like JSON
+                if (values.trim().startsWith('{') || values.trim().startsWith('[')) {
+                    const parsed = JSON.parse(values);
+                    return formatObject(parsed);
+                }
+                return values;
+            }
 
-            return str.substring(0, 50) + '...';
+            return String(values);
         } catch (e) {
-            return '-';
+            console.error('Error formatting logs:', e);
+            return String(values);
         }
     };
 

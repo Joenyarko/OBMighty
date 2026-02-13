@@ -51,7 +51,8 @@ class RolePermissionSeeder extends Seeder
             
             // Users
             'view_users',
-            'manage_users', // CEO/Secretary
+            'create_workers',   // Granular permission for creating workers
+            'manage_users',     // CEO/Secretary (broader)
             'manage_permissions', // CEO only
             
             // Accounting
@@ -107,7 +108,7 @@ class RolePermissionSeeder extends Seeder
             'view_sales',
             'view_cards', 'track_boxes',
             'view_inventory', 'manage_inventory', 'adjust_stock',
-            'view_users', 'manage_users', // Can create workers
+            'view_users', 'create_workers', 'manage_users', // Can create workers
             'view_surplus', 'manage_surplus',
             'view_reports',
             'view_branches', // View own branch details

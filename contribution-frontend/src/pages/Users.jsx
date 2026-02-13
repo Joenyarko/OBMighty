@@ -8,7 +8,7 @@ import '../styles/App.css';
 import { useNavigate } from 'react-router-dom';
 
 function Users({ roleFilter, title }) {
-    const { isCEO, isSecretary } = useAuth();
+    const { user, isCEO, isSecretary } = useAuth(); // Added user to destructuring
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
@@ -34,6 +34,17 @@ function Users({ roleFilter, title }) {
     useEffect(() => {
         fetchData();
     }, [roleFilter]);
+
+    useEffect(() => {
+        // Auto-assign branch for Secretary when modal opens or user loads
+        if (isSecretary && user?.branch_id) {
+            setFormData(prev => ({
+                ...prev,
+                branch_id: user.branch_id,
+                role: 'worker' // Secretary can only create workers
+            }));
+        }
+    }, [isSecretary, user, showModal]);
 
     const fetchData = async () => {
         try {
@@ -116,7 +127,9 @@ function Users({ roleFilter, title }) {
             await userAPI.create(formData);
             setShowModal(false);
             setFormData({
-                name: '', email: '', phone: '', password: '', password_confirmation: '', role: roleFilter || 'worker', branch_id: ''
+                name: '', email: '', phone: '', password: '', password_confirmation: '',
+                role: roleFilter || 'worker',
+                branch_id: isSecretary ? user.branch_id : ''
             });
             fetchData();
             showSuccess('User created successfully');
@@ -130,7 +143,7 @@ function Users({ roleFilter, title }) {
         <div className="users-page">
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h1 style={{ color: 'var(--primary-color)' }}>{title || 'User Management'}</h1>
-                {isCEO && (
+                {(isCEO || (isSecretary && roleFilter === 'worker')) && (
                     <button className="btn-primary" onClick={() => setShowModal(true)}>
                         + Create New {roleFilter === 'worker' ? 'Worker' : roleFilter === 'secretary' ? 'Manager' : 'User'}
                     </button>
@@ -199,11 +212,8 @@ function Users({ roleFilter, title }) {
 
             {/* Create User Modal */}
             {showModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                }}>
-                    <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="custom-modal-overlay" onClick={() => setShowModal(false)}>
+                    <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
                         <h2 style={{ marginBottom: '16px', color: 'var(--primary-color)' }}>Create New Staff</h2>
                         <form onSubmit={handleSubmit}>
                             <div className="form-group">
@@ -220,19 +230,27 @@ function Users({ roleFilter, title }) {
                             </div>
                             <div className="form-group">
                                 <label>Role</label>
-                                <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                                    <option value="worker">Worker (Collector)</option>
-                                    <option value="secretary">Secretary (Branch Admin)</option>
-                                </select>
+                                {isSecretary ? (
+                                    <input type="text" value="Worker" disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} />
+                                ) : (
+                                    <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
+                                        <option value="worker">Worker (Collector)</option>
+                                        <option value="secretary">Secretary (Branch Admin)</option>
+                                    </select>
+                                )}
                             </div>
                             <div className="form-group">
                                 <label>Assign Branch</label>
-                                <select value={formData.branch_id} onChange={e => setFormData({ ...formData, branch_id: e.target.value })} required>
-                                    <option value="">Select Branch</option>
-                                    {branches.map(b => (
-                                        <option key={b.id} value={b.id}>{b.name}</option>
-                                    ))}
-                                </select>
+                                {isSecretary ? (
+                                    <input type="text" value={user?.branch?.name || 'My Branch'} disabled style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }} />
+                                ) : (
+                                    <select value={formData.branch_id} onChange={e => setFormData({ ...formData, branch_id: e.target.value })} required>
+                                        <option value="">Select Branch</option>
+                                        {branches.map(b => (
+                                            <option key={b.id} value={b.id}>{b.name}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                             <div className="form-group">
                                 <label>Password</label>
@@ -254,11 +272,8 @@ function Users({ roleFilter, title }) {
 
             {/* Permission Management Modal */}
             {showPermissionModal && selectedUser && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-                }}>
-                    <div style={{ background: 'var(--card-bg)', padding: '24px', borderRadius: '12px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <div className="custom-modal-overlay" onClick={() => setShowPermissionModal(false)}>
+                    <div className="custom-modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <h2 style={{ marginBottom: '8px', color: 'var(--primary-color)' }}>Manage Permissions</h2>
                         <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
                             User: <strong>{selectedUser.name}</strong> ({selectedUser.roles?.[0]?.name})

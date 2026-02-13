@@ -47,8 +47,21 @@ class UserController extends Controller
         // Authorization logic could be moved to Policy
         // Only CEO can create Secretary
         // Only CEO can create new users
+        // Check permission: CEO or 'create_workers'
+        if (!auth()->user()->hasRole('ceo') && !auth()->user()->can('create_workers')) {
+            abort(403, 'Unauthorized. You do not have permission to create users.');
+        }
+
+        // Additional restrictions for non-CEOs (e.g. Secretaries)
         if (!auth()->user()->hasRole('ceo')) {
-            abort(403, 'Unauthorized. Only CEO can create new users.');
+            // Can only create 'worker' role
+            if ($validated['role'] !== 'worker') {
+                abort(403, 'Unauthorized. You can only create Worker accounts.');
+            }
+            // Can only assign to own branch
+            if ($validated['branch_id'] != auth()->user()->branch_id) {
+                abort(403, 'Unauthorized. You can only assign users to your own branch.');
+            }
         }
 
         $user = User::create([
