@@ -16,7 +16,7 @@ export const TenantProvider = ({ children }) => {
             // Use the shared API instance which has the correct BaseURL
             const response = await api.get('/config');
             const config = response.data;
-            console.log('Tenant Config Loaded:', config); // DEBUG LOG
+            // console.log('Tenant Config Loaded:', config); // DEBUG LOG REMOVED
 
             setTenant(config);
 

@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
         $ceo = User::create([
             'name' => 'CEO',
             'email' => 'admin@obmighty.com',
-            'password' => Hash::make('password123'),
+            'password' => Hash::make(env('DEFAULT_USER_PASSWORD', 'password')),
             'status' => 'active',
             'branch_id' => null, // CEO sees all
         ]);

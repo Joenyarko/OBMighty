@@ -4,7 +4,15 @@
 <head>
   <meta charset="UTF-8" />
   <!-- Favicon will be set dynamically by TenantContext -->
-  <link rel="icon" type="image/jpeg" href="data:," />
+  <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
+  <script>
+    (function () {
+      if (window.location.pathname.startsWith('/admin')) {
+        var link = document.querySelector("link[rel~='icon']");
+        if (link) link.href = '/Neziz-logo2.png';
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#4F46E5" />
   <meta name="description" content="Multi-branch contribution tracking system" />

@@ -49,3 +49,6 @@ contribution-frontend/coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# Debug files
+contribution-backend/debug_*.php
