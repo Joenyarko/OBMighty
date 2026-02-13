@@ -44,6 +44,37 @@ class UserController extends Controller
     }
 
     /**
+     * Store a newly created user.
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8',
+            'company_id' => 'required|exists:companies,id',
+            'role' => 'required|string|in:ceo,secretary,worker',
+            'phone' => 'nullable|string|max:20',
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            'company_id' => $validated['company_id'],
+            'phone' => $validated['phone'] ?? null,
+            'status' => 'active',
+        ]);
+
+        $user->assignRole($validated['role']);
+        
+        // Load relationships for response
+        $user->load(['company', 'roles']);
+
+        return response()->json($user, 201);
+    }
+
+    /**
      * Display the specified user.
      */
     public function show($id)

@@ -491,9 +491,22 @@ function CompanyManagement() {
                                     <div style={{ fontSize: '15px', color: '#e5e7eb' }}>{viewingCompany.subdomain ? `${viewingCompany.subdomain}.yourdomain.com` : '-'}</div>
                                 </div>
 
-                                <div className="detail-item">
-                                    <label style={{ display: 'block', fontSize: '12px', textTransform: 'uppercase', color: '#6b7280', marginBottom: '4px', letterSpacing: '0.5px' }}>Total Users</label>
-                                    <div style={{ fontSize: '15px', color: '#e5e7eb' }}>{viewingCompany.users_count || 0}</div>
+                                <div className="detail-item" style={{ gridColumn: 'span 2' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', textTransform: 'uppercase', color: '#6b7280', marginBottom: '8px', letterSpacing: '0.5px' }}>User Breakdown ({viewingCompany.users_count || 0})</label>
+                                    <div style={{ display: 'flex', gap: '16px' }}>
+                                        <div style={{ flex: 1, backgroundColor: '#242830', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                            <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>{viewingCompany.ceos_count || 0}</div>
+                                            <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase' }}>CEOs</div>
+                                        </div>
+                                        <div style={{ flex: 1, backgroundColor: '#242830', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                            <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>{viewingCompany.managers_count || 0}</div>
+                                            <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase' }}>Managers</div>
+                                        </div>
+                                        <div style={{ flex: 1, backgroundColor: '#242830', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
+                                            <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'white' }}>{viewingCompany.workers_count || 0}</div>
+                                            <div style={{ fontSize: '11px', color: '#9ca3af', textTransform: 'uppercase' }}>Workers</div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="detail-item">

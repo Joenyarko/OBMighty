@@ -37,7 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->group(function () {
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
             Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'stats']);
-            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show']);
+            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show', 'store']);
     });
 
     // Auth routes
