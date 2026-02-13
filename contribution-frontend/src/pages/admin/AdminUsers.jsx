@@ -29,7 +29,7 @@ function AdminUsers() {
     useEffect(() => {
         fetchCompanies();
     }, []);
-    fetchUsers();
+
     useEffect(() => {
         fetchUsers();
     }, [page, searchTerm, selectedCompany]); // Re-fetch when filter changes
