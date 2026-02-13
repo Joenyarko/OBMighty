@@ -31,7 +31,7 @@ function ActivityLog() {
 
         try {
             const response = await userAPI.getAll();
-            setUsers(response.data || response.data.data || []);
+            setUsers(response.data?.data || response.data || []);
         } catch (error) {
             console.error('Failed to fetch users', error);
         }
