@@ -497,6 +497,14 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            showError('Phone number must be exactly 10 digits.');
+            return;
+        }
+
         onSubmit(formData);
     };
 
@@ -535,12 +543,15 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
                     </div>
 
                     <div className="form-group">
-                        <label>Phone</label>
+                        <label>Phone (10 digits)</label>
                         <input
                             type="tel"
+                            placeholder="e.g. 0244123456"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             required
+                            pattern="[0-9]{10}"
+                            title="Phone number must be exactly 10 digits"
                         />
                     </div>
 
@@ -665,6 +676,14 @@ function EditCustomerModal({ customer, onClose, onSubmit }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            showError('Phone number must be exactly 10 digits.');
+            return;
+        }
+
         onSubmit(customer.id, formData);
     };
 
@@ -683,12 +702,15 @@ function EditCustomerModal({ customer, onClose, onSubmit }) {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Phone Number</label>
+                        <label>Phone Number (10 digits)</label>
                         <input
                             type="text"
+                            placeholder="e.g. 0244123456"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             required
+                            pattern="[0-9]{10}"
+                            title="Phone number must be exactly 10 digits"
                         />
                     </div>
                     <div className="form-group">

@@ -37,11 +37,23 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'phone' => 'nullable|string|max:20',
-            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
             'branch_id' => 'required|exists:branches,id',
             'role' => 'required|in:secretary,worker',
             'status' => 'nullable|in:active,inactive,suspended'
+        ], [
+            'phone.regex' => 'The phone number must be exactly 10 digits.',
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
         // Authorization logic could be moved to Policy
@@ -108,11 +120,23 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone' => 'nullable|string|max:20',
-            'password' => 'nullable|string|min:8|confirmed',
+            'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
             'branch_id' => 'sometimes|exists:branches,id',
             'status' => 'sometimes|in:active,inactive,suspended',
-            'role' => 'sometimes|in:secretary,worker' // Careful with role updates
+            'role' => 'sometimes|in:secretary,worker'
+        ], [
+            'phone.regex' => 'The phone number must be exactly 10 digits.',
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
         if (isset($validated['password'])) {

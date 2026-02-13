@@ -83,6 +83,7 @@ export const AuthProvider = ({ children }) => {
         isCEO: hasRole('ceo'),
         isSecretary: hasRole('secretary'),
         isWorker: hasRole('worker'),
+        isSuperAdmin: hasRole('super_admin'),
         setUser, // Expose setUser for profile updates
     };
 

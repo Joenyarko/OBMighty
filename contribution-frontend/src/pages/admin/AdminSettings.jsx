@@ -32,17 +32,46 @@ function AdminSettings() {
         e.preventDefault();
         setLoading(true);
 
-        // Validation for password
-        if (formData.password && formData.password !== formData.password_confirmation) {
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (formData.phone && !phoneRegex.test(formData.phone)) {
             Swal.fire({
                 icon: 'error',
-                title: 'Password Mismatch',
-                text: 'Passwords do not match.',
+                title: 'Invalid Phone',
+                text: 'Phone number must be exactly 10 digits.',
                 background: '#161920',
                 color: '#fff'
             });
             setLoading(false);
             return;
+        }
+
+        // Validation for password
+        if (formData.password) {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            if (!passwordRegex.test(formData.password)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Weak Password',
+                    text: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                    background: '#161920',
+                    color: '#fff'
+                });
+                setLoading(false);
+                return;
+            }
+
+            if (formData.password !== formData.password_confirmation) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Password Mismatch',
+                    text: 'Passwords do not match.',
+                    background: '#161920',
+                    color: '#fff'
+                });
+                setLoading(false);
+                return;
+            }
         }
 
         try {

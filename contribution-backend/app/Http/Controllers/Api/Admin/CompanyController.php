@@ -54,8 +54,20 @@ class CompanyController extends Controller
             'is_active' => 'boolean',
             // CEO Details
             'ceo_name' => 'required|string|max:255',
-            'ceo_email' => 'required|email|max:255', // Unique check is complex due to multi-tenancy, but for a NEW company CEO, it should probably be unique globally or at least we catch the error if not
-            'ceo_password' => 'required|string|min:8',
+            'ceo_email' => 'required|email|max:255',
+            'ceo_password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
+            'ceo_phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+        ], [
+            'ceo_phone.regex' => 'The CEO phone number must be exactly 10 digits.',
+            'ceo_password.regex' => 'The CEO password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
         return DB::transaction(function () use ($request, $validated) {

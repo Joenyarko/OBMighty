@@ -51,10 +51,21 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
             'company_id' => 'required|exists:companies,id',
             'role' => 'required|string|in:ceo,secretary,worker',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+        ], [
+            'phone.regex' => 'The phone number must be exactly 10 digits.',
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
         $user = User::create([

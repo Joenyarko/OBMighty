@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerCard;
 use App\Models\BoxState;
 use App\Models\BoxPayment;
+use App\Models\AuditLog;
 use App\Models\Card;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -259,6 +261,33 @@ class CustomerCardController extends Controller
             // Get branch from worker or customer? CustomerCard -> Customer -> Branch
             $customer = $customerCard->customer;
             $branchId = $customer->branch_id;
+
+            // --- Sync to general Payment history (Required for History & Sales views) ---
+            Payment::create([
+                'company_id' => $customerCard->company_id,
+                'customer_id' => $customer->id,
+                'worker_id' => $workerId,
+                'branch_id' => $branchId,
+                'payment_amount' => $amount,
+                'boxes_filled' => $boxesToCheck,
+                'payment_date' => $date,
+                'payment_method' => $validated['payment_method'] ?? 'cash',
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => $request->user()->id,
+            ]);
+
+            // --- Log Activity ---
+            AuditLog::log(
+                'payment_recorded_via_card',
+                $payment,
+                null,
+                [
+                    'customer_name' => $customer->name,
+                    'amount' => $amount,
+                    'boxes_checked' => $boxesToCheck,
+                    'payment_method' => $validated['payment_method'] ?? 'cash'
+                ]
+            );
             
             \Log::info('Analytics update', ['branch_id' => $branchId, 'worker_id' => $workerId, 'amount' => $amount]);
             
@@ -587,8 +616,29 @@ class CustomerCardController extends Controller
                 ]);
             }
             
-            // 5. Delete payment record
+            // 5. Delete corresponding general Payment record
+            Payment::where('customer_id', $customer->id)
+                ->where('worker_id', $workerId)
+                ->where('payment_amount', $amount)
+                ->where('payment_date', $date)
+                ->where('boxes_filled', $boxes)
+                ->orderBy('created_at', 'desc')
+                ->first()?->delete();
+            
+            // 6. Delete payment record
             $payment->delete();
+
+            // --- Log Activity ---
+            AuditLog::log(
+                'payment_reversed_via_card',
+                $customerCard,
+                [
+                    'amount' => $amount,
+                    'boxes' => $boxes,
+                    'payment_id' => $paymentId
+                ],
+                ['action' => 'payment_reversed']
+            );
             
             DB::commit();
             \Log::info('Payment reversed successfully');
@@ -747,6 +797,30 @@ class CustomerCardController extends Controller
                 'adjusted_at' => now(),
                 'adjustment_notes' => $validated['notes'] ?? null,
             ]);
+            
+            // Update corresponding general Payment record
+            $generalPayment = Payment::where('customer_id', $customer->id)
+                ->where('worker_id', $workerId)
+                ->where('payment_amount', $oldAmount)
+                ->where('payment_date', $date)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($generalPayment) {
+                $generalPayment->update([
+                    'payment_amount' => $newAmount,
+                    'boxes_filled' => $payment->boxes_checked, // Use new total boxes for this payment
+                    'notes' => $validated['notes'] ?? $generalPayment->notes,
+                ]);
+            }
+
+            // --- Log Activity ---
+            AuditLog::log(
+                'payment_adjusted_via_card',
+                $payment,
+                ['amount' => $oldAmount],
+                ['new_amount' => $newAmount, 'notes' => $validated['notes'] ?? null]
+            );
             
             // Update parent customer
             if ($customer) {

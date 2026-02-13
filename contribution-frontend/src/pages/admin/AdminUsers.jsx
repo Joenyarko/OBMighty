@@ -64,6 +64,35 @@ function AdminUsers() {
 
     const handleAddUser = async (e) => {
         e.preventDefault();
+
+        const Swal = (await import('sweetalert2')).default;
+
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (newUserData.phone && !phoneRegex.test(newUserData.phone)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Phone',
+                text: 'Phone number must be exactly 10 digits.',
+                background: '#161920',
+                color: '#fff'
+            });
+            return;
+        }
+
+        // Password Validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+        if (!passwordRegex.test(newUserData.password)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Weak Password',
+                text: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                background: '#161920',
+                color: '#fff'
+            });
+            return;
+        }
+
         setAddUserLoading(true);
         try {
             await api.post('/admin/users', newUserData);
@@ -271,12 +300,12 @@ function AdminUsers() {
                             </div>
 
                             <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Email</label>
+                                <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Phone Number (10 digits)</label>
                                 <input
-                                    type="email"
-                                    value={newUserData.email}
-                                    onChange={e => setNewUserData({ ...newUserData, email: e.target.value })}
-                                    required
+                                    type="text"
+                                    placeholder="e.g. 0244123456"
+                                    value={newUserData.phone}
+                                    onChange={e => setNewUserData({ ...newUserData, phone: e.target.value })}
                                     style={{ width: '100%', padding: '10px', backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white', borderRadius: '6px' }}
                                 />
                             </div>

@@ -20,17 +20,24 @@ class CompanySettingsController extends Controller
             return response()->json(['message' => 'Company not found'], 404);
         }
 
-        $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'card_prefix' => 'sometimes|string|max:10', // Short prefix
-            'primary_color' => 'sometimes|string|max:7', // Hex color
-        ]);
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'card_prefix' => 'sometimes|string|max:10', // Short prefix
+                'primary_color' => 'sometimes|string|max:7', // Hex color
+            ]);
 
-        $company->update($validated);
+            $company->update($validated);
 
-        return response()->json([
-            'message' => 'Company settings updated successfully',
-            'company' => $company
-        ]);
+            return response()->json([
+                'message' => 'Company settings updated successfully',
+                'company' => $company
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error updating settings: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ], 500);
+        }
     }
 }

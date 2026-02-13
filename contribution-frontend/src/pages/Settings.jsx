@@ -179,16 +179,43 @@ function Settings() {
         e.preventDefault();
         setProfileLoading(true);
 
-        // Validation for password
-        if (profileData.password && profileData.password !== profileData.password_confirmation) {
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (profileData.phone && !phoneRegex.test(profileData.phone)) {
             Swal.fire({
                 icon: 'error',
-                title: 'Password Mismatch',
-                text: 'Passwords do not match.',
+                title: 'Invalid Phone',
+                text: 'Phone number must be exactly 10 digits.',
                 confirmButtonColor: 'var(--primary-color)'
             });
             setProfileLoading(false);
             return;
+        }
+
+        // Validation for password
+        if (profileData.password) {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            if (!passwordRegex.test(profileData.password)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Weak Password',
+                    text: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                    confirmButtonColor: 'var(--primary-color)'
+                });
+                setProfileLoading(false);
+                return;
+            }
+
+            if (profileData.password !== profileData.password_confirmation) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Password Mismatch',
+                    text: 'Passwords do not match.',
+                    confirmButtonColor: 'var(--primary-color)'
+                });
+                setProfileLoading(false);
+                return;
+            }
         }
 
         try {
@@ -451,6 +478,27 @@ function Settings() {
                                         value={profileData.email}
                                         onChange={e => setProfileData({ ...profileData, email: e.target.value })}
                                         required
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 10px 10px 40px',
+                                            backgroundColor: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>Phone Number (10 digits)</label>
+                                <div className="input-with-icon" style={{ position: 'relative' }}>
+                                    <Sliders size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. 0244123456"
+                                        value={profileData.phone}
+                                        onChange={e => setProfileData({ ...profileData, phone: e.target.value })}
                                         style={{
                                             width: '100%',
                                             padding: '10px 10px 10px 40px',

@@ -9,6 +9,8 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+    public function up(): void
+    {
         Schema::table('companies', function (Blueprint $table) {
             $table->string('card_prefix')->default('NEZ')->after('subdomain');
         });
@@ -17,6 +19,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
+    public function down(): void
+    {
         Schema::table('companies', function (Blueprint $table) {
             $table->dropColumn('card_prefix');
         });

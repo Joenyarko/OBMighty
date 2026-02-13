@@ -79,7 +79,7 @@ class CustomerController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|regex:/^[0-9]{10}$/',
             'location' => 'required|string',
             'card_id' => 'required|exists:cards,id',
             'branch_id' => 'nullable|exists:branches,id',
@@ -87,6 +87,8 @@ class CustomerController extends Controller
             'total_boxes' => 'nullable|integer|min:1',
             'price_per_box' => 'nullable|numeric|min:0.01',
             'total_amount' => 'nullable|numeric|min:0.01',
+        ], [
+            'phone.regex' => 'The phone number must be exactly 10 digits.',
         ]);
 
         // Auto-assign worker and branch for non-CEO users
@@ -219,8 +221,10 @@ class CustomerController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'phone' => 'sometimes|string|max:20',
+            'phone' => 'sometimes|string|regex:/^[0-9]{10}$/',
             'location' => 'sometimes|string',
+        ], [
+            'phone.regex' => 'The phone number must be exactly 10 digits.',
         ]);
 
         $oldValues = $customer->toArray();

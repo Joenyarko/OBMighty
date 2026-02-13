@@ -8,7 +8,7 @@ import '../styles/App.css';
 import { useNavigate } from 'react-router-dom';
 
 function Users({ roleFilter, title }) {
-    const { user, isCEO, isSecretary } = useAuth(); // Added user to destructuring
+    const { user, isCEO, isSecretary, isSuperAdmin } = useAuth(); // Added user to destructuring
     const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
@@ -123,6 +123,28 @@ function Users({ roleFilter, title }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Phone Validation (Exactly 10 digits)
+        const phoneRegex = /^[0-9]{10}$/;
+        if (formData.phone && !phoneRegex.test(formData.phone)) {
+            showError('Phone number must be exactly 10 digits.');
+            return;
+        }
+
+        // Email Validation (Handled by type="email" but can be reinforced if needed)
+
+        // Password Validation
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            showError('Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+            return;
+        }
+
+        if (formData.password !== formData.password_confirmation) {
+            showError('Passwords do not match.');
+            return;
+        }
+
         try {
             await userAPI.create(formData);
             setShowModal(false);
@@ -143,7 +165,7 @@ function Users({ roleFilter, title }) {
         <div className="users-page">
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h1 style={{ color: 'var(--primary-color)' }}>{title || 'User Management'}</h1>
-                {(isCEO || (isSecretary && roleFilter === 'worker')) && (
+                {(isSuperAdmin || isCEO || (isSecretary && roleFilter === 'worker')) && (
                     <button className="btn-primary" onClick={() => setShowModal(true)}>
                         + Create New {roleFilter === 'worker' ? 'Worker' : roleFilter === 'secretary' ? 'Manager' : 'User'}
                     </button>
@@ -158,7 +180,7 @@ function Users({ roleFilter, title }) {
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Role</th>
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Branch</th>
                             <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Status</th>
-                            {(isCEO || isSecretary) && <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Actions</th>}
+                            {(isSuperAdmin || isCEO || isSecretary) && <th style={{ padding: '16px', color: 'var(--text-secondary)' }}>Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -182,9 +204,9 @@ function Users({ roleFilter, title }) {
                                 <td style={{ padding: '16px' }}>
                                     <span style={{ color: '#4CAF50' }}>{user.status || 'Active'}</span>
                                 </td>
-                                {(isCEO || isSecretary) && (
+                                {(isSuperAdmin || isCEO || isSecretary) && (
                                     <td style={{ padding: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                        {isCEO && (
+                                        {(isSuperAdmin || isCEO) && (
                                             <button
                                                 className="btn-secondary"
                                                 style={{ padding: '6px 12px', fontSize: '12px' }}
@@ -225,8 +247,15 @@ function Users({ roleFilter, title }) {
                                 <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Phone Number</label>
-                                <input type="text" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+                                <label>Phone Number (10 digits)</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. 0244123456"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                    pattern="[0-9]{10}"
+                                    title="Phone number must be exactly 10 digits"
+                                />
                             </div>
                             <div className="form-group">
                                 <label>Role</label>
@@ -253,7 +282,7 @@ function Users({ roleFilter, title }) {
                                 )}
                             </div>
                             <div className="form-group">
-                                <label>Password</label>
+                                <label>Password (Min 8 characters, Mixed Case, Number & Symbol)</label>
                                 <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
                             </div>
                             <div className="form-group">
