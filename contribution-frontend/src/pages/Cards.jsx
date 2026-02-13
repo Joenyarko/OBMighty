@@ -27,9 +27,7 @@ function Cards() {
         status: 'active'
     });
     const [frontImagePreview, setFrontImagePreview] = useState(null);
-    const [backImagePreview, setBackImagePreview] = useState(null);
     const [frontImageFile, setFrontImageFile] = useState(null);
-    const [backImageFile, setBackImageFile] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [modalImage, setModalImage] = useState(null);
 
@@ -78,7 +76,7 @@ function Cards() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageChange = (e, type) => {
+    const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             // Validate file size (5MB max)
@@ -95,13 +93,8 @@ function Cards() {
 
             const reader = new FileReader();
             reader.onloadend = () => {
-                if (type === 'front') {
-                    setFrontImagePreview(reader.result);
-                    setFrontImageFile(file);
-                } else {
-                    setBackImagePreview(reader.result);
-                    setBackImageFile(file);
-                }
+                setFrontImagePreview(reader.result);
+                setFrontImageFile(file);
             };
             reader.readAsDataURL(file);
         }
@@ -115,9 +108,7 @@ function Cards() {
             status: 'active'
         });
         setFrontImagePreview(null);
-        setBackImagePreview(null);
         setFrontImageFile(null);
-        setBackImageFile(null);
         setEditMode(false);
         setSelectedCard(null);
     };
@@ -144,9 +135,6 @@ function Cards() {
 
         if (frontImageFile) {
             data.append('front_image', frontImageFile);
-        }
-        if (backImageFile) {
-            data.append('back_image', backImageFile);
         }
 
         try {
@@ -180,7 +168,6 @@ function Cards() {
             status: card.status
         });
         setFrontImagePreview(card.front_image_url);
-        setBackImagePreview(card.back_image_url);
         setEditMode(true);
         setShowModal(true);
     };
@@ -235,20 +222,13 @@ function Cards() {
                             </div>
 
                             <div className="card-images">
-                                <div className="image-container">
-                                    <label>Front (Items)</label>
+                                <div className="image-container" style={{ width: '100%' }}>
+                                    <label>Card Image</label>
                                     <img
                                         src={card.front_image_url}
                                         alt="Card Front"
                                         onClick={() => openImageModal(card.front_image_url)}
-                                    />
-                                </div>
-                                <div className="image-container">
-                                    <label>Back (Boxes)</label>
-                                    <img
-                                        src={card.back_image_url}
-                                        alt="Card Back"
-                                        onClick={() => openImageModal(card.back_image_url)}
+                                        style={{ width: '100%', height: 'auto', maxHeight: '200px', objectFit: 'contain' }}
                                     />
                                 </div>
                             </div>
@@ -371,7 +351,7 @@ function Cards() {
                                     <input
                                         type="file"
                                         accept="image/jpeg,image/jpg,image/png"
-                                        onChange={(e) => handleImageChange(e, 'front')}
+                                        onChange={(e) => handleImageChange(e)}
                                         required={!editMode}
                                     />
                                     {frontImagePreview && (
