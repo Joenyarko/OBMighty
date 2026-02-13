@@ -9,7 +9,7 @@ function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
-    const [page, setPage] = useState(1);
+
     const [totalPages, setTotalPages] = useState(1);
     const [companies, setCompanies] = useState([]);
     const [selectedCompany, setSelectedCompany] = useState('');
