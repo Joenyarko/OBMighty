@@ -25,6 +25,7 @@ class Customer extends Model
         'total_amount',
         'amount_paid',
         'status',
+        'is_served',
         'last_payment_date',
     ];
 
@@ -35,6 +36,7 @@ class Customer extends Model
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'last_payment_date' => 'date',
+        'is_served' => 'boolean',
     ];
 
     protected $appends = ['balance', 'completion_percentage'];

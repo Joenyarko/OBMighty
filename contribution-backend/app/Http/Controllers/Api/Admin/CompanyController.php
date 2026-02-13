@@ -16,8 +16,12 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        // Only return active (non-deleted) companies
-        return response()->json(Company::all());
+        // Return companies with user count, ordered by creation
+        return response()->json(
+            Company::withCount('users')
+                ->orderBy('created_at', 'desc')
+                ->get()
+        );
     }
 
     /**

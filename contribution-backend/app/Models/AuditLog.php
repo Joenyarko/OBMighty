@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
+    use BelongsToCompany;
+
     const UPDATED_AT = null; // Only created_at timestamp
 
     protected $fillable = [

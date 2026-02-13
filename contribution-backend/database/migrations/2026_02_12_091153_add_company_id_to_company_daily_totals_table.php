@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
-            if (!Schema::hasColumn('audit_logs', 'company_id')) {
-                $table->unsignedBigInteger('company_id')->nullable()->after('user_id');
-                $table->index('company_id');
-            }
+        Schema::table('company_daily_totals', function (Blueprint $table) {
+            $table->foreignId('company_id')->nullable()->after('id')->index();
         });
     }
 
@@ -24,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
+        Schema::table('company_daily_totals', function (Blueprint $table) {
             $table->dropColumn('company_id');
         });
     }

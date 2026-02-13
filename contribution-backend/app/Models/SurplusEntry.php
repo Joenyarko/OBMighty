@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class SurplusEntry extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'branch_id',
         'worker_id',
         'amount',

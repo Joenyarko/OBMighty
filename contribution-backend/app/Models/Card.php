@@ -60,7 +60,17 @@ class Card extends Model
     {
         $lastCard = self::withTrashed()->orderBy('id', 'desc')->first();
         $number = $lastCard ? $lastCard->id + 1 : 1;
-        return 'OBM-' . str_pad($number, 3, '0', STR_PAD_LEFT);
+
+        // Get prefix from company or default to NEZ
+        $prefix = 'NEZ';
+        if (auth()->check()) {
+            $user = auth()->user();
+            if ($user->company && $user->company->card_prefix) {
+                $prefix = $user->company->card_prefix;
+            }
+        }
+
+        return $prefix . '-' . str_pad($number, 3, '0', STR_PAD_LEFT);
     }
 
     /**

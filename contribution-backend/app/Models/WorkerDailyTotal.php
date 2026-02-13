@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class WorkerDailyTotal extends Model
 {
+    use \App\Traits\BelongsToCompany;
+
     protected $fillable = [
         'worker_id',
         'branch_id',
+        'company_id',
         'date',
         'total_collections',
         'total_customers_paid',

@@ -46,6 +46,11 @@ return new class extends Migration
 
         // Drop old columns if they exist
         Schema::table('cards', function (Blueprint $table) {
+            // Drop generated column first
+            if (Schema::hasColumn('cards', 'total_amount')) {
+                $table->dropColumn('total_amount');
+            }
+            
             if (Schema::hasColumn('cards', 'customer_id')) {
                 $table->dropColumn('customer_id');
             }

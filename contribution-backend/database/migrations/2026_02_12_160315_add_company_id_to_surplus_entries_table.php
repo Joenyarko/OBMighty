@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
-            if (!Schema::hasColumn('audit_logs', 'company_id')) {
-                $table->unsignedBigInteger('company_id')->nullable()->after('user_id');
-                $table->index('company_id');
+        Schema::table('surplus_entries', function (Blueprint $table) {
+            if (!Schema::hasColumn('surplus_entries', 'company_id')) {
+                $table->foreignId('company_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
             }
         });
     }
@@ -24,7 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('audit_logs', function (Blueprint $table) {
+        Schema::table('surplus_entries', function (Blueprint $table) {
+            $table->dropForeign(['company_id']);
             $table->dropColumn('company_id');
         });
     }

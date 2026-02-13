@@ -59,6 +59,12 @@ class CustomerController extends Controller
             });
         }
 
+        // Apply is_served filter (only relevant for completed customers usually, but can be general)
+        if ($request->has('is_served')) {
+            $isServed = filter_var($request->is_served, FILTER_VALIDATE_BOOLEAN);
+            $query->where('is_served', $isServed);
+        }
+
         $customers = $query->orderBy('created_at', 'desc')->paginate(10);
 
         return response()->json($customers);
@@ -261,6 +267,7 @@ class CustomerController extends Controller
      */
     public function transfer(Request $request, $id)
     {
+        // ... (transfer logic remains same)
         $validated = $request->validate([
             'new_worker_id' => 'required|exists:users,id',
         ]);
@@ -288,6 +295,43 @@ class CustomerController extends Controller
             'customer' => $customer->load(['branch', 'worker', 'card']),
             'previous_worker_id' => $oldWorkerId,
             'new_worker_id' => $newWorker->id,
+        ]);
+    }
+
+    /**
+     * Mark a customer as served (Secretary and CEO only)
+     */
+    public function markAsServed(Request $request, $id)
+    {
+        $user = $request->user();
+        $customer = Customer::findOrFail($id);
+
+        // Authorization check
+        if ($user->hasRole('worker')) {
+            return response()->json(['message' => 'Unauthorized. Workers cannot perform this action.'], 403);
+        }
+
+        if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($customer->status !== 'completed') {
+            return response()->json(['message' => 'Only completed customers can be marked as served.'], 422);
+        }
+
+        if ($customer->is_served) {
+            return response()->json(['message' => 'Customer is already served.'], 422);
+        }
+
+        $customer->is_served = true;
+        $customer->save();
+
+        // Create audit log
+        \App\Models\AuditLog::log('customer_served', $customer, ['is_served' => false], ['is_served' => true]);
+
+        return response()->json([
+            'message' => 'Customer marked as served successfully',
+            'customer' => $customer->load(['branch', 'worker', 'card']),
         ]);
     }
 }

@@ -145,4 +145,8 @@ export const auditLogAPI = {
     getAll: (params) => api.get('/audit-logs', { params }),
 };
 
+export const companyAPI = {
+    updateSettings: (data) => api.post('/company/settings', data),
+};
+
 export default api;

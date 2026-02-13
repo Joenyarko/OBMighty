@@ -14,6 +14,7 @@ class Company extends Model
         'name',
         'domain',
         'subdomain',
+        'card_prefix',
         'logo_url',
         'primary_color',
         'is_active',

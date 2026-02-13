@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class BranchDailyTotal extends Model
 {
+    use \App\Traits\BelongsToCompany;
+
     protected $fillable = [
         'branch_id',
+        'company_id',
         'date',
         'total_collections',
         'total_payments',

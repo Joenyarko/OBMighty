@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 
 class LedgerEntry extends Model
 {
+    use BelongsToCompany;
+
     protected $fillable = [
+        'company_id',
         'entry_date',
         'account_type',
         'category',

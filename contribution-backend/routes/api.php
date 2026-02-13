@@ -36,22 +36,29 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware(['role:super_admin', 'super_admin']) // Check role AND set context
         ->group(function () {
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
-            // Future dashboard stats for super admin could go here
+            Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'stats']);
+            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show']);
     });
 
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/profile', [AuthController::class, 'updateProfile']);
     
-    // Common Admin Routes (CEO & Secretary)
-    Route::middleware('role:ceo|secretary')->group(function () {
+    // Company Settings (CEO only)
+    Route::post('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'update'])->middleware('role:ceo');
+
+    // Common Admin Routes (CEO & Secretary & Super Admin)
+    // ADDED super_admin here
+    Route::middleware('role:ceo|secretary|super_admin')->group(function () {
         Route::get('/branches', [BranchController::class, 'index']);
         Route::get('/branches/{branch}', [BranchController::class, 'show']);
         Route::apiResource('users', UserController::class);
     });
 
-    // Branches & System (CEO & Secretary)
-    Route::middleware('role:ceo|secretary')->group(function () {
+    // Branches & System (CEO & Secretary & Super Admin)
+    // ADDED super_admin here
+    Route::middleware('role:ceo|secretary|super_admin')->group(function () {
         Route::apiResource('branches', BranchController::class)->except(['index', 'show']); // Create/Edit/Delete
         
         // Accounting & Expenses
@@ -62,8 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/accounting/profit-loss', [AccountingController::class, 'profitLoss']);
     });
 
-    // CEO Only Routes
-    Route::middleware('role:ceo')->group(function () {
+    // CEO Only Routes (AND Super Admin)
+    // ADDED super_admin here
+    Route::middleware('role:ceo|super_admin')->group(function () {
         // Card Management (Create/Update/Delete)
         Route::post('/cards', [CardController::class, 'store']);
         Route::put('/cards/{card}', [CardController::class, 'update']);
@@ -87,7 +95,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('payments', PaymentController::class)->only(['index', 'store']);
     
     // Customer Transfer (CEO only)
-    Route::post('/customers/{id}/transfer', [CustomerController::class, 'transfer'])->middleware('role:ceo');
+    // ADDED super_admin here
+    Route::post('/customers/{id}/transfer', [CustomerController::class, 'transfer'])->middleware('role:ceo|super_admin');
+
+    // Customer Served (CEO and Secretary)
+    // ADDED super_admin here
+    Route::post('/customers/{id}/serve', [CustomerController::class, 'markAsServed'])->middleware('role:ceo|secretary|super_admin');
     
     // Sales (All roles, scoped by controller logic)
     Route::prefix('sales')->group(function () {
@@ -98,7 +111,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     // Surplus (CEO and Secretary only)
-    Route::prefix('surplus')->middleware('role:ceo|secretary')->group(function () {
+    // ADDED super_admin here
+    Route::prefix('surplus')->middleware('role:ceo|secretary|super_admin')->group(function () {
         Route::get('/', [SurplusController::class, 'index']);
         Route::post('/', [SurplusController::class, 'store']);
         Route::get('/{id}', [SurplusController::class, 'show']);
@@ -109,7 +123,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     // Payroll (CEO only)
-    Route::prefix('payroll')->middleware('role:ceo')->group(function () {
+    // ADDED super_admin here
+    Route::prefix('payroll')->middleware('role:ceo|super_admin')->group(function () {
         Route::get('/employees', [PayrollController::class, 'employees']);
         Route::get('/employees/{id}', [PayrollController::class, 'employeeDetails']);
         Route::post('/salaries', [PayrollController::class, 'setSalary']);
@@ -136,7 +151,8 @@ Route::middleware('auth:sanctum')->group(function () {
             $user = $request->user();
             
             // Only allow CEO and Secretary roles
-            if ($user->hasRole(['ceo', 'secretary'])) {
+            // ADDED super_admin here
+            if ($user->hasRole(['ceo', 'secretary', 'super_admin'])) {
                 return app(CustomerCardController::class)->reversePayment($id);
             }
 
@@ -149,7 +165,8 @@ Route::middleware('auth:sanctum')->group(function () {
              $user = $request->user();
              
              // Only allow CEO and Secretary roles
-             if ($user->hasRole(['ceo', 'secretary'])) {
+             // ADDED super_admin here
+             if ($user->hasRole(['ceo', 'secretary', 'super_admin'])) {
                  return app(CustomerCardController::class)->adjustPayment($request, $id);
              }
 
@@ -169,8 +186,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/worker-performance', [ReportController::class, 'workerPerformance']);
         Route::get('/defaulting-customers', [ReportController::class, 'defaultingCustomers']);
     });
-    // Permission Management (CEO only)
-    Route::middleware('role:ceo')->group(function () {
+    // Permission Management (CEO & Super Admin)
+    Route::middleware('role:ceo|super_admin')->group(function () {
         Route::get('/permissions', [App\Http\Controllers\Api\PermissionController::class, 'index']);
         Route::post('/users/{id}/permissions', [App\Http\Controllers\Api\PermissionController::class, 'syncUserPermissions']);
         
