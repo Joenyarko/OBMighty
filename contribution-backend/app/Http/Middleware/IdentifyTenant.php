@@ -38,9 +38,20 @@ class IdentifyTenant
         if (!$company && $subdomain === 'api') {
              // Try to identify company from the Origin header (e.g., company1.neziz.cloud)
              $origin = $request->header('Origin');
+             
+             \Illuminate\Support\Facades\Log::info('Central API Fallback Attempt', [
+                 'origin_header' => $origin,
+             ]);
+
              if ($origin) {
                  $originHost = parse_url($origin, PHP_URL_HOST);
                  $originSubdomain = explode('.', $originHost)[0];
+                 
+                 \Illuminate\Support\Facades\Log::info('Central API Origin Parsed', [
+                     'origin_host' => $originHost,
+                     'origin_subdomain' => $originSubdomain
+                 ]);
+
                  $company = Company::where('domain', $originHost)
                      ->orWhere('subdomain', $originHost)
                      ->orWhere('subdomain', $originSubdomain)
