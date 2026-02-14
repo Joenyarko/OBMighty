@@ -33,11 +33,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Super Admin Routes (Global Access)
     Route::prefix('admin')
-        ->middleware(['role:super_admin', 'super_admin']) // Check role AND set context
+        ->middleware(['role:super_admin'])
         ->group(function () {
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
             Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'stats']);
-            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show', 'store']);
+            Route::get('/metrics', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'metrics']);
+            Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+            Route::post('/users/{id}/roles', [\App\Http\Controllers\Api\Admin\UserController::class, 'assignRole']);
     });
 
     // Auth routes
@@ -46,7 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     
     // Company Settings (CEO only)
-    Route::post('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'update'])->middleware('role:ceo');
+    Route::middleware('role:ceo')->group(function () {
+        Route::get('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'show']);
+        Route::post('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'update']);
+        Route::get('/company/profile', [App\Http\Controllers\Api\CompanySettingsController::class, 'profile']);
+        Route::get('/company/dashboard', [App\Http\Controllers\Api\CompanyDashboardController::class, 'index']);
+    });
 
     // Common Admin Routes (CEO & Secretary & Super Admin)
     // ADDED super_admin here
@@ -185,6 +192,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/monthly', [ReportController::class, 'monthly']);
         Route::get('/worker-performance', [ReportController::class, 'workerPerformance']);
         Route::get('/defaulting-customers', [ReportController::class, 'defaultingCustomers']);
+        
+        // Enhanced Reports
+        Route::get('/profitability', [\App\Http\Controllers\Api\EnhancedReportController::class, 'profitabilityAnalysis']);
+        Route::get('/customer-performance', [\App\Http\Controllers\Api\EnhancedReportController::class, 'customerPerformance']);
+        Route::get('/worker-productivity', [\App\Http\Controllers\Api\EnhancedReportController::class, 'workerProductivity']);
+        Route::get('/inventory-status', [\App\Http\Controllers\Api\EnhancedReportController::class, 'inventoryStatus']);
+        Route::get('/ledger', [\App\Http\Controllers\Api\EnhancedReportController::class, 'ledgerReport']);
+        Route::get('/audit-trail', [\App\Http\Controllers\Api\EnhancedReportController::class, 'auditTrail']);
     });
     // Permission Management (CEO & Super Admin)
     Route::middleware('role:ceo|super_admin')->group(function () {

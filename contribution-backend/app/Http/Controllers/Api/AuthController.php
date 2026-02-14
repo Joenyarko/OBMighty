@@ -22,6 +22,15 @@ class AuthController extends Controller
 
         $user = User::withoutGlobalScope('company')->where('email', $request->email)->first();
 
+        \Illuminate\Support\Facades\Log::info('Login Diagnostic', [
+            'attempt_email' => $request->email,
+            'user_found' => $user ? 'YES' : 'NO',
+            'user_id' => $user?->id,
+            'user_company_id' => $user?->company_id,
+            'tenant_identified_id' => config('app.company_id'),
+            'password_match' => $user ? (Hash::check($request->password, $user->password) ? 'YES' : 'NO') : 'N/A',
+        ]);
+
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
@@ -43,6 +52,10 @@ class AuthController extends Controller
 
         // Create token
         $token = $user->createToken('auth-token')->plainTextToken;
+
+        // Load relations without global scope to ensure they are returned correctly
+        $user->load(['branch' => function($q) { $q->withoutGlobalScopes(); }, 
+                     'company' => function($q) { $q->withoutGlobalScopes(); }]);
 
         return response()->json([
             'message' => 'Login successful',

@@ -1,0 +1,294 @@
+{
+  "info": {
+    "name": "O.B.Mighty API",
+    "description": "Complete API collection for O.B.Mighty Multi-Tenant Contribution System",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "https://api.neziz.cloud/api/login",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "login"]
+            },
+            "description": "POST request to login. Returns authentication token."
+          }
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/me",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "me"]
+            },
+            "description": "GET current authenticated user"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/logout",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "logout"]
+            },
+            "description": "POST to logout current user"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/payments?page=1&per_page=15",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "payments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "per_page",
+                  "value": "15"
+                }
+              ]
+            },
+            "description": "GET paginated list of payments"
+          }
+        },
+        {
+          "name": "Create Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_id\": 1,\n  \"payment_amount\": 500,\n  \"payment_method\": \"cash\",\n  \"payment_date\": \"2026-02-14\",\n  \"notes\": \"Payment for service\"\n}"
+            },
+            "url": {
+              "raw": "https://api.neziz.cloud/api/payments",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "payments"]
+            },
+            "description": "POST to create new payment"
+          }
+        },
+        {
+          "name": "Get Payment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/payments/1",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "payments", "1"]
+            },
+            "description": "GET specific payment details"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get All Customers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/customers?page=1",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "customers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "GET list of customers"
+          }
+        },
+        {
+          "name": "Create Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"1234567890\",\n  \"total_balance\": 5000,\n  \"payment_method\": \"cash\"\n}"
+            },
+            "url": {
+              "raw": "https://api.neziz.cloud/api/customers",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "customers"]
+            },
+            "description": "POST to create new customer"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Profitability Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/reports/profitability?start_date=2026-01-01&end_date=2026-12-31",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "reports", "profitability"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "GET profitability analysis report"
+          }
+        },
+        {
+          "name": "Customer Performance Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/reports/customer-performance",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "reports", "customer-performance"]
+            },
+            "description": "GET customer performance report"
+          }
+        },
+        {
+          "name": "Worker Productivity Report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.neziz.cloud/api/reports/worker-productivity",
+              "protocol": "https",
+              "host": ["api", "neziz", "cloud"],
+              "path": ["api", "reports", "worker-productivity"]
+            },
+            "description": "GET worker productivity report"
+          }
+        }
+      ]
+    }
+  ]
+}
