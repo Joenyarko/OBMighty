@@ -57,22 +57,11 @@ class ManifestController extends Controller
     protected function generateManifestResponse($company = null)
     {
         if ($company) {
-            $logoUrl = $company->logo_url 
-                ? asset('storage/logos/' . basename($company->logo_url)) 
-                : url('/logo.jpeg');
+            $logoUrl = $company->logo_url ? asset('storage/logos/' . basename($company->logo_url)) : null;
 
-            $manifest = [
-                'id' => 'company_' . $company->id, // Unique ID for separate installations
-                'name' => $company->name,
-                'short_name' => substr($company->name, 0, 12),
-                'description' => $company->name . ' management system',
-                'start_url' => '/',
-                'scope' => '/',
-                'display' => 'standalone',
-                'orientation' => 'portrait-or-landscape',
-                'theme_color' => $company->primary_color ?? '#4F46E5',
-                'background_color' => '#ffffff',
-                'icons' => [
+            $icons = [];
+            if ($logoUrl) {
+                $icons = [
                     [
                         'src' => $logoUrl,
                         'sizes' => '192x192',
@@ -85,7 +74,21 @@ class ManifestController extends Controller
                         'type' => (str_contains($logoUrl, '.png')) ? 'image/png' : 'image/jpeg',
                         'purpose' => 'any'
                     ]
-                ],
+                ];
+            }
+
+            $manifest = [
+                'id' => 'company_' . $company->id,
+                'name' => $company->name,
+                'short_name' => substr($company->name, 0, 12),
+                'description' => $company->name . ' management system',
+                'start_url' => '/',
+                'scope' => '/',
+                'display' => 'standalone',
+                'orientation' => 'portrait-or-landscape',
+                'theme_color' => $company->primary_color ?? '#4F46E5',
+                'background_color' => '#ffffff',
+                'icons' => $icons,
                 'categories' => ['productivity', 'finance']
             ];
         } else {
@@ -100,20 +103,7 @@ class ManifestController extends Controller
                 'orientation' => 'portrait-or-landscape',
                 'theme_color' => '#4F46E5',
                 'background_color' => '#ffffff',
-                'icons' => [
-                    [
-                        'src' => url('/logo.jpeg'),
-                        'sizes' => '192x192',
-                        'type' => 'image/jpeg',
-                        'purpose' => 'any'
-                    ],
-                    [
-                        'src' => url('/logo.jpeg'),
-                        'sizes' => '512x512',
-                        'type' => 'image/jpeg',
-                        'purpose' => 'any'
-                    ]
-                ],
+                'icons' => [],
                 'categories' => ['productivity', 'finance']
             ];
         }

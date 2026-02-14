@@ -73,6 +73,7 @@ async function getDynamicManifest(request) {
     const manifestData = await getStoredManifestData();
 
     if (manifestData) {
+      console.log('[SW] Serving manifest from IndexedDB');
       return new Response(JSON.stringify(manifestData), {
         headers: { 'Content-Type': 'application/manifest+json' }
       });
@@ -82,7 +83,29 @@ async function getDynamicManifest(request) {
   }
 
   // Fallback to network fetch if manifest data isn't in DB yet
-  return fetch(request);
+  console.log('[SW] Manifest not in DB, fetching from network');
+  try {
+    const response = await fetch(request.clone());
+    if (response && response.ok) {
+      console.log('[SW] Network fetch successful for manifest');
+      return response;
+    }
+  } catch (error) {
+    console.error('[SW] Network fetch failed for manifest:', error);
+  }
+  
+  // If all else fails, return a minimal valid manifest
+  console.log('[SW] Returning fallback manifest');
+  return new Response(JSON.stringify({
+    id: 'default_system',
+    name: 'Management System',
+    short_name: 'Management',
+    display: 'standalone',
+    start_url: '/',
+    scope: '/'
+  }), {
+    headers: { 'Content-Type': 'application/manifest+json' }
+  });
 }
 
 // IndexedDB Access
