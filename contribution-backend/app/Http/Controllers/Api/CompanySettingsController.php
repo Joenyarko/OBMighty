@@ -210,3 +210,4 @@ class CompanySettingsController extends Controller
             ], 500);
         }
     }
+}
