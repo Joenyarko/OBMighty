@@ -22,6 +22,17 @@ use App\Http\Controllers\Api\CustomerCardController;
 |--------------------------------------------------------------------------
 */
 
+// Public CORS routes for storage/logos
+Route::middleware(['cors.storage'])->group(function () {
+    Route::get('/storage/logos/{filename}', function ($filename) {
+        $path = storage_path('app/public/logos/' . $filename);
+        if (!file_exists($path)) {
+            return response()->json(['message' => 'File not found'], 404);
+        }
+        return response()->file($path);
+    });
+});
+
 // Public routes
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
 Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);

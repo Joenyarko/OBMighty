@@ -173,29 +173,29 @@ class CompanySettingsController extends Controller
             }
 
             $file = $request->file('logo');
-            $filename = 'logos/' . $company->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $filename = 'company_' . $company->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             
-            // Store the file
-            $path = $file->storeAs('public', $filename);
+            // Store in public path for better CORS handling
+            $path = $file->storeAs('public/logos', $filename);
             
-            // Generate the URL
-            $logoUrl = '/storage/' . $filename;
+            // Generate the full public URL (use asset helper to get correct domain)
+            $logoUrl = asset('storage/logos/' . $filename);
 
             // Update company logo
             $company->update(['logo_url' => $logoUrl]);
  
             // Log this action
-            \App\Models\AuditLog::log(
-                'Company logo updated',
-                $company,
-                null,
-                ['filename' => $filename],
-                $user->id
-            );
+            \App\Models\AuditLog::create([
+                'company_id' => $company->id,
+                'user_id' => $user->id,
+                'action' => 'Company logo updated',
+                'details' => json_encode(['filename' => $filename]),
+                'ip_address' => $request->ip(),
+            ]);
  
             return response()->json([
                 'message' => 'Logo uploaded successfully',
-                'logo_url' => $company->logo_url
+                'logo_url' => $company->fresh()->logo_url
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
