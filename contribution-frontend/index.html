@@ -3,21 +3,36 @@
 
 <head>
   <meta charset="UTF-8" />
-  <!-- Favicon will be set dynamically by TenantContext -->
+  <!-- Favicon will be set dynamically by AuthContext -->
   <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
-  <script>
-    (function () {
-      if (window.location.pathname.startsWith('/admin')) {
-        var link = document.querySelector("link[rel~='icon']");
-        if (link) link.href = '/Neziz-logo2.png';
-      }
-    })();
-  </script>
+  
+  <!-- Dynamic PWA Manifest - loads company branding when authenticated -->
+  <link id="manifest-link" rel="manifest" href="/manifest.json" />
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#4F46E5" />
   <meta name="description" content="Multi-branch contribution tracking system" />
-  <link rel="manifest" href="/manifest.json" />
   <title>Daily Contribution Manager</title>
+  
+  <script>
+    // Update manifest when user logs in
+    window.updateManifest = function(isAuthenticated) {
+      const manifestLink = document.getElementById('manifest-link');
+      if (isAuthenticated) {
+        // Use authenticated endpoint to get company-specific manifest
+        manifestLink.href = '/api/manifest';
+      } else {
+        // Use public manifest as fallback
+        manifestLink.href = '/manifest.json';
+      }
+      // Reload service worker to update the manifest
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.update());
+        });
+      }
+    };
+  </script>
 </head>
 
 <body>

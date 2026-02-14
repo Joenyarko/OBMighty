@@ -37,6 +37,11 @@ export const AuthProvider = ({ children }) => {
                             setFavicon(companyData.logo_url);
                         }
                         setPageTitle(companyData.name);
+                        
+                        // Update PWA manifest with company branding
+                        if (window.updateManifest) {
+                            window.updateManifest(true);
+                        }
                     }
                 } catch (err) {
                     console.warn('Failed to fetch company info:', err);
@@ -62,6 +67,11 @@ export const AuthProvider = ({ children }) => {
             setToken(token);
             setUser(user);
 
+            // Update PWA manifest with company branding
+            if (window.updateManifest) {
+                window.updateManifest(true);
+            }
+
             return { success: true };
         } catch (error) {
             return {
@@ -82,6 +92,11 @@ export const AuthProvider = ({ children }) => {
             setToken(null);
             setUser(null);
             setCompany(null);
+
+            // Reset PWA manifest to public version
+            if (window.updateManifest) {
+                window.updateManifest(false);
+            }
         }
     };
 
