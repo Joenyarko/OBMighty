@@ -57,12 +57,7 @@ export async function updatePWAManifest(companyData) {
       // Since backend now brands /manifest.json automatically, we only touch this if we want to bypass caching
       const manifestLink = document.getElementById('manifest-link');
       if (manifestLink) {
-        const currentHref = manifestLink.getAttribute('href');
-        const brandedUrl = `/api/manifest.json?v=${companyData.id || 'default'}`; // Add version to force refresh
-
-        if (currentHref !== brandedUrl) {
-          manifestLink.href = brandedUrl;
-        }
+        manifestLink.href = `/api/manifest.json?v=${companyData.id || 'default'}`;
       }
 
       // 2. Sync with Service Worker for Offline support

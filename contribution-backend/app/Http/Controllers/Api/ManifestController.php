@@ -14,66 +14,9 @@ class ManifestController extends Controller
     public function getManifest(Request $request)
     {
         $user = $request->user();
+        $company = $user ? $user->company : null;
         
-        // Generic base manifest (No hardcoded branding)
-        $manifest = [
-            'name' => 'Management System',
-            'short_name' => 'Management',
-            'description' => 'Business management and finance system',
-            'start_url' => '/',
-            'scope' => '/',
-            'display' => 'standalone',
-            'orientation' => 'portrait-or-landscape',
-            'theme_color' => '#4F46E5',
-            'background_color' => '#ffffff',
-            'icons' => [
-                [
-                    'src' => url('/logo.jpeg'),
-                    'sizes' => '192x192',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ],
-                [
-                    'src' => url('/logo.jpeg'),
-                    'sizes' => '512x512',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ]
-            ],
-            'categories' => ['productivity', 'finance']
-        ];
-
-        // If user is authenticated, customize with company branding
-        if ($user && $user->company) {
-            $company = $user->company;
-            
-            $manifest['name'] = $company->name;
-            $manifest['short_name'] = substr($company->name, 0, 12);
-            $manifest['description'] = $company->name . ' management system';
-            $manifest['theme_color'] = $company->primary_color ?? '#4F46E5';
-            
-            // Use company logo if available
-            if ($company->logo_url) {
-                $manifest['icons'] = [
-                    [
-                        'src' => $company->logo_url,
-                        'sizes' => '192x192',
-                        'type' => 'image/png',
-                        'purpose' => 'any'
-                    ],
-                    [
-                        'src' => $company->logo_url,
-                        'sizes' => '512x512',
-                        'type' => 'image/png',
-                        'purpose' => 'any'
-                    ]
-                ];
-            }
-        }
-
-        return response()->json($manifest)
-            ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', 'no-cache');
+        return $this->generateManifestResponse($company);
     }
 
     /**
@@ -88,41 +31,12 @@ class ManifestController extends Controller
             return $this->getPublicManifest(request());
         }
 
-        $manifest = [
-            'name' => $company->name,
-            'short_name' => substr($company->name, 0, 12),
-            'description' => $company->name . ' management system',
-            'start_url' => '/',
-            'scope' => '/',
-            'display' => 'standalone',
-            'orientation' => 'portrait-or-landscape',
-            'theme_color' => $company->primary_color ?? '#4F46E5',
-            'background_color' => '#ffffff',
-            'icons' => [
-                [
-                    'src' => $company->logo_url ?? url('/logo.jpeg'),
-                    'sizes' => '192x192',
-                    'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
-                    'purpose' => 'any'
-                ],
-                [
-                    'src' => $company->logo_url ?? url('/logo.jpeg'),
-                    'sizes' => '512x512',
-                    'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
-                    'purpose' => 'any'
-                ]
-            ],
-            'categories' => ['productivity', 'finance']
-        ];
-
-        return response()->json($manifest)
-            ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', 'public, max-age=3600');
+        return $this->generateManifestResponse($company);
     }
 
     /**
      * Get public manifest (for unauthenticated users)
-     * GET /manifest.json (fallback)
+     * GET /api/manifest.json (standard endpoint)
      */
     public function getPublicManifest(Request $request)
     {
@@ -134,8 +48,21 @@ class ManifestController extends Controller
             $company = \App\Models\Company::find($companyId);
         }
 
+        return $this->generateManifestResponse($company);
+    }
+
+    /**
+     * Help generates a standardized manifest response
+     */
+    protected function generateManifestResponse($company = null)
+    {
         if ($company) {
+            $logoUrl = $company->logo_url 
+                ? asset('storage/logos/' . basename($company->logo_url)) 
+                : url('/logo.jpeg');
+
             $manifest = [
+                'id' => 'company_' . $company->id, // Unique ID for separate installations
                 'name' => $company->name,
                 'short_name' => substr($company->name, 0, 12),
                 'description' => $company->name . ' management system',
@@ -147,15 +74,15 @@ class ManifestController extends Controller
                 'background_color' => '#ffffff',
                 'icons' => [
                     [
-                        'src' => $company->logo_url ?? url('/logo.jpeg'),
+                        'src' => $logoUrl,
                         'sizes' => '192x192',
-                        'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
+                        'type' => (str_contains($logoUrl, '.png')) ? 'image/png' : 'image/jpeg',
                         'purpose' => 'any'
                     ],
                     [
-                        'src' => $company->logo_url ?? url('/logo.jpeg'),
+                        'src' => $logoUrl,
                         'sizes' => '512x512',
-                        'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
+                        'type' => (str_contains($logoUrl, '.png')) ? 'image/png' : 'image/jpeg',
                         'purpose' => 'any'
                     ]
                 ],
@@ -163,6 +90,7 @@ class ManifestController extends Controller
             ];
         } else {
             $manifest = [
+                'id' => 'default_system',
                 'name' => 'Management System',
                 'short_name' => 'Management',
                 'description' => 'Business management and finance system',
