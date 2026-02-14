@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
+use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -165,7 +166,7 @@ class CompanySettingsController extends Controller
 
         try {
             $request->validate([
-                'logo' => 'required|image|mimes:jpeg,png,svg,webp|max:5120'
+                'logo' => 'required|file|image|mimes:jpeg,png,svg,webp|max:5120'
             ]);
 
             if (!$request->hasFile('logo')) {
@@ -173,23 +174,20 @@ class CompanySettingsController extends Controller
             }
 
             $file = $request->file('logo');
-            $filename = 'company_' . $company->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $imageService = new ImageUploadService();
             
-            // Store in public path for better CORS handling
-            $path = $file->storeAs('public/logos', $filename);
+            // Upload using the service (folder='logos', prefix with company id)
+            $result = $imageService->upload($file, 'logos', 'company_' . $company->id);
             
-            // Generate the full API URL for CORS access
-            $logoUrl = url('/api/storage/logos/' . $filename);
-
             // Update company logo
-            $company->update(['logo_url' => $logoUrl]);
+            $company->update(['logo_url' => $result['url']]);
  
             // Log this action
             \App\Models\AuditLog::create([
                 'company_id' => $company->id,
                 'user_id' => $user->id,
                 'action' => 'Company logo updated',
-                'details' => json_encode(['filename' => $filename]),
+                'details' => json_encode(['filename' => $result['filename']]),
                 'ip_address' => $request->ip(),
             ]);
  
@@ -197,11 +195,6 @@ class CompanySettingsController extends Controller
                 'message' => 'Logo uploaded successfully',
                 'logo_url' => $company->fresh()->logo_url
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
         } catch (\Exception $e) {
             \Log::error('Logo upload error: ' . $e->getMessage());
             return response()->json([
