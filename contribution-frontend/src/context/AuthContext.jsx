@@ -34,11 +34,7 @@ export const AuthProvider = ({ children }) => {
 
                         // Update favicon and page title
                         if (companyData.logo_url) {
-                            // Ensure full URL for Canvas load
-                            const fullLogoUrl = companyData.logo_url.startsWith('http')
-                                ? companyData.logo_url
-                                : `${import.meta.env.VITE_API_URL.replace('/api', '')}${companyData.logo_url}`;
-                            setFavicon(fullLogoUrl);
+                            setFavicon(companyData.logo_url);
                         }
                         setPageTitle(companyData.name);
                     }

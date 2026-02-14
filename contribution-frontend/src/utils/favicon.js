@@ -6,13 +6,21 @@ export const setFavicon = (logoUrl) => {
     if (!logoUrl) return;
 
     try {
-        // Update or create favicon link directly without canvas (avoids CORS issues)
+        // Update or create favicon link
         let favicon = document.querySelector('link[rel="icon"]');
         if (!favicon) {
             favicon = document.createElement('link');
             favicon.rel = 'icon';
-            favicon.type = 'image/png';
             document.head.appendChild(favicon);
+        }
+        
+        // Determine the favicon type based on URL
+        if (logoUrl.includes('.svg')) {
+            favicon.type = 'image/svg+xml';
+        } else if (logoUrl.includes('.webp')) {
+            favicon.type = 'image/webp';
+        } else {
+            favicon.type = 'image/png';
         }
         
         // Set the logo URL directly as favicon

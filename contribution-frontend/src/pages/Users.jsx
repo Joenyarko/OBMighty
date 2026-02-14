@@ -161,6 +161,38 @@ function Users({ roleFilter, title }) {
         }
     };
 
+    const handleDelete = async (userId, userName) => {
+        // Only CEO can delete
+        if (!isCEO) {
+            showError('Only CEO has permission to delete users');
+            return;
+        }
+
+        // Prevent deleting yourself
+        if (userId === user?.id) {
+            showError('You cannot delete your own account');
+            return;
+        }
+
+        const result = await showConfirm(
+            `Delete User "${userName}"?`,
+            'This action cannot be undone.',
+            'Delete',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await userAPI.delete(userId);
+            fetchData();
+            showSuccess(`${userName} has been deleted successfully`);
+        } catch (error) {
+            console.error('Failed to delete user', error);
+            showError(error.response?.data?.message || 'Error deleting user.');
+        }
+    };
+
     return (
         <div className="users-page">
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
@@ -222,6 +254,15 @@ function Users({ roleFilter, title }) {
                                                 onClick={() => navigate(`/performance/${user.id}`)}
                                             >
                                                 Performance
+                                            </button>
+                                        )}
+                                        {isCEO && (user.roles?.[0]?.name === 'worker' || user.roles?.[0]?.name === 'secretary') && (
+                                            <button
+                                                className="btn-danger"
+                                                style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(244, 67, 54, 0.1)', color: '#f44336', border: '1px solid rgba(244, 67, 54, 0.3)' }}
+                                                onClick={() => handleDelete(user.id, user.name)}
+                                            >
+                                                Delete
                                             </button>
                                         )}
                                     </td>
