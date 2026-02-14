@@ -178,8 +178,8 @@ class CompanySettingsController extends Controller
             // Store in public path for better CORS handling
             $path = $file->storeAs('public/logos', $filename);
             
-            // Generate the full public URL (use asset helper to get correct domain)
-            $logoUrl = asset('storage/logos/' . $filename);
+            // Generate the full API URL for CORS access
+            $logoUrl = url('/api/storage/logos/' . $filename);
 
             // Update company logo
             $company->update(['logo_url' => $logoUrl]);
