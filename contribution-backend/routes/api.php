@@ -33,7 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Super Admin Routes (Global Access)
     Route::prefix('admin')
-        ->middleware(['role:super_admin'])
+        ->middleware(['role:super_admin', 'super_admin'])
         ->group(function () {
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
             Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'stats']);

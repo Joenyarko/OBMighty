@@ -78,10 +78,20 @@ class Card extends Model
      */
     public function getFrontImageUrlAttribute()
     {
-        if ($this->front_image) {
-            return Storage::disk('public')->url($this->front_image);
+        if (!$this->front_image) return null;
+        
+        if (str_starts_with($this->front_image, 'http')) {
+            return $this->front_image;
         }
-        return null;
+
+        $path = str_starts_with($this->front_image, '/') ? $this->front_image : '/' . $this->front_image;
+        
+        // Check if it already includes 'storage'
+        if (!str_contains($path, '/storage/')) {
+            $path = '/storage' . $path;
+        }
+
+        return url($path);
     }
 
     /**
@@ -89,10 +99,19 @@ class Card extends Model
      */
     public function getBackImageUrlAttribute()
     {
-        if ($this->back_image) {
-            return Storage::disk('public')->url($this->back_image);
+        if (!$this->back_image) return null;
+        
+        if (str_starts_with($this->back_image, 'http')) {
+            return $this->back_image;
         }
-        return null;
+
+        $path = str_starts_with($this->back_image, '/') ? $this->back_image : '/' . $this->back_image;
+        
+        if (!str_contains($path, '/storage/')) {
+            $path = '/storage' . $path;
+        }
+
+        return url($path);
     }
 
     /**

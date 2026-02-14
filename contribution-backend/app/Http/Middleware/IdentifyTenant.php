@@ -58,9 +58,11 @@ class IdentifyTenant
                      ->first();
              }
 
-             // If still no company, default to the first active company
+             // If still no company and we are on the central API domain, we don't set a company_id
+             // This allows Super Admin routes to function without a tenant scope
              if (!$company) {
-                 $company = Company::where('is_active', true)->first();
+                 app()->instance('central_domain', true);
+                 return $next($request);
              }
         }
 
@@ -70,10 +72,12 @@ class IdentifyTenant
              $company = Company::first(); // Default to first company for local dev
         }
 
-        if ($company) {
-             \Illuminate\Support\Facades\Log::info('Tenant Identified', ['id' => $company->id, 'name' => $company->name, 'db_active' => $company->is_active]);
-        } else {
-             \Illuminate\Support\Facades\Log::warning('Tenant NOT Found', ['host' => $host]);
+        // Final check: If we are on a central domain but no company identified, don't 404
+        // Let the auth/middleware stack handle permissions
+        $isCentral = ($subdomain === 'api' || $host === 'neziz.com' || str_ends_with($host, '.com')); // Add more as needed
+        
+        if (!$company && ($isCentral || app()->has('central_domain'))) {
+             return $next($request);
         }
 
         if (!$company || !$company->is_active) {
