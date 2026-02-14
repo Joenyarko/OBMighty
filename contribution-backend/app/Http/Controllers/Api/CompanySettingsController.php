@@ -26,7 +26,7 @@ class CompanySettingsController extends Controller
             'company' => [
                 'id' => $company->id,
                 'name' => $company->name,
-                'logo_url' => $company->logo_url ? (str_starts_with($company->logo_url, 'http') ? $company->logo_url : url($company->logo_url)) : null,
+                'logo_url' => $company->logo_url,
                 'primary_color' => $company->primary_color,
                 'card_prefix' => $company->card_prefix,
                 'currency' => $company->currency,
@@ -48,9 +48,7 @@ class CompanySettingsController extends Controller
         }
 
         return response()->json([
-            'company' => array_merge($company->toArray(), [
-                'logo_url' => $company->logo_url ? (str_starts_with($company->logo_url, 'http') ? $company->logo_url : url($company->logo_url)) : null
-            ]),
+            'company' => $company,
             'stats' => [
                 'total_branches' => $company->branches()->count(),
                 'total_users' => $company->users()->count(),
@@ -112,12 +110,10 @@ class CompanySettingsController extends Controller
             );
 
             $updatedCompany = $company->fresh();
-            $absoluteLogoUrl = $updatedCompany->logo_url ? (str_starts_with($updatedCompany->logo_url, 'http') ? $updatedCompany->logo_url : url($updatedCompany->logo_url)) : null;
-
             return response()->json([
                 'message' => 'Company settings updated successfully',
-                'company' => array_merge($updatedCompany->toArray(), ['logo_url' => $absoluteLogoUrl]),
-                'logo_url' => $absoluteLogoUrl
+                'company' => $updatedCompany,
+                'logo_url' => $updatedCompany->logo_url
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -187,8 +183,7 @@ class CompanySettingsController extends Controller
 
             // Update company logo
             $company->update(['logo_url' => $logoUrl]);
-            $absoluteLogoUrl = url($logoUrl);
-
+ 
             // Log this action
             \App\Models\AuditLog::log(
                 'Company logo updated',
@@ -197,10 +192,10 @@ class CompanySettingsController extends Controller
                 ['filename' => $filename],
                 $user->id
             );
-
+ 
             return response()->json([
                 'message' => 'Logo uploaded successfully',
-                'logo_url' => $absoluteLogoUrl
+                'logo_url' => $company->logo_url
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

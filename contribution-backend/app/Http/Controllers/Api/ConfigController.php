@@ -34,7 +34,7 @@ class ConfigController extends Controller
 
         $data = [
             'app_name' => $company->name,
-            'logo_url' => $company->logo_url ? (str_starts_with($company->logo_url, 'http') ? $company->logo_url : url($company->logo_url)) : null,
+            'logo_url' => $company->logo_url,
             'primary_color' => $company->primary_color,
             'domain' => $company->domain,
             'subdomain' => $company->subdomain,

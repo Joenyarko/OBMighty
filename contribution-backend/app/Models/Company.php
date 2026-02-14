@@ -22,6 +22,24 @@ class Company extends Model
         'timezone',
         'is_active',
     ];
+ 
+    /**
+     * Get the absolute URL for the company logo.
+     */
+    public function getLogoUrlAttribute($value)
+    {
+        if (!$value) return null;
+        
+        // If it's already a full URL, return it
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+ 
+        // Ensure it starts with / if not already
+        $path = str_starts_with($value, '/') ? $value : '/' . $value;
+        
+        return url($path);
+    }
 
     protected $casts = [
         'is_active' => 'boolean',
