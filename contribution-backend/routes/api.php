@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SurplusController;
 use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\CustomerCardController;
 use App\Http\Controllers\Api\ImageController;
+use App\Http\Controllers\Api\ManifestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,6 +43,7 @@ Route::middleware(['cors.storage'])->group(function () {
 // Public routes
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
 Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);
+Route::get('/manifest.json', [ManifestController::class, 'getPublicManifest']); // Public PWA manifest (fallback)
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -49,6 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Unified image upload endpoint (for all image types - logo, cards, products, etc.)
     Route::post('/images/upload', [ImageController::class, 'upload']);
     Route::delete('/images/{folder}/{filename}', [ImageController::class, 'delete']);
+    
+    // Dynamic PWA manifest with company branding
+    Route::get('/manifest', [ManifestController::class, 'getManifest']);
     // Super Admin Routes (Global Access)
     Route::prefix('admin')
         ->middleware(['role:super_admin', 'super_admin'])
