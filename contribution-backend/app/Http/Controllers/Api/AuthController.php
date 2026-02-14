@@ -15,25 +15,12 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('Login Request Headers/Body', [
-            'headers' => $request->headers->all(),
-            'body' => $request->all(),
-        ]);
-
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        \Illuminate\Support\Facades\Log::info('Login Attempt', [
-            'email' => $request->email,
-            'tenant_id' => config('app.company_id'),
-            'host' => $request->getHost(),
-        ]);
-
         $user = User::where('email', $request->email)->first();
-
-        \Illuminate\Support\Facades\Log::info('User Found?', ['found' => $user ? 'yes' : 'no']);
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
