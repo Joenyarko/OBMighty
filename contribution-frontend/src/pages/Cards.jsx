@@ -259,16 +259,15 @@ function Cards() {
 
             {/* Pagination Controls */}
             {pagination.total > 0 && (
-                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
-                    <div style={{ color: 'var(--text-secondary)' }}>
+                <div className="pagination-controls">
+                    <div className="pagination-info">
                         Showing {pagination.from}–{pagination.to} of {pagination.total} cards
                     </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="pagination-buttons">
                         <button
                             onClick={() => handlePageChange(1)}
                             disabled={pagination.current_page === 1}
                             className="btn-secondary"
-                            style={{ padding: '6px 12px' }}
                         >
                             First
                         </button>
@@ -276,7 +275,6 @@ function Cards() {
                             onClick={() => handlePageChange(pagination.current_page - 1)}
                             disabled={pagination.current_page === 1}
                             className="btn-secondary"
-                            style={{ padding: '6px 12px' }}
                         >
                             Previous
                         </button>
@@ -284,7 +282,6 @@ function Cards() {
                             onClick={() => handlePageChange(pagination.current_page + 1)}
                             disabled={pagination.current_page === pagination.last_page}
                             className="btn-secondary"
-                            style={{ padding: '6px 12px' }}
                         >
                             Next
                         </button>
@@ -292,7 +289,6 @@ function Cards() {
                             onClick={() => handlePageChange(pagination.last_page)}
                             disabled={pagination.current_page === pagination.last_page}
                             className="btn-secondary"
-                            style={{ padding: '6px 12px' }}
                         >
                             Last
                         </button>

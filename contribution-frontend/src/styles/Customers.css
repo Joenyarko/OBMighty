@@ -394,3 +394,80 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     font-weight: bold;
 }
+
+@media (max-width: 768px) {
+    .customers-page {
+        padding: 16px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 24px;
+        text-align: center;
+    }
+
+    .page-header .header-actions {
+        width: 100%;
+        display: flex;
+        gap: 12px;
+    }
+
+    .page-header .btn-primary {
+        flex: 1;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        padding: 20px;
+        margin: auto;
+    }
+
+    .card-selection-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 16px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px;
+        /* Prevent iOS zoom */
+    }
+
+    .pagination-controls {
+        padding: 8px;
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .pagination-buttons {
+        gap: 4px;
+    }
+
+    .pagination-buttons .btn-secondary {
+        padding: 6px 10px;
+        font-size: 13px;
+        flex: 1;
+    }
+}

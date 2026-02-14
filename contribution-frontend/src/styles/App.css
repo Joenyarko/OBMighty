@@ -302,20 +302,45 @@ tr:hover {
   }
 
   /* Responsive Modals */
+  .modal-overlay {
+    align-items: center;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
   .modal-content {
     width: 95% !important;
     max-width: 95% !important;
-    margin: 10px auto;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 16px !important;
+    margin: auto;
+    max-height: none;
+    overflow-y: visible;
+    padding: 20px 16px !important;
   }
 
-  .modal-overlay {
-    align-items: flex-end;
-    /* Sheet-like on mobile? Or center? Center is fine */
-    padding: 10px;
+  /* Responsive Pagination */
+  .pagination-controls {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: center !important;
+    text-align: center;
   }
+
+  .pagination-controls>div:last-child {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* Global Pagination Styles */
+.pagination-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding: 12px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
 }
 
 /* Specific Customer Styles (Moved from CustomersTable.css) */
