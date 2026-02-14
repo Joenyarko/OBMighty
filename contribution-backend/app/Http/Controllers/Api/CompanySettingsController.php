@@ -57,20 +57,30 @@ class CompanySettingsController extends Controller
                 'timezone' => 'sometimes|string|timezone',
             ]);
 
-            $company->update($validated);
+            // Only update fields that were provided
+            $updateData = [];
+            foreach ($validated as $key => $value) {
+                if ($value !== null) {
+                    $updateData[$key] = $value;
+                }
+            }
+
+            if (!empty($updateData)) {
+                $company->update($updateData);
+            }
 
             // Log this change
             \App\Models\AuditLog::create([
                 'company_id' => $company->id,
                 'user_id' => $user->id,
                 'action' => 'Company settings updated',
-                'details' => json_encode($validated),
+                'details' => json_encode($updateData),
                 'ip_address' => $request->ip(),
             ]);
 
             return response()->json([
                 'message' => 'Company settings updated successfully',
-                'company' => $company
+                'company' => $company->fresh()
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -78,6 +88,7 @@ class CompanySettingsController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            \Log::error('Company settings update error: ' . $e->getMessage());
             return response()->json([
                 'message' => 'Error updating settings',
                 'error' => $e->getMessage()
@@ -106,4 +117,63 @@ class CompanySettingsController extends Controller
             ]
         ]);
     }
-}
+
+    /**
+     * Upload company logo
+     */
+    public function uploadLogo(Request $request)
+    {
+        $user = $request->user();
+        $company = $user->company;
+
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        try {
+            $request->validate([
+                'logo' => 'required|image|mimes:jpeg,png,svg,webp|max:5120'
+            ]);
+
+            if (!$request->hasFile('logo')) {
+                return response()->json(['message' => 'No file provided'], 400);
+            }
+
+            $file = $request->file('logo');
+            $filename = 'logos/' . $company->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            // Store the file
+            $path = $file->storeAs('public', $filename);
+            
+            // Generate the URL
+            $logoUrl = '/storage/' . $filename;
+
+            // Update company logo
+            $company->update(['logo_url' => $logoUrl]);
+
+            // Log this action
+            \App\Models\AuditLog::create([
+                'company_id' => $company->id,
+                'user_id' => $user->id,
+                'action' => 'Company logo updated',
+                'details' => json_encode(['filename' => $filename]),
+                'ip_address' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'message' => 'Logo uploaded successfully',
+                'logo_url' => $logoUrl
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Logo upload error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error uploading logo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }

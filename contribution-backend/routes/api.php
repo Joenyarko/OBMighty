@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:ceo')->group(function () {
         Route::get('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'show']);
         Route::post('/company/settings', [App\Http\Controllers\Api\CompanySettingsController::class, 'update']);
+        Route::post('/company/upload-logo', [App\Http\Controllers\Api\CompanySettingsController::class, 'uploadLogo']);
         Route::get('/company/profile', [App\Http\Controllers\Api\CompanySettingsController::class, 'profile']);
         Route::get('/company/dashboard', [App\Http\Controllers\Api\CompanyDashboardController::class, 'index']);
     });
