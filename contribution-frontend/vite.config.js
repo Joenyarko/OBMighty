@@ -9,25 +9,14 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['logo.jpeg', 'Neziz-logo2.png'],
       manifest: {
-        name: 'Daily Contribution Manager',
-        short_name: 'ContribManager',
-        description: 'Multi-branch contribution tracking system',
+        name: 'Management System',
+        short_name: 'System',
+        description: 'Business management and finance system',
         theme_color: '#4F46E5',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
-        icons: [
-          {
-            src: 'logo.jpeg',
-            sizes: '192x192',
-            type: 'image/jpeg'
-          },
-          {
-            src: 'logo.jpeg',
-            sizes: '512x512',
-            type: 'image/jpeg'
-          }
-        ]
+        icons: []
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],

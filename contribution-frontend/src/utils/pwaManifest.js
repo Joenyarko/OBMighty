@@ -47,17 +47,22 @@ export async function updatePWAManifest(companyData) {
         if (appleIcon) appleIcon.href = companyData.logo_url;
       }
 
-      const appleTitle = document.getElementById('apple-app-title');
-      if (appleTitle) appleTitle.content = companyName;
-
       const manifestLink = document.getElementById('manifest-link');
       if (manifestLink) {
         const manifestUrl = `/api/pwa-manifest/${companyData.id}`;
-        manifestLink.href = manifestUrl;
+
+        // Android/Chrome hack: replace the link tag to force re-evaluation
+        const newManifestLink = manifestLink.cloneNode(true);
+        newManifestLink.href = manifestUrl;
+        manifestLink.parentNode.replaceChild(newManifestLink, manifestLink);
       }
 
       // 2. Sync with Service Worker for Offline support
       if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => registration.update());
+        });
+
         navigator.serviceWorker.ready.then((registration) => {
           if (registration.active) {
             // Send manifest data to store in SW (IndexedDB)
