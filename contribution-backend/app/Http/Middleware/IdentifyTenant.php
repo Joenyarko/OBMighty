@@ -28,10 +28,30 @@ class IdentifyTenant
         ]);
         
         // Find company by domain or subdomain
+        $subdomain = explode('.', $host)[0];
         $company = Company::where('domain', $host)
             ->orWhere('subdomain', $host)
-            ->orWhere('subdomain', explode('.', $host)[0]) // Try matching "client" from "client.obmighty.com"
+            ->orWhere('subdomain', $subdomain)
             ->first();
+
+        // Fallback for central API domain (e.g., api.neziz.cloud)
+        if (!$company && $subdomain === 'api') {
+             // Try to identify company from the Origin header (e.g., company1.neziz.cloud)
+             $origin = $request->header('Origin');
+             if ($origin) {
+                 $originHost = parse_url($origin, PHP_URL_HOST);
+                 $originSubdomain = explode('.', $originHost)[0];
+                 $company = Company::where('domain', $originHost)
+                     ->orWhere('subdomain', $originHost)
+                     ->orWhere('subdomain', $originSubdomain)
+                     ->first();
+             }
+
+             // If still no company, default to the first active company
+             if (!$company) {
+                 $company = Company::where('is_active', true)->first();
+             }
+        }
 
         // Local development fallback
         if (!$company && ($host === 'localhost' || $host === '127.0.0.1')) {
