@@ -84,6 +84,44 @@ function CompanySettings() {
         }));
     };
 
+    const handleLogoUpload = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) {
+            showError('Please upload a valid image file (PNG, JPEG, SVG, or WebP)');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showError('File size must be less than 5MB');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            const formDataUpload = new FormData();
+            formDataUpload.append('logo', file);
+
+            const response = await api.post('/company/upload-logo', formDataUpload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            setFormData(prev => ({
+                ...prev,
+                logo_url: response.data.logo_url
+            }));
+            
+            showSuccess('Logo uploaded successfully');
+        } catch (error) {
+            showError(error.response?.data?.message || 'Failed to upload logo');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleSave = async () => {
         try {
             setSaving(true);
@@ -286,21 +324,35 @@ function CompanySettings() {
                             </div>
 
                             <div className="form-group">
-                                <label>Logo URL</label>
-                                <input
-                                    type="url"
-                                    name="logo_url"
-                                    value={formData.logo_url}
-                                    onChange={handleInputChange}
-                                    placeholder="https://example.com/logo.png"
-                                    className={errors.logo_url ? 'input-error' : ''}
-                                />
-                                {errors.logo_url && <span className="error-text">{errors.logo_url}</span>}
-                                {formData.logo_url && (
-                                    <div className="logo-preview">
-                                        <img src={formData.logo_url} alt="Logo preview" />
+                                <label>Company Logo</label>
+                                <div className="logo-upload-section">
+                                    <div className="logo-upload-input">
+                                        <input
+                                            type="file"
+                                            id="logo-file"
+                                            accept="image/*"
+                                            onChange={handleLogoUpload}
+                                            disabled={saving}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="nex-btn-secondary"
+                                            onClick={() => document.getElementById('logo-file').click()}
+                                            disabled={saving}
+                                        >
+                                            {saving ? 'Uploading...' : 'Upload Logo'}
+                                        </button>
+                                        <small>PNG, JPEG, SVG, or WebP (max 5MB)</small>
                                     </div>
-                                )}
+
+                                    {formData.logo_url && (
+                                        <div className="logo-preview">
+                                            <img src={formData.logo_url} alt="Logo preview" />
+                                            <p>Current Logo</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="color-preview" style={{ backgroundColor: formData.primary_color }}>
