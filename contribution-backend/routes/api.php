@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/company/info', [App\Http\Controllers\Api\CompanySettingsController::class, 'getCompanyInfo']);
     Route::post('/profile', [AuthController::class, 'updateProfile']);
     
     // Company Settings (CEO only)
