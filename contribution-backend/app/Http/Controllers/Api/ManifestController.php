@@ -126,35 +126,72 @@ class ManifestController extends Controller
      */
     public function getPublicManifest(Request $request)
     {
-        $manifest = [
-            'name' => 'Management System',
-            'short_name' => 'Management',
-            'description' => 'Business management and finance system',
-            'start_url' => '/',
-            'scope' => '/',
-            'display' => 'standalone',
-            'orientation' => 'portrait-or-landscape',
-            'theme_color' => '#4F46E5',
-            'background_color' => '#ffffff',
-            'icons' => [
-                [
-                    'src' => url('/logo.jpeg'),
-                    'sizes' => '192x192',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
+        // Check if a company was identified by the middleware (IdentifyTenant)
+        $companyId = config('app.company_id');
+        $company = null;
+        
+        if ($companyId) {
+            $company = \App\Models\Company::find($companyId);
+        }
+
+        if ($company) {
+            $manifest = [
+                'name' => $company->name,
+                'short_name' => substr($company->name, 0, 12),
+                'description' => $company->name . ' management system',
+                'start_url' => '/',
+                'scope' => '/',
+                'display' => 'standalone',
+                'orientation' => 'portrait-or-landscape',
+                'theme_color' => $company->primary_color ?? '#4F46E5',
+                'background_color' => '#ffffff',
+                'icons' => [
+                    [
+                        'src' => $company->logo_url ?? url('/logo.jpeg'),
+                        'sizes' => '192x192',
+                        'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => $company->logo_url ?? url('/logo.jpeg'),
+                        'sizes' => '512x512',
+                        'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
+                        'purpose' => 'any'
+                    ]
                 ],
-                [
-                    'src' => url('/logo.jpeg'),
-                    'sizes' => '512x512',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ]
-            ],
-            'categories' => ['productivity', 'finance']
-        ];
+                'categories' => ['productivity', 'finance']
+            ];
+        } else {
+            $manifest = [
+                'name' => 'Management System',
+                'short_name' => 'Management',
+                'description' => 'Business management and finance system',
+                'start_url' => '/',
+                'scope' => '/',
+                'display' => 'standalone',
+                'orientation' => 'portrait-or-landscape',
+                'theme_color' => '#4F46E5',
+                'background_color' => '#ffffff',
+                'icons' => [
+                    [
+                        'src' => url('/logo.jpeg'),
+                        'sizes' => '192x192',
+                        'type' => 'image/jpeg',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => url('/logo.jpeg'),
+                        'sizes' => '512x512',
+                        'type' => 'image/jpeg',
+                        'purpose' => 'any'
+                    ]
+                ],
+                'categories' => ['productivity', 'finance']
+            ];
+        }
 
         return response()->json($manifest)
             ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', 'public, max-age=86400');
+            ->header('Cache-Control', 'public, max-age=3600');
     }
 }

@@ -12,6 +12,30 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Fetch public company config (for branding/manifest)
+        const fetchPublicConfig = async () => {
+            try {
+                const configRes = await authAPI.getConfig();
+                if (configRes?.data) {
+                    const { app_name, logo_url } = configRes.data;
+
+                    // Apply branding even before login
+                    if (logo_url) setFavicon(logo_url);
+                    if (app_name) setPageTitle(app_name);
+
+                    // Update PWA manifest with initial branding
+                    updatePWAManifest({
+                        name: app_name,
+                        logo_url: logo_url
+                    });
+                }
+            } catch (err) {
+                console.warn('Could not fetch public config:', err);
+            }
+        };
+
+        fetchPublicConfig();
+
         if (token) {
             fetchUser();
         } else {
@@ -38,7 +62,7 @@ export const AuthProvider = ({ children }) => {
                             setFavicon(companyData.logo_url);
                         }
                         setPageTitle(companyData.name);
-                        
+
                         // Update PWA manifest with company branding (for iOS and all devices)
                         updatePWAManifest(companyData);
                     }

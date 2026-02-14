@@ -39,20 +39,30 @@ export async function updatePWAManifest(companyData) {
 
     // Update static tags and Service Worker
     function syncBranding() {
-      // 1. Update static tags (iOS Icons/Title)
+      // 1. Update static tags (iOS Icons/Title/Favicon)
       if (companyData.logo_url) {
         const appleIcon = document.getElementById('apple-touch-icon');
         if (appleIcon) appleIcon.href = companyData.logo_url;
+
+        // Also update the standard favicon
+        const favicon = document.querySelector('link[rel="icon"]');
+        if (favicon) favicon.href = companyData.logo_url;
       }
 
+      const appleTitle = document.getElementById('apple-app-title');
+      if (appleTitle) appleTitle.content = companyData.name;
+      document.title = `${companyData.name} - Contribution Manager`;
+
+      // 2. Swapping manifest link (only if needed or to force re-fetch)
+      // Since backend now brands /manifest.json automatically, we only touch this if we want to bypass caching
       const manifestLink = document.getElementById('manifest-link');
       if (manifestLink) {
-        const manifestUrl = `/api/pwa-manifest/${companyData.id}`;
+        const currentHref = manifestLink.getAttribute('href');
+        const brandedUrl = `/api/manifest.json?v=${companyData.id || 'default'}`; // Add version to force refresh
 
-        // Android/Chrome hack: replace the link tag to force re-evaluation
-        const newManifestLink = manifestLink.cloneNode(true);
-        newManifestLink.href = manifestUrl;
-        manifestLink.parentNode.replaceChild(newManifestLink, manifestLink);
+        if (currentHref !== brandedUrl) {
+          manifestLink.href = brandedUrl;
+        }
       }
 
       // 2. Sync with Service Worker for Offline support
