@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
-import Login from '../pages/Login';
 
 const TenantContext = createContext(null);
 
@@ -61,7 +60,20 @@ export const TenantProvider = ({ children }) => {
     };
 
     if (loading) {
-        return <Login />;
+        return (
+            <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh',
+                backgroundColor: '#121212',
+                color: '#D4AF37',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                fontSize: '16px'
+            }}>
+                Loading...
+            </div>
+        );
     }
 
     return (
