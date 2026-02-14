@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { showSuccess, showError } from '../utils/sweetalert';
 import { Building, Save, AlertCircle, Palette, Mail, Globe, Zap } from 'lucide-react';
+import ImageUpload from '../components/ImageUpload';
 import '../styles/CompanySettings.css';
 
 function CompanySettings() {
@@ -84,42 +85,13 @@ function CompanySettings() {
         }));
     };
 
-    const handleLogoUpload = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        // Validate file type
-        if (!['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.type)) {
-            showError('Please upload a valid image file (PNG, JPEG, SVG, or WebP)');
-            return;
-        }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            showError('File size must be less than 5MB');
-            return;
-        }
-
-        try {
-            setSaving(true);
-            const formDataUpload = new FormData();
-            formDataUpload.append('logo', file);
-
-            const response = await api.post('/company/upload-logo', formDataUpload, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-
-            setFormData(prev => ({
-                ...prev,
-                logo_url: response.data.logo_url
-            }));
-            
-            showSuccess('Logo uploaded successfully');
-        } catch (error) {
-            showError(error.response?.data?.message || 'Failed to upload logo');
-        } finally {
-            setSaving(false);
-        }
+    const handleLogoUpload = (imageUrl, imageData) => {
+        // Update formData with the new logo URL
+        setFormData(prev => ({
+            ...prev,
+            logo_url: imageUrl
+        }));
+        showSuccess('Logo uploaded successfully');
     };
 
     const handleSave = async () => {
@@ -333,34 +305,14 @@ function CompanySettings() {
 
                             <div className="form-group">
                                 <label>Company Logo</label>
-                                <div className="logo-upload-section">
-                                    <div className="logo-upload-input">
-                                        <input
-                                            type="file"
-                                            id="logo-file"
-                                            accept="image/*"
-                                            onChange={handleLogoUpload}
-                                            disabled={saving}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="nex-btn-secondary"
-                                            onClick={() => document.getElementById('logo-file').click()}
-                                            disabled={saving}
-                                        >
-                                            {saving ? 'Uploading...' : 'Upload Logo'}
-                                        </button>
-                                        <small>PNG, JPEG, SVG, or WebP (max 5MB)</small>
-                                    </div>
-
-                                    {formData.logo_url && (
-                                        <div className="logo-preview">
-                                            <img src={formData.logo_url} alt="Logo preview" />
-                                            <p>Current Logo</p>
-                                        </div>
-                                    )}
-                                </div>
+                                <ImageUpload 
+                                    onImageUpload={handleLogoUpload}
+                                    currentImage={formData.logo_url}
+                                    folder="logos"
+                                    label="Upload Company Logo"
+                                    maxSize={5}
+                                    showLabel={true}
+                                />
                             </div>
 
                             <div className="color-preview" style={{ backgroundColor: formData.primary_color }}>

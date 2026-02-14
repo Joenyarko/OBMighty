@@ -277,6 +277,239 @@
 }
 
 /* Logo Upload Section */
+/* Logo Upload - Drag and Drop */
+.logo-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 20px 0;
+}
+
+.logo-dropzone:hover {
+    border-color: #4f46e5;
+    background: linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%);
+}
+
+.logo-dropzone.active {
+    border-color: #4f46e5;
+    background: linear-gradient(135deg, #eef2ff 0%, #ede9fe 100%);
+    transform: scale(1.02);
+}
+
+.dropzone-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.upload-icon {
+    color: #4f46e5;
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+.logo-dropzone:hover .upload-icon {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.dropzone-content h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dropzone-content p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.dropzone-content .btn-primary {
+    margin-top: 8px;
+    padding: 8px 20px;
+    font-size: 13px;
+}
+
+/* Logo Preview Modal */
+.logo-preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.preview-content {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.preview-content h3 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.preview-img {
+    max-width: 100%;
+    max-height: 250px;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    background: #f9fafb;
+    padding: 10px;
+}
+
+.preview-text {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.preview-actions .btn-success {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preview-actions .btn-success:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.preview-actions .btn-success:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.preview-actions .btn-cancel {
+    background: #e5e7eb;
+    color: var(--text-primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preview-actions .btn-cancel:hover:not(:disabled) {
+    background: #d1d5db;
+    transform: translateY(-2px);
+}
+
+.preview-actions .btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Current Logo Display */
+.logo-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.logo-display {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+}
+
+.logo-display img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    padding: 8px;
+}
+
+.logo-label {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.btn-link-secondary {
+    background: none;
+    border: none;
+    color: #4f46e5;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.btn-link-secondary:hover {
+    color: #4338ca;
+    text-decoration: underline;
+}
+
+/* Old styles - keeping for reference but replaced above */
 .logo-upload-section {
     display: flex;
     flex-direction: column;
