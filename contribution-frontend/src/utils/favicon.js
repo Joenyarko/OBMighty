@@ -14,7 +14,7 @@ export const setFavicon = (logoUrl) => {
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        
+
         img.onload = () => {
             // Draw white background
             ctx.fillStyle = '#ffffff';
@@ -28,7 +28,7 @@ export const setFavicon = (logoUrl) => {
 
             // Convert canvas to favicon
             const faviconUrl = canvas.toDataURL('image/png');
-            
+
             // Update or create favicon link
             let favicon = document.querySelector('link[rel="icon"]');
             if (!favicon) {
@@ -40,13 +40,25 @@ export const setFavicon = (logoUrl) => {
         };
 
         img.onerror = () => {
-            console.warn('Failed to load logo for favicon:', logoUrl);
+            console.warn('Failed to load logo for favicon, falling back to direct URL:', logoUrl);
+            updateFaviconLink(logoUrl);
         };
 
         img.src = logoUrl;
     } catch (error) {
-        console.error('Error setting favicon:', error);
+        console.error('Error setting favicon, falling back to direct URL:', error);
+        updateFaviconLink(logoUrl);
     }
+};
+
+const updateFaviconLink = (url) => {
+    let favicon = document.querySelector('link[rel="icon"]');
+    if (!favicon) {
+        favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        document.head.appendChild(favicon);
+    }
+    favicon.href = url;
 };
 
 export const setPageTitle = (companyName) => {
