@@ -14,8 +14,12 @@ return new class extends Migration
     {
         // Helper function to check if index exists
         $indexExists = function($table, $indexName) {
-            $indexes = DB::select(DB::raw("SHOW INDEXES FROM $table WHERE Key_name = '$indexName'"));
-            return count($indexes) > 0;
+            try {
+                $indexes = DB::select("SHOW INDEXES FROM `$table` WHERE Key_name = ?", [$indexName]);
+                return count($indexes) > 0;
+            } catch (\Exception $e) {
+                return false;
+            }
         };
 
         // Index for payment queries by date range
