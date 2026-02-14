@@ -26,7 +26,7 @@ class CompanySettingsController extends Controller
             'company' => [
                 'id' => $company->id,
                 'name' => $company->name,
-                'logo_url' => $company->logo_url,
+                'logo_url' => $company->logo_url ? (str_starts_with($company->logo_url, 'http') ? $company->logo_url : url($company->logo_url)) : null,
                 'primary_color' => $company->primary_color,
                 'card_prefix' => $company->card_prefix,
                 'currency' => $company->currency,
@@ -48,7 +48,9 @@ class CompanySettingsController extends Controller
         }
 
         return response()->json([
-            'company' => $company,
+            'company' => array_merge($company->toArray(), [
+                'logo_url' => $company->logo_url ? (str_starts_with($company->logo_url, 'http') ? $company->logo_url : url($company->logo_url)) : null
+            ]),
             'stats' => [
                 'total_branches' => $company->branches()->count(),
                 'total_users' => $company->users()->count(),
@@ -99,21 +101,23 @@ class CompanySettingsController extends Controller
             if (!empty($updateData)) {
                 $company->update($updateData);
             }
-
-            // Log this change
-            \App\Models\AuditLog::create([
-                'company_id' => $company->id,
-                'user_id' => $user->id,
-                'action' => 'Company settings updated',
-                'details' => json_encode($updateData),
-                'ip_address' => $request->ip(),
-            ]);
+            
+            // Log this change using the static log() method to ensure all fields are set
+            \App\Models\AuditLog::log(
+                'Company settings updated',
+                $company,
+                null, // old values
+                $updateData,
+                $user->id
+            );
 
             $updatedCompany = $company->fresh();
+            $absoluteLogoUrl = $updatedCompany->logo_url ? (str_starts_with($updatedCompany->logo_url, 'http') ? $updatedCompany->logo_url : url($updatedCompany->logo_url)) : null;
+
             return response()->json([
                 'message' => 'Company settings updated successfully',
-                'company' => $updatedCompany,
-                'logo_url' => $updatedCompany->logo_url
+                'company' => array_merge($updatedCompany->toArray(), ['logo_url' => $absoluteLogoUrl]),
+                'logo_url' => $absoluteLogoUrl
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -183,19 +187,20 @@ class CompanySettingsController extends Controller
 
             // Update company logo
             $company->update(['logo_url' => $logoUrl]);
+            $absoluteLogoUrl = url($logoUrl);
 
             // Log this action
-            \App\Models\AuditLog::create([
-                'company_id' => $company->id,
-                'user_id' => $user->id,
-                'action' => 'Company logo updated',
-                'details' => json_encode(['filename' => $filename]),
-                'ip_address' => $request->ip(),
-            ]);
+            \App\Models\AuditLog::log(
+                'Company logo updated',
+                $company,
+                null,
+                ['filename' => $filename],
+                $user->id
+            );
 
             return response()->json([
                 'message' => 'Logo uploaded successfully',
-                'logo_url' => $logoUrl
+                'logo_url' => $absoluteLogoUrl
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([

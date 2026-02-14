@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
             const response = await authAPI.me();
             const userData = response.data.user;
             setUser(userData);
-            
+
             // Fetch company data if user has company
             if (userData.company_id) {
                 try {
@@ -31,10 +31,14 @@ export const AuthProvider = ({ children }) => {
                     if (companyRes?.data?.company) {
                         const companyData = companyRes.data.company;
                         setCompany(companyData);
-                        
+
                         // Update favicon and page title
                         if (companyData.logo_url) {
-                            setFavicon(companyData.logo_url);
+                            // Ensure full URL for Canvas load
+                            const fullLogoUrl = companyData.logo_url.startsWith('http')
+                                ? companyData.logo_url
+                                : `${import.meta.env.VITE_API_URL.replace('/api', '')}${companyData.logo_url}`;
+                            setFavicon(fullLogoUrl);
                         }
                         setPageTitle(companyData.name);
                     }
