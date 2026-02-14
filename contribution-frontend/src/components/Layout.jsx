@@ -14,7 +14,7 @@ function Layout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
     const [collapsed, setCollapsed] = useState(false); // Desktop toggle
     const [openSubmenu, setOpenSubmenu] = useState('');
-    const { user, logout, isCEO, isSecretary, hasRole } = useAuth();
+    const { user, company, logout, isCEO, isSecretary, hasRole } = useAuth();
     const { tenant } = useTenant(); // Get tenant config
     const navigate = useNavigate();
     const location = useLocation();
@@ -190,13 +190,13 @@ function Layout({ children }) {
                 <div className="sidebar-header">
                     <div className="brand">
                         <img
-                            src={tenant?.logo_url || "/logo.jpeg"}
+                            src={company?.logo_url || tenant?.logo_url || "/logo.jpeg"}
                             alt="Logo"
                             className="logo"
                         />
                         {!collapsed && (
                             <div className="brand-text">
-                                <h2>{tenant?.app_name || 'Contribution Manager'}</h2>
+                                <h2>{company?.name || tenant?.app_name || 'Contribution Manager'}</h2>
                                 <span>Contribution Manager</span>
                             </div>
                         )}

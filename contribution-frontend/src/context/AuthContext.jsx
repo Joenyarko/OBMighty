@@ -1,10 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
+import { setFavicon, setPageTitle } from '../utils/favicon';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [company, setCompany] = useState(null);
     const [token, setToken] = useState(localStorage.getItem('token'));
     const [loading, setLoading] = useState(true);
 
@@ -19,7 +21,27 @@ export const AuthProvider = ({ children }) => {
     const fetchUser = async () => {
         try {
             const response = await authAPI.me();
-            setUser(response.data.user);
+            const userData = response.data.user;
+            setUser(userData);
+            
+            // Fetch company data if user has company
+            if (userData.company_id) {
+                try {
+                    const companyRes = await authAPI.getCompanyInfo?.();
+                    if (companyRes?.data?.company) {
+                        const companyData = companyRes.data.company;
+                        setCompany(companyData);
+                        
+                        // Update favicon and page title
+                        if (companyData.logo_url) {
+                            setFavicon(companyData.logo_url);
+                        }
+                        setPageTitle(companyData.name);
+                    }
+                } catch (err) {
+                    console.warn('Failed to fetch company info:', err);
+                }
+            }
         } catch (error) {
             console.error('Failed to fetch user:', error);
             logout();
@@ -59,6 +81,7 @@ export const AuthProvider = ({ children }) => {
             localStorage.removeItem('user');
             setToken(null);
             setUser(null);
+            setCompany(null);
         }
     };
 
@@ -74,6 +97,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        company,
         token,
         loading,
         login,

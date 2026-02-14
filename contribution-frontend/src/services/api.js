@@ -46,6 +46,7 @@ export const authAPI = {
     login: (credentials) => api.post('/login', credentials),
     logout: () => api.post('/logout'),
     me: () => api.get('/me'),
+    getCompanyInfo: () => api.get('/company/info'),
 };
 
 // Customer API

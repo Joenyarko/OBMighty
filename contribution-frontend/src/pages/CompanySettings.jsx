@@ -127,14 +127,22 @@ function CompanySettings() {
             setSaving(true);
             setErrors({});
 
-            // Validate card prefix
-            if (formData.card_prefix && !/^[A-Z0-9]+$/.test(formData.card_prefix)) {
-                setErrors({ card_prefix: 'Card prefix must contain only uppercase letters and numbers' });
+            // Validate card prefix - allow both uppercase and lowercase
+            if (formData.card_prefix && !/^[A-Za-z0-9]+$/.test(formData.card_prefix)) {
+                setErrors({ card_prefix: 'Card prefix must contain only letters and numbers' });
                 return;
             }
 
             const response = await api.post('/company/settings', formData);
+            
+            // Update company and logo from response
             setCompany(response.data.company);
+            setFormData(prev => ({
+                ...prev,
+                logo_url: response.data.logo_url || response.data.company?.logo_url || prev.logo_url,
+                card_prefix: response.data.company?.card_prefix || prev.card_prefix,
+            }));
+            
             showSuccess(response.data.message);
         } catch (error) {
             if (error.response?.data?.errors) {
