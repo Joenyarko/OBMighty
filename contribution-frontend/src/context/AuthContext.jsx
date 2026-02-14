@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { setFavicon, setPageTitle } from '../utils/favicon';
+import { updatePWAManifest, resetPWAManifest } from '../utils/pwaManifest';
 
 const AuthContext = createContext(null);
 
@@ -38,10 +39,8 @@ export const AuthProvider = ({ children }) => {
                         }
                         setPageTitle(companyData.name);
                         
-                        // Update PWA manifest with company branding
-                        if (window.updateManifest) {
-                            window.updateManifest(true);
-                        }
+                        // Update PWA manifest with company branding (for iOS and all devices)
+                        updatePWAManifest(companyData);
                     }
                 } catch (err) {
                     console.warn('Failed to fetch company info:', err);
@@ -67,11 +66,6 @@ export const AuthProvider = ({ children }) => {
             setToken(token);
             setUser(user);
 
-            // Update PWA manifest with company branding
-            if (window.updateManifest) {
-                window.updateManifest(true);
-            }
-
             return { success: true };
         } catch (error) {
             return {
@@ -93,10 +87,8 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setCompany(null);
 
-            // Reset PWA manifest to public version
-            if (window.updateManifest) {
-                window.updateManifest(false);
-            }
+            // Reset PWA manifest to default
+            resetPWAManifest();
         }
     };
 

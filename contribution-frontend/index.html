@@ -5,18 +5,19 @@
   <meta charset="UTF-8" />
   <!-- Favicon will be set dynamically by AuthContext -->
   <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
-  
+  <link id="apple-touch-icon" rel="apple-touch-icon" href="/logo.jpeg" />
+
   <!-- Dynamic PWA Manifest - loads company branding when authenticated -->
   <link id="manifest-link" rel="manifest" href="/manifest.json" />
-  
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#4F46E5" />
   <meta name="description" content="Multi-branch contribution tracking system" />
   <title>Daily Contribution Manager</title>
-  
+
   <script>
     // Update manifest when user logs in
-    window.updateManifest = function(isAuthenticated) {
+    window.updateManifest = function (isAuthenticated) {
       const manifestLink = document.getElementById('manifest-link');
       if (isAuthenticated) {
         // Use authenticated endpoint to get company-specific manifest
