@@ -20,22 +20,20 @@ export async function updatePWAManifest(companyData) {
       orientation: 'portrait-or-landscape',
       theme_color: companyData.primary_color || '#4F46E5',
       background_color: '#ffffff',
-      icons: companyData.logo_url
-        ? [
-          {
-            src: companyData.logo_url,
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: companyData.logo_url,
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          }
-        ]
-        : [],
+      icons: [
+        {
+          src: companyData.logo_url || '/logo.jpeg',
+          sizes: '192x192',
+          type: (companyData.logo_url && companyData.logo_url.endsWith('.png')) ? 'image/png' : 'image/jpeg',
+          purpose: 'any'
+        },
+        {
+          src: companyData.logo_url || '/logo.jpeg',
+          sizes: '512x512',
+          type: (companyData.logo_url && companyData.logo_url.endsWith('.png')) ? 'image/png' : 'image/jpeg',
+          purpose: 'any'
+        }
+      ],
       company: companyData
     };
 

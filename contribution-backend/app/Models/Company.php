@@ -28,7 +28,8 @@ class Company extends Model
      */
     public function getLogoUrlAttribute($value)
     {
-        if (!$value) return null;
+        // Default logo if none set
+        if (!$value) return url('/logo.jpeg');
         
         // If it's already a full URL, return it
         if (str_starts_with($value, 'http')) {

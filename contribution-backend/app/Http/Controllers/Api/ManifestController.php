@@ -26,7 +26,20 @@ class ManifestController extends Controller
             'orientation' => 'portrait-or-landscape',
             'theme_color' => '#4F46E5',
             'background_color' => '#ffffff',
-            'icons' => [],
+            'icons' => [
+                [
+                    'src' => url('/logo.jpeg'),
+                    'sizes' => '192x192',
+                    'type' => 'image/jpeg',
+                    'purpose' => 'any'
+                ],
+                [
+                    'src' => url('/logo.jpeg'),
+                    'sizes' => '512x512',
+                    'type' => 'image/jpeg',
+                    'purpose' => 'any'
+                ]
+            ],
             'categories' => ['productivity', 'finance']
         ];
 
@@ -87,15 +100,15 @@ class ManifestController extends Controller
             'background_color' => '#ffffff',
             'icons' => [
                 [
-                    'src' => $company->logo_url,
+                    'src' => $company->logo_url ?? url('/logo.jpeg'),
                     'sizes' => '192x192',
-                    'type' => 'image/png',
+                    'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
                     'purpose' => 'any'
                 ],
                 [
-                    'src' => $company->logo_url,
+                    'src' => $company->logo_url ?? url('/logo.jpeg'),
                     'sizes' => '512x512',
-                    'type' => 'image/png',
+                    'type' => $company->logo_url ? 'image/png' : 'image/jpeg',
                     'purpose' => 'any'
                 ]
             ],
@@ -123,7 +136,20 @@ class ManifestController extends Controller
             'orientation' => 'portrait-or-landscape',
             'theme_color' => '#4F46E5',
             'background_color' => '#ffffff',
-            'icons' => [],
+            'icons' => [
+                [
+                    'src' => url('/logo.jpeg'),
+                    'sizes' => '192x192',
+                    'type' => 'image/jpeg',
+                    'purpose' => 'any'
+                ],
+                [
+                    'src' => url('/logo.jpeg'),
+                    'sizes' => '512x512',
+                    'type' => 'image/jpeg',
+                    'purpose' => 'any'
+                ]
+            ],
             'categories' => ['productivity', 'finance']
         ];
 
