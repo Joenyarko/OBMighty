@@ -13,8 +13,11 @@ class AuthController extends Controller
     /**
      * Login user and create token
      */
-    public function login(Request $request)
-    {
+        \Illuminate\Support\Facades\Log::info('Login Request Headers/Body', [
+            'headers' => $request->headers->all(),
+            'body' => $request->all(),
+        ]);
+
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
