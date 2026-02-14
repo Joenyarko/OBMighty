@@ -15,63 +15,28 @@ class ManifestController extends Controller
     {
         $user = $request->user();
         
-        // Default manifest values
+        // Generic base manifest (No hardcoded branding)
         $manifest = [
-            'name' => 'Contribution Manager',
-            'short_name' => 'Contribution',
-            'description' => 'Manage contributions and finances',
+            'name' => 'Management System',
+            'short_name' => 'Management',
+            'description' => 'Business management and finance system',
             'start_url' => '/',
             'scope' => '/',
             'display' => 'standalone',
             'orientation' => 'portrait-or-landscape',
             'theme_color' => '#4F46E5',
             'background_color' => '#ffffff',
-            'icons' => [
-                [
-                    'src' => '/logo.jpeg',
-                    'sizes' => '192x192',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ],
-                [
-                    'src' => '/logo.jpeg',
-                    'sizes' => '512x512',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ]
-            ],
-            'screenshots' => [
-                [
-                    'src' => '/logo.jpeg',
-                    'type' => 'image/jpeg',
-                    'sizes' => '540x720'
-                ]
-            ],
-            'categories' => ['productivity', 'finance'],
-            'shortcuts' => [
-                [
-                    'name' => 'Dashboard',
-                    'short_name' => 'Dashboard',
-                    'description' => 'View your dashboard',
-                    'url' => '/dashboard',
-                    'icons' => [
-                        [
-                            'src' => '/logo.jpeg',
-                            'type' => 'image/jpeg',
-                            'sizes' => '192x192'
-                        ]
-                    ]
-                ]
-            ]
+            'icons' => [],
+            'categories' => ['productivity', 'finance']
         ];
 
         // If user is authenticated, customize with company branding
         if ($user && $user->company) {
             $company = $user->company;
             
-            $manifest['name'] = $company->name . ' - Contribution Manager';
+            $manifest['name'] = $company->name;
             $manifest['short_name'] = substr($company->name, 0, 12);
-            $manifest['description'] = $company->name . ' contribution and finance management system';
+            $manifest['description'] = $company->name . ' management system';
             $manifest['theme_color'] = $company->primary_color ?? '#4F46E5';
             
             // Use company logo if available
@@ -90,20 +55,12 @@ class ManifestController extends Controller
                         'purpose' => 'any'
                     ]
                 ];
-                
-                $manifest['screenshots'] = [
-                    [
-                        'src' => $company->logo_url,
-                        'type' => 'image/png',
-                        'sizes' => '540x720'
-                    ]
-                ];
             }
         }
 
         return response()->json($manifest)
             ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+            ->header('Cache-Control', 'no-cache');
     }
 
     /**
@@ -119,9 +76,9 @@ class ManifestController extends Controller
         }
 
         $manifest = [
-            'name' => $company->name . ' - Contribution Manager',
+            'name' => $company->name,
             'short_name' => substr($company->name, 0, 12),
-            'description' => $company->name . ' contribution and finance management system',
+            'description' => $company->name . ' management system',
             'start_url' => '/',
             'scope' => '/',
             'display' => 'standalone',
@@ -130,13 +87,13 @@ class ManifestController extends Controller
             'background_color' => '#ffffff',
             'icons' => [
                 [
-                    'src' => $company->logo_url ?: '/logo.jpeg',
+                    'src' => $company->logo_url,
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any'
                 ],
                 [
-                    'src' => $company->logo_url ?: '/logo.jpeg',
+                    'src' => $company->logo_url,
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any'
@@ -157,34 +114,21 @@ class ManifestController extends Controller
     public function getPublicManifest(Request $request)
     {
         $manifest = [
-            'name' => 'Contribution Manager',
-            'short_name' => 'Contribution',
-            'description' => 'Manage contributions and finances',
+            'name' => 'Management System',
+            'short_name' => 'Management',
+            'description' => 'Business management and finance system',
             'start_url' => '/',
             'scope' => '/',
             'display' => 'standalone',
             'orientation' => 'portrait-or-landscape',
             'theme_color' => '#4F46E5',
             'background_color' => '#ffffff',
-            'icons' => [
-                [
-                    'src' => '/logo.jpeg',
-                    'sizes' => '192x192',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ],
-                [
-                    'src' => '/logo.jpeg',
-                    'sizes' => '512x512',
-                    'type' => 'image/jpeg',
-                    'purpose' => 'any'
-                ]
-            ],
+            'icons' => [],
             'categories' => ['productivity', 'finance']
         ];
 
         return response()->json($manifest)
             ->header('Content-Type', 'application/manifest+json')
-            ->header('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+            ->header('Cache-Control', 'public, max-age=86400');
     }
 }

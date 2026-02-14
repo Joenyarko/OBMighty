@@ -1,6 +1,6 @@
 // Service Worker for O.B. Mighty PWA
-const CACHE_NAME = 'obmighty-v1';
-const MANIFEST_KEY = 'pwa_manifest_data';
+const CACHE_NAME = 'obmighty-v2';
+const ASSET_CACHE = 'obmighty-assets-v1';
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -11,105 +11,123 @@ self.addEventListener('install', (event) => {
 // Activate event
 self.addEventListener('activate', (event) => {
   console.log('[ServiceWorker] Activating...');
+  // Clean up old caches
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME && cacheName !== ASSET_CACHE) {
+            console.log('[ServiceWorker] Removing old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
   self.clients.claim();
 });
 
-// Fetch event - handle manifest requests dynamically
+// Fetch event - handle manifest and asset caching
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Intercept manifest.json requests and serve dynamic manifest
-  if (url.pathname === '/manifest.json' || url.pathname.endsWith('/manifest.json')) {
-    event.respondWith(getManifest());
+  // 1. Intercept manifest requests (branded or default)
+  if (url.pathname.includes('/pwa-manifest/') || url.pathname.endsWith('/manifest.json')) {
+    event.respondWith(getDynamicManifest(request));
     return;
   }
 
-  // For other requests, use default fetch
+  // 2. Network-first strategy for branding assets (logos), fallback to cache
+  if (url.pathname.includes('/storage/logos/') || url.pathname.includes('/api/images/')) {
+    event.respondWith(
+      fetch(request.clone())
+        .then((response) => {
+          if (response && response.status === 200) {
+            const cacheCopy = response.clone();
+            caches.open(ASSET_CACHE).then((cache) => {
+              cache.put(request, cacheCopy);
+            });
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // 3. Default Cache-first strategy for other static assets
   event.respondWith(
     caches.match(request).then((response) => {
-      return response || fetch(request).catch((error) => {
-        console.error('Fetch error:', error);
+      return response || fetch(request).catch(() => {
+        // Silent fail for non-critical assets
       });
     })
   );
 });
 
-// Get dynamic manifest based on stored company data
-async function getManifest() {
+// Dynamic Manifest Handling
+async function getDynamicManifest(request) {
   try {
-    // Try to get company data from IndexedDB or localStorage
+    // Try to get stored branded manifest from IndexedDB
     const manifestData = await getStoredManifestData();
-    
-    if (manifestData && manifestData.company) {
-      // Return company-specific manifest
-      return new Response(
-        JSON.stringify(manifestData),
-        {
-          headers: {
-            'Content-Type': 'application/manifest+json',
-            'Cache-Control': 'no-cache'
-          }
-        }
-      );
+
+    if (manifestData) {
+      return new Response(JSON.stringify(manifestData), {
+        headers: { 'Content-Type': 'application/manifest+json' }
+      });
     }
   } catch (error) {
-    console.error('Error getting stored manifest:', error);
+    console.error('[SW] Error getting dynamic manifest:', error);
   }
 
-  // Fallback to default manifest
-  return fetch('/manifest.json');
+  // Fallback to network fetch if manifest data isn't in DB yet
+  return fetch(request);
 }
 
-// Get stored manifest data from IndexedDB
+// IndexedDB Access
 function getStoredManifestData() {
   return new Promise((resolve) => {
     const request = indexedDB.open('obmighty', 1);
-
-    request.onerror = () => {
-      console.error('IndexedDB error');
-      resolve(null);
-    };
-
     request.onsuccess = (event) => {
       const db = event.target.result;
-      const transaction = db.transaction('manifest', 'readonly');
-      const objectStore = transaction.objectStore('manifest');
-      const getRequest = objectStore.get('company');
-
-      getRequest.onsuccess = () => {
-        resolve(getRequest.result || null);
-      };
-
-      getRequest.onerror = () => {
-        resolve(null);
-      };
-    };
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
       if (!db.objectStoreNames.contains('manifest')) {
-        db.createObjectStore('manifest');
+        resolve(null);
+        return;
       }
+      const transaction = db.transaction('manifest', 'readonly');
+      const getReq = transaction.objectStore('manifest').get('company');
+      getReq.onsuccess = () => resolve(getReq.result || null);
+      getReq.onerror = () => resolve(null);
+    };
+    request.onerror = () => resolve(null);
+    request.onupgradeneeded = (event) => {
+      event.target.result.createObjectStore('manifest');
     };
   });
 }
 
-// Listen for messages from the client to update manifest
+// Client Messages
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'UPDATE_MANIFEST') {
+  if (!event.data) return;
+
+  if (event.data.type === 'UPDATE_MANIFEST') {
     saveManifestData(event.data.manifest);
+  }
+
+  if (event.data.type === 'PRECACHE_ASSETS') {
+    const assets = event.data.assets || [];
+    caches.open(ASSET_CACHE).then((cache) => {
+      cache.addAll(assets).catch(err => console.error('[SW] Precache failed:', err));
+    });
   }
 });
 
-// Save manifest data to IndexedDB
 function saveManifestData(manifest) {
   const request = indexedDB.open('obmighty', 1);
-
   request.onsuccess = (event) => {
     const db = event.target.result;
     const transaction = db.transaction('manifest', 'readwrite');
-    const objectStore = transaction.objectStore('manifest');
-    objectStore.put(manifest, 'company');
+    transaction.objectStore('manifest').put(manifest, 'company');
   };
 }

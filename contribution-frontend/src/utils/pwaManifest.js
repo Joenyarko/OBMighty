@@ -7,11 +7,13 @@ export async function updatePWAManifest(companyData) {
   if (!companyData) return;
 
   try {
-    // Build the manifest object
+    const companyName = companyData.name || 'Management System';
+
+    // Build the manifest object dynamically
     const manifest = {
-      name: companyData.name ? `${companyData.name} - Contribution Manager` : 'Contribution Manager',
-      short_name: companyData.name ? companyData.name.substring(0, 12) : 'Contribution',
-      description: companyData.name ? `${companyData.name} contribution and finance management system` : 'Manage contributions and finances',
+      name: companyName,
+      short_name: companyName.substring(0, 12),
+      description: `${companyName} management system`,
       start_url: '/',
       scope: '/',
       display: 'standalone',
@@ -33,67 +35,51 @@ export async function updatePWAManifest(companyData) {
             purpose: 'any'
           }
         ]
-        : [
-          {
-            src: '/logo.jpeg',
-            sizes: '192x192',
-            type: 'image/jpeg',
-            purpose: 'any'
-          },
-          {
-            src: '/logo.jpeg',
-            sizes: '512x512',
-            type: 'image/jpeg',
-            purpose: 'any'
-          }
-        ],
+        : [],
       company: companyData
     };
 
-    // Wait for service worker controller if not present
-    function sendManifestToSW() {
-      // 1. Update static tags immediately (faster for iOS)
+    // Update static tags and Service Worker
+    function syncBranding() {
+      // 1. Update static tags (iOS Icons/Title)
       if (companyData.logo_url) {
         const appleIcon = document.getElementById('apple-touch-icon');
         if (appleIcon) appleIcon.href = companyData.logo_url;
       }
 
-      if (companyData.name) {
-        const appleTitle = document.getElementById('apple-app-title');
-        if (appleTitle) appleTitle.content = companyData.name;
-      }
+      const appleTitle = document.getElementById('apple-app-title');
+      if (appleTitle) appleTitle.content = companyName;
 
       const manifestLink = document.getElementById('manifest-link');
       if (manifestLink) {
-        // Use the public branded endpoint - required because iOS background fetch lacks auth
-        const apiUrl = import.meta.env.VITE_API_URL || '';
         const manifestUrl = `/api/pwa-manifest/${companyData.id}`;
         manifestLink.href = manifestUrl;
       }
 
-      // 2. Sync with Service Worker for background updates
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'UPDATE_MANIFEST',
-          manifest: manifest
-        });
-        console.log('[PWA] Manifest synced with Service Worker:', companyData.name);
-      } else if ('serviceWorker' in navigator) {
-        // If no controller yet, wait for it
+      // 2. Sync with Service Worker for Offline support
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
           if (registration.active) {
+            // Send manifest data to store in SW (IndexedDB)
             registration.active.postMessage({
               type: 'UPDATE_MANIFEST',
               manifest: manifest
             });
+
+            // Pre-cache the logo for offline use
+            if (companyData.logo_url) {
+              registration.active.postMessage({
+                type: 'PRECACHE_ASSETS',
+                assets: [companyData.logo_url]
+              });
+            }
           }
         });
-        console.log('[PWA] Static tags updated, waiting for Service Worker controller...');
       }
     }
-    sendManifestToSW();
+    syncBranding();
   } catch (error) {
-    console.error('[PWA] Error updating manifest:', error);
+    console.error('[PWA] Error updating branding:', error);
   }
 }
 
@@ -110,22 +96,16 @@ export function resetPWAManifest() {
     }
 
     const manifestLink = document.getElementById('manifest-link');
-    if (manifestLink) {
-      manifestLink.href = '/manifest.json';
-    }
+    if (manifestLink) manifestLink.href = '/manifest.json';
 
     const appleIcon = document.getElementById('apple-touch-icon');
-    if (appleIcon) {
-      appleIcon.href = '/logo.jpeg';
-    }
+    if (appleIcon) appleIcon.href = '/logo.jpeg';
 
     const appleTitle = document.getElementById('apple-app-title');
-    if (appleTitle) {
-      appleTitle.content = 'Daily Contribution Manager';
-    }
+    if (appleTitle) appleTitle.content = 'Management System';
 
-    console.log('[PWA] Manifest reset to default');
+    console.log('[PWA] Branding reset to default');
   } catch (error) {
-    console.error('[PWA] Error resetting manifest:', error);
+    console.error('[PWA] Error resetting branding:', error);
   }
 }
