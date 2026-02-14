@@ -10,10 +10,16 @@ function AdminDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [stats, setStats] = useState({
-        total_companies: 0,
-        total_users: 0,
-        active_today: 0,
-        system_health: 'Checking...'
+        overview: {
+            total_companies: 0,
+            total_users: 0,
+            active_users_week: 0,
+            active_companies: 0
+        },
+        system_health: {
+            status: 'checking',
+            failed_login_attempts_week: 0
+        }
     });
     const [loading, setLoading] = useState(true);
 
@@ -63,7 +69,7 @@ function AdminDashboard() {
                     </div>
                     <div className="stat-details">
                         <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--nex-text-primary)' }}>
-                            {loading ? '...' : stats.total_companies} Companies
+                            {loading ? '...' : stats.overview.total_companies} Companies
                         </h3>
                         <p style={{ fontSize: '14px', color: 'var(--nex-text-secondary)', margin: 0 }}>View and manage tenants</p>
                     </div>
@@ -89,9 +95,9 @@ function AdminDashboard() {
                     </div>
                     <div className="stat-details">
                         <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--nex-text-primary)' }}>
-                            {loading ? '...' : stats.total_users} Users
+                            {loading ? '...' : stats.overview.total_users} Users
                         </h3>
-                        <p style={{ fontSize: '14px', color: 'var(--nex-text-secondary)', margin: 0 }}>Total users ({stats.active_today} active today)</p>
+                        <p style={{ fontSize: '14px', color: 'var(--nex-text-secondary)', margin: 0 }}>Total users ({stats.overview.active_users_week} active this week)</p>
                     </div>
                 </div>
 
@@ -114,9 +120,11 @@ function AdminDashboard() {
                     </div>
                     <div className="stat-details">
                         <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 4px 0', color: 'var(--nex-text-primary)' }}>
-                            {loading ? '...' : stats.system_health}
+                            {loading ? '...' : (stats.system_health?.status === 'operational' ? 'Operational' : 'Warning')}
                         </h3>
-                        <p style={{ fontSize: '14px', color: 'var(--nex-text-secondary)', margin: 0 }}>System Health Status</p>
+                        <p style={{ fontSize: '14px', color: 'var(--nex-text-secondary)', margin: 0 }}>
+                            System Health ({stats.system_health?.failed_login_attempts_week || 0} failed logins this week)
+                        </p>
                     </div>
                 </div>
             </div>
