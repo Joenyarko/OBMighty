@@ -34,11 +34,13 @@ function Login() {
         <div className="login-container">
             <div className="login-card">
                 <div className="login-header">
-                    <img
-                        src={tenant?.logo_url || "/logo.jpeg"}
-                        alt={`${tenant?.app_name || 'Contribution Manager'} Logo`}
-                        className="login-logo"
-                    />
+                    {tenant?.logo_url ? (
+                        <img
+                            src={tenant.logo_url}
+                            alt={`${tenant.app_name || 'Contribution Manager'} Logo`}
+                            className="login-logo"
+                        />
+                    ) : null}
                     <h1>{tenant?.app_name || 'Daily Contribution Manager'}</h1>
                     <p>Sign in to your account</p>
                 </div>

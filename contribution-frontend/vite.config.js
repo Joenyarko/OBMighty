@@ -7,30 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['logo.jpeg', 'Neziz-logo2.png'],
-      manifest: {
-        name: 'Management System',
-        short_name: 'System',
-        description: 'Business management and finance system',
-        theme_color: '#4F46E5',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
-          {
-            src: '/logo.jpeg',
-            sizes: '192x192',
-            type: 'image/jpeg',
-            purpose: 'any'
-          },
-          {
-            src: '/logo.jpeg',
-            sizes: '512x512',
-            type: 'image/jpeg',
-            purpose: 'any'
-          }
-        ]
-      },
+      // No static manifest or icons; dynamic manifest is handled by backend/service worker
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [

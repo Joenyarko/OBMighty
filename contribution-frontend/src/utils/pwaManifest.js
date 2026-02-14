@@ -20,20 +20,20 @@ export async function updatePWAManifest(companyData) {
       orientation: 'portrait-or-landscape',
       theme_color: companyData.primary_color || '#4F46E5',
       background_color: '#ffffff',
-      icons: [
+      icons: companyData.logo_url ? [
         {
-          src: companyData.logo_url || '/logo.jpeg',
+          src: companyData.logo_url,
           sizes: '192x192',
-          type: (companyData.logo_url && companyData.logo_url.endsWith('.png')) ? 'image/png' : 'image/jpeg',
+          type: companyData.logo_url.endsWith('.png') ? 'image/png' : 'image/jpeg',
           purpose: 'any'
         },
         {
-          src: companyData.logo_url || '/logo.jpeg',
+          src: companyData.logo_url,
           sizes: '512x512',
-          type: (companyData.logo_url && companyData.logo_url.endsWith('.png')) ? 'image/png' : 'image/jpeg',
+          type: companyData.logo_url.endsWith('.png') ? 'image/png' : 'image/jpeg',
           purpose: 'any'
         }
-      ],
+      ] : [],
       company: companyData
     };
 
@@ -107,7 +107,10 @@ export function resetPWAManifest() {
     if (manifestLink) manifestLink.href = '/manifest.json';
 
     const appleIcon = document.getElementById('apple-touch-icon');
-    if (appleIcon) appleIcon.href = '/logo.jpeg';
+    if (appleIcon) appleIcon.href = '';
+
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) favicon.href = '';
 
     const appleTitle = document.getElementById('apple-app-title');
     if (appleTitle) appleTitle.content = 'Management System';

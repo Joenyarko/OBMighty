@@ -33,7 +33,7 @@ const AdminLayout = ({ children }) => {
                             alt="Neziz"
                             className="nex-brand-logo"
                             style={{ width: '32px', height: '32px', objectFit: 'contain', background: 'transparent' }}
-                            onError={(e) => { e.target.onerror = null; e.target.src = "/logo.jpeg"; }}
+                            onError={(e) => { e.target.onerror = null; e.target.src = ""; }}
                         />
                         <div>
                             <div style={{ lineHeight: '1.2' }}>Neziz</div>

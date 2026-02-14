@@ -190,7 +190,7 @@ function Layout({ children }) {
                 <div className="sidebar-header">
                     <div className="brand">
                         <img
-                            src={company?.logo_url || tenant?.logo_url || "/logo.jpeg"}
+                            src={company?.logo_url || tenant?.logo_url || ''}
                             alt="Logo"
                             className="logo"
                         />
