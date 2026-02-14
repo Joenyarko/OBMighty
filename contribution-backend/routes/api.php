@@ -44,6 +44,7 @@ Route::middleware(['cors.storage'])->group(function () {
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
 Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);
 Route::get('/manifest.json', [ManifestController::class, 'getPublicManifest']); // Public PWA manifest (fallback)
+Route::get('/pwa-manifest/{id}', [ManifestController::class, 'getCompanyManifest']); // Public branded manifest
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

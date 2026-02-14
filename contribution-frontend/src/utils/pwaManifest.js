@@ -58,10 +58,17 @@ export async function updatePWAManifest(companyData) {
         if (appleIcon) appleIcon.href = companyData.logo_url;
       }
 
+      if (companyData.name) {
+        const appleTitle = document.getElementById('apple-app-title');
+        if (appleTitle) appleTitle.content = companyData.name;
+      }
+
       const manifestLink = document.getElementById('manifest-link');
       if (manifestLink) {
-        // Use the authenticated API endpoint directly - more reliable for iOS Safari
-        manifestLink.href = '/api/manifest';
+        // Use the public branded endpoint - required because iOS background fetch lacks auth
+        const apiUrl = import.meta.env.VITE_API_URL || '';
+        const manifestUrl = `/api/pwa-manifest/${companyData.id}`;
+        manifestLink.href = manifestUrl;
       }
 
       // 2. Sync with Service Worker for background updates
@@ -72,7 +79,7 @@ export async function updatePWAManifest(companyData) {
         });
         console.log('[PWA] Manifest synced with Service Worker:', companyData.name);
       } else if ('serviceWorker' in navigator) {
-        // If no controller yet, wait for it or just rely on the /api/manifest link we set above
+        // If no controller yet, wait for it
         navigator.serviceWorker.ready.then((registration) => {
           if (registration.active) {
             registration.active.postMessage({
@@ -110,6 +117,11 @@ export function resetPWAManifest() {
     const appleIcon = document.getElementById('apple-touch-icon');
     if (appleIcon) {
       appleIcon.href = '/logo.jpeg';
+    }
+
+    const appleTitle = document.getElementById('apple-app-title');
+    if (appleTitle) {
+      appleTitle.content = 'Daily Contribution Manager';
     }
 
     console.log('[PWA] Manifest reset to default');
