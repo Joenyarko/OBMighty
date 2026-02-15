@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { setFavicon, setPageTitle } from '../utils/favicon';
-import { setFavicon, setPageTitle } from '../utils/favicon';
 
 const AuthContext = createContext(null);
 
