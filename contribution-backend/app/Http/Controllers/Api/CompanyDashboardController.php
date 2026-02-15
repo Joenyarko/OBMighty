@@ -63,8 +63,7 @@ class CompanyDashboardController extends Controller
         $totalCardTemplates = $company->cards()->count();
 
         // Overall stats for CEO
-        $overallRevenue = $company->payments()->sum('payment_amount') + 
-                         \App\Models\BoxPayment::where('company_id', $company->id)->sum('amount_paid');
+        $overallRevenue = $company->payments()->sum('payment_amount');
         $overallExpense = $company->expenses()->sum('amount');
         $totalCardsIssued = $company->customerCards()->count();
         
