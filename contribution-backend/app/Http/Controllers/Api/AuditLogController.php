@@ -20,24 +20,9 @@ class AuditLogController extends Controller
             ->where('company_id', config('app.company_id') ?: 1); // Fallback to 1 for safety if config missing
 
 
-        // Authorization / Scope
-        if ($user->hasRole('secretary')) {
-            // Secretary sees logs where:
-            // 1. The ACTOR (user) is in their branch
-            // 2. OR the TARGET (auditable) belongs to their branch (if applicable) -> complex, stick to actor for now.
-            $branchId = $user->branch_id;
-            
-            $query->where(function($q) use ($branchId) {
-                // Actor is in the branch
-                $q->whereHas('user', function ($uq) use ($branchId) {
-                    $uq->where('branch_id', $branchId);
-                });
-                // OR Actor is null (system) but context implies branch? No, safer to hide system logs from secretary.
-            });
-        } elseif (!$user->hasRole('ceo')) {
-            // Workers shouldn't see logs? Or only their own? 
-            // Usually logs are for admin. Let's restrict to own logs for workers if they ever access this.
-            $query->where('user_id', $user->id);
+        // Authorization - Only CEO can access activity logs
+        if (!$user->hasRole('ceo')) {
+            return response()->json(['message' => 'Unauthorized. Only CEO can view activity logs.'], 403);
         }
 
         // Filters
