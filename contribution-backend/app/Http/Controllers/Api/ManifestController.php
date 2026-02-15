@@ -64,24 +64,18 @@ class ManifestController extends Controller
             $manifest = [
                 'id' => 'company_' . $company->id,
                 'name' => $company->name,
-                'short_name' => substr($company->name, 0, 12),
+                'short_name' => substr($company->name, 0, 25), // Increased for identity
                 'description' => $company->name . ' management system',
                 'start_url' => '/',
                 'scope' => '/',
                 'display' => 'standalone',
                 'orientation' => 'any',
                 'theme_color' => $company->primary_color ?? '#4F46E5',
-                'background_color' => '#ffffff',
+                'background_color' => '#000000', // Black background for transparent logos
                 'icons' => [
                     [
                         'src' => $logoUrl,
                         'sizes' => '192x192',
-                        'type' => $isPng ? 'image/png' : 'image/jpeg',
-                        'purpose' => 'any'
-                    ],
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '512x512',
                         'type' => $isPng ? 'image/png' : 'image/jpeg',
                         'purpose' => 'any'
                     ],
@@ -94,11 +88,18 @@ class ManifestController extends Controller
                 ],
                 'screenshots' => [
                     [
-                        'src' => $logoUrl, // Placeholder using logo as screenshot
-                        'sizes' => '512x512',
+                        'src' => $logoUrl, 
+                        'sizes' => '192x192',
                         'type' => $isPng ? 'image/png' : 'image/jpeg',
                         'form_factor' => 'narrow',
-                        'label' => 'Dashboard Overview'
+                        'label' => 'Mobile Dashboard'
+                    ],
+                    [
+                        'src' => $logoUrl, 
+                        'sizes' => '192x192',
+                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'form_factor' => 'wide',
+                        'label' => 'Desktop Dashboard'
                     ]
                 ],
                 'categories' => ['productivity', 'finance']
@@ -115,17 +116,11 @@ class ManifestController extends Controller
                 'display' => 'standalone',
                 'orientation' => 'any',
                 'theme_color' => '#4F46E5',
-                'background_color' => '#ffffff',
+                'background_color' => '#000000',
                 'icons' => [
                     [
                         'src' => $logoUrl,
                         'sizes' => '192x192',
-                        'type' => 'image/png',
-                        'purpose' => 'any'
-                    ],
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '512x512',
                         'type' => 'image/png',
                         'purpose' => 'any'
                     ],
@@ -139,10 +134,17 @@ class ManifestController extends Controller
                 'screenshots' => [
                     [
                         'src' => $logoUrl,
-                        'sizes' => '512x512',
+                        'sizes' => '192x192',
                         'type' => 'image/png',
                         'form_factor' => 'narrow',
-                        'label' => 'System Dashboard'
+                        'label' => 'System Mobile'
+                    ],
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '192x192',
+                        'type' => 'image/png',
+                        'form_factor' => 'wide',
+                        'label' => 'System Desktop'
                     ]
                 ],
                 'categories' => ['productivity', 'finance']
