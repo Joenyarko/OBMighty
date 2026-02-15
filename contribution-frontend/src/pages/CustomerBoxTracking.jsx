@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import api from '../services/api';
 import '../styles/CustomerBoxTracking.css';
@@ -18,6 +19,7 @@ const customerCardAPI = {
 function CustomerBoxTracking() {
     const { customerId } = useParams();
     const navigate = useNavigate();
+    const { isCEO, user } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [customerCard, setCustomerCard] = useState(null);
