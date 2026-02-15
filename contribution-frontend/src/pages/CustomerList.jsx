@@ -162,10 +162,9 @@ function CustomerList() {
     };
 
     const handleDelete = async (id) => {
-        const result = await showWarning(
+        const result = await showConfirm(
             'Are you sure you want to delete this customer?',
-            'This action cannot be undone.',
-            'Yes, delete it!'
+            'Delete Customer'
         );
 
         if (result.isConfirmed) {
