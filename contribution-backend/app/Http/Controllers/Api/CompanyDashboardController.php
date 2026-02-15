@@ -31,8 +31,11 @@ class CompanyDashboardController extends Controller
             'app_company_id' => config('app.company_id')
         ]);
 
+        $companyTotal = \App\Models\CompanyDailyTotal::where('date', $today)->first();
+
         return response()->json([
             'overview' => $this->getOverview($company, $today, $startOfMonth, $endOfMonth),
+            'company_total' => $companyTotal, // Added this to populate cards
             'revenue' => $this->getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth),
             'performance' => $this->getPerformanceMetrics($company, $startOfMonth, $endOfMonth),
             'topWorkers' => $this->getTopWorkers($company, $startOfMonth, $endOfMonth),
@@ -88,6 +91,7 @@ class CompanyDashboardController extends Controller
             'total_card_templates' => $totalCardTemplates,
             'overall_revenue' => round($overallRevenue, 2),
             'overall_expense' => round($overallExpense, 2),
+            'overall_profit' => round($overallRevenue - $overallExpense, 2),
         ];
     }
 
