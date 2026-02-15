@@ -899,6 +899,11 @@ class CustomerCardController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Manual Card Closure Error', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'message' => 'Failed to close card',
                 'error' => $e->getMessage()

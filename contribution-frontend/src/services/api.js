@@ -131,6 +131,7 @@ export const customerCardAPI = {
     getPaymentHistory: (id) => api.get(`/customer-cards/${id}/payment-history`),
     getDailySales: (id, date) => api.get(`/customer-cards/${id}/daily-sales`, { params: { date } }),
     getWorkerDailySales: (date) => api.get('/customer-cards/worker/daily-sales', { params: { date } }),
+    closeCard: (id) => api.patch(`/customer-cards/${id}/close`),
 };
 
 export const permissionAPI = {
