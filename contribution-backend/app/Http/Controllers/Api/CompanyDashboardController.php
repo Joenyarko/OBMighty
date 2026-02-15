@@ -24,6 +24,13 @@ class CompanyDashboardController extends Controller
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
+        \Illuminate\Support\Facades\Log::info('CEO Dashboard Access', [
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'company_name' => $company->name,
+            'app_company_id' => config('app.company_id')
+        ]);
+
         return response()->json([
             'overview' => $this->getOverview($company, $today, $startOfMonth, $endOfMonth),
             'revenue' => $this->getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth),

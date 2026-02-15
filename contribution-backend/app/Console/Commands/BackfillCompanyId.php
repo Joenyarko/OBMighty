@@ -68,21 +68,33 @@ class BackfillCompanyId extends Command
         ];
 
         $totalUpdated = 0;
+        $summary = [];
 
         foreach ($tables as $table) {
             if (\Illuminate\Support\Facades\Schema::hasTable($table) && \Illuminate\Support\Facades\Schema::hasColumn($table, 'company_id')) {
-                $count = DB::table($table)
-                    ->whereNull('company_id')
-                    ->update(['company_id' => $companyId]);
+                // Count how many need update
+                $orphans = DB::table($table)->whereNull('company_id')->count();
                 
-                if ($count > 0) {
-                    $this->line("Updated {$count} records in table: {$table}");
+                if ($orphans > 0) {
+                    $count = DB::table($table)
+                        ->whereNull('company_id')
+                        ->update(['company_id' => $companyId]);
+                    
+                    $this->line("Updated {$count} orphaned records in: {$table}");
                     $totalUpdated += $count;
+                    $summary[$table] = $count;
+                } else {
+                    $this->line("No orphans found in: {$table}");
                 }
             }
         }
 
-        $this->info("Backfill completed. Total records updated: {$totalUpdated}");
+        if ($totalUpdated === 0) {
+            $this->warn("No orphaned records were found. Either the data is already linked, or there is no data to link.");
+        } else {
+            $this->info("Success! Backfill completed. Total records updated: {$totalUpdated}");
+        }
+        
         return 0;
     }
 }

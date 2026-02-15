@@ -39,6 +39,11 @@ class Company extends Model
         // Ensure it starts with / if not already
         $path = str_starts_with($value, '/') ? $value : '/' . $value;
         
+        // Ensure it includes /storage/ if it's a local path
+        if (!str_contains($path, '/storage/')) {
+            $path = '/storage' . $path;
+        }
+        
         return url($path);
     }
 
