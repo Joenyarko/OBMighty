@@ -23,8 +23,9 @@ class SalesController extends Controller
         // Determine date range based on period
         $dateRange = $this->getDateRange($period);
         
-        // Build base query
+        // Build base query - explicitly filter by company
         $query = User::role('worker')
+            ->where('company_id', $user->company_id)
             ->with('branch')
             ->select('users.*');
         
