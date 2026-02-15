@@ -184,12 +184,47 @@ function SecretaryDashboard({ data }) {
 
 function CEODashboard({ data }) {
     const companyTotal = data?.company_total || {};
+    const overview = data?.overview || {};
 
     return (
         <div className="dashboard-content">
+            {/* New Overall Metrics for CEO */}
+            <div className="stats-grid overall-stats" style={{ marginBottom: '24px' }}>
+                <div className="stat-card">
+                    <h3>Overall Revenue</h3>
+                    <p className="stat-value" style={{ color: '#2ecc71' }}>
+                        GHS{overview.overall_revenue || 0}
+                    </p>
+                </div>
+                <div className="stat-card">
+                    <h3>Overall Expense</h3>
+                    <p className="stat-value" style={{ color: '#e74c3c' }}>
+                        GHS{overview.overall_expense || 0}
+                    </p>
+                </div>
+                <div className="stat-card">
+                    <h3>Net Flow</h3>
+                    <p className="stat-value" style={{ color: (overview.overall_revenue - overview.overall_expense) >= 0 ? '#2ecc71' : '#e74c3c' }}>
+                        GHS{(overview.overall_revenue - overview.overall_expense).toFixed(2)}
+                    </p>
+                </div>
+                <div className="stat-card">
+                    <h3>Total Staff</h3>
+                    <p className="stat-value">
+                        {overview.total_staff || 0}
+                    </p>
+                </div>
+                <div className="stat-card">
+                    <h3>Cards Issued</h3>
+                    <p className="stat-value">
+                        {overview.total_cards_issued || 0}
+                    </p>
+                </div>
+            </div>
+
             <div className="stats-grid">
                 <div className="stat-card highlight">
-                    <h3>Company Collections</h3>
+                    <h3>Today Collections</h3>
                     <p className="stat-value">
                         GHS{companyTotal.total_collections || 0}
                     </p>

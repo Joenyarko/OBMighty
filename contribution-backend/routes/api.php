@@ -177,8 +177,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/box-states', [CustomerCardController::class, 'getBoxStates']);
         Route::get('/{id}/daily-sales', [CustomerCardController::class, 'getDailySales']);
         Route::get('/{id}/payment-history', [CustomerCardController::class, 'getPaymentHistory']);
-        Route::get('/', [CustomerCardController::class, 'index']);
         Route::get('/worker/daily-sales', [CustomerCardController::class, 'getWorkerDailySales']);
+        Route::patch('/{id}/close', [CustomerCardController::class, 'close']);
     });
     
         Route::delete('/box-payments/{id}', function ($id, Request $request) {

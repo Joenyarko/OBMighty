@@ -12,6 +12,7 @@ const customerCardAPI = {
     getDailySales: (id, date) => api.get(`/customer-cards/${id}/daily-sales`, { params: { date } }),
     reversePayment: (paymentId) => api.delete(`/box-payments/${paymentId}`),
     adjustPayment: (paymentId, data) => api.patch(`/box-payments/${paymentId}`, data),
+    closeCard: (id) => api.patch(`/customer-cards/${id}/close`),
 };
 
 function CustomerBoxTracking() {
@@ -171,6 +172,24 @@ function CustomerBoxTracking() {
         }
     };
 
+    const handleCloseCard = async () => {
+        const confirmed = await showConfirm(
+            `Are you sure you want to CLOSE this card manually? This should only be done if the customer is stopping. All payment data will remain intact.`,
+            'Close Card Manually',
+            'warning'
+        );
+
+        if (!confirmed.isConfirmed) return;
+
+        try {
+            await customerCardAPI.closeCard(customerCard.id);
+            showSuccess('Card closed successfully!');
+            fetchData();
+        } catch (error) {
+            showError(error.response?.data?.message || 'Failed to close card');
+        }
+    };
+
     if (loading) {
         return <div className="loading">Loading customer card...</div>;
     }
@@ -187,6 +206,11 @@ function CustomerBoxTracking() {
                     ← Back to Management
                 </button>
                 <h1>📦 Box Payment Tracking</h1>
+                {(isCEO || user?.roles?.includes('super_admin')) && customerCard?.status === 'active' && (
+                    <button className="btn-close-card" onClick={handleCloseCard}>
+                        🔒 Close Card
+                    </button>
+                )}
             </div>
 
             {/* Customer Details */}

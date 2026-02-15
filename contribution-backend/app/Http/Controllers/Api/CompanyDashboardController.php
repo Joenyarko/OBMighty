@@ -54,6 +54,15 @@ class CompanyDashboardController extends Controller
 
         $totalBranches = $company->branches()->count();
 
+        // Overall stats for CEO
+        $overallRevenue = $company->payments()->sum('payment_amount');
+        $overallExpense = $company->expenses()->sum('amount');
+        $totalCards = \App\Models\CustomerCard::where('company_id', $company->id)->count();
+        $totalStaff = $company->users()
+            ->whereHas('roles', function($q) {
+                $q->whereIn('name', ['worker', 'manager']);
+            })->count();
+
         return [
             'today_revenue' => $todayPayments,
             'month_revenue' => $monthPayments,
@@ -64,6 +73,10 @@ class CompanyDashboardController extends Controller
                 : 0,
             'total_branches' => $totalBranches,
             'total_users' => $company->users()->count(),
+            'total_staff' => $totalStaff,
+            'total_cards_issued' => $totalCards,
+            'overall_revenue' => $overallRevenue,
+            'overall_expense' => $overallExpense,
         ];
     }
 

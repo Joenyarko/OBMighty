@@ -859,4 +859,50 @@ class CustomerCardController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Close a customer card manualmente
+     */
+    public function close(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('ceo') && !$user->hasRole('super_admin')) {
+            return response()->json(['message' => 'Only CEO can close cards manually'], 403);
+        }
+
+        $customerCard = CustomerCard::with('customer')->findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            // Update card status
+            $customerCard->update(['status' => 'closed']);
+
+            // Update parent customer status
+            if ($customerCard->customer) {
+                $customerCard->customer->update(['status' => 'closed']);
+            }
+
+            // Log activity
+            AuditLog::log(
+                'card_manually_closed',
+                $customerCard,
+                ['previous_status' => 'active'],
+                ['reason' => 'CEO manual closure']
+            );
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Card closed successfully',
+                'customer_card' => $customerCard->fresh(),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Failed to close card',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

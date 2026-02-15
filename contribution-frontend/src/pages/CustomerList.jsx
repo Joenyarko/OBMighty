@@ -235,6 +235,7 @@ function CustomerList() {
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                     <option value="defaulting">Defaulting</option>
+                    <option value="closed">Closed</option>
                 </select>
 
                 {/* Sub-filter for Completed status */}
