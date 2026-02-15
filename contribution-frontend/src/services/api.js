@@ -7,7 +7,7 @@ if (!API_URL) {
 }
 
 const api = axios.create({
-    baseURL: API_URL,
+    baseURL: '/api',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

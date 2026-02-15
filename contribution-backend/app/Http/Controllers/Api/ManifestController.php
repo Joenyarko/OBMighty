@@ -57,7 +57,7 @@ class ManifestController extends Controller
     protected function generateManifestResponse($company = null)
     {
         if ($company) {
-            $logoUrl = $company->logo_url ? asset('storage/logos/' . basename($company->logo_url)) : null;
+            $logoUrl = $company->logo_url ? '/storage/logos/' . basename($company->logo_url) : null;
 
             $icons = [];
             if ($logoUrl) {

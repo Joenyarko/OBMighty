@@ -32,9 +32,8 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Intercept manifest requests (branded or default)
-  if (url.pathname.includes('/pwa-manifest/') || url.pathname.endsWith('/manifest.json')) {
-    event.respondWith(getDynamicManifest(request));
+  // 1. Let manifest fall through to default strategy (static fetch)
+  if (url.pathname.endsWith('/manifest.webmanifest')) {
     return;
   }
 
@@ -93,7 +92,7 @@ async function getDynamicManifest(request) {
   } catch (error) {
     console.error('[SW] Network fetch failed for manifest:', error);
   }
-  
+
   // If all else fails, return a minimal valid manifest
   console.log('[SW] Returning fallback manifest');
   return new Response(JSON.stringify({

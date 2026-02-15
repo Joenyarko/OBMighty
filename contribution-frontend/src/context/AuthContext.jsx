@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import { setFavicon, setPageTitle } from '../utils/favicon';
-import { updatePWAManifest, resetPWAManifest } from '../utils/pwaManifest';
+import { setFavicon, setPageTitle } from '../utils/favicon';
 
 const AuthContext = createContext(null);
 
@@ -23,11 +23,6 @@ export const AuthProvider = ({ children }) => {
                     if (logo_url) setFavicon(logo_url);
                     if (app_name) setPageTitle(app_name);
 
-                    // Update PWA manifest with initial branding
-                    updatePWAManifest({
-                        name: app_name,
-                        logo_url: logo_url
-                    });
                 }
             } catch (err) {
                 console.warn('Could not fetch public config:', err);
@@ -62,9 +57,6 @@ export const AuthProvider = ({ children }) => {
                             setFavicon(companyData.logo_url);
                         }
                         setPageTitle(companyData.name);
-
-                        // Update PWA manifest with company branding (for iOS and all devices)
-                        updatePWAManifest(companyData);
                     }
                 } catch (err) {
                     console.warn('Failed to fetch company info:', err);
@@ -110,9 +102,6 @@ export const AuthProvider = ({ children }) => {
             setToken(null);
             setUser(null);
             setCompany(null);
-
-            // Reset PWA manifest to default
-            resetPWAManifest();
         }
     };
 
