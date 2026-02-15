@@ -159,6 +159,8 @@
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    /* Prevent horizontal scroll */
     border: 2px solid var(--primary-color);
     box-shadow: 0 0 30px rgba(253, 185, 19, 0.3);
 }
@@ -243,7 +245,8 @@
 
 .card-selection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    /* Better mobile fitting */
     gap: 16px;
     max-height: 400px;
     overflow-y: auto;

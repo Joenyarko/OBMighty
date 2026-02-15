@@ -882,13 +882,20 @@ class CustomerCardController extends Controller
                 $customerCard->customer->update(['status' => 'closed']);
             }
 
-            // Log activity
-            AuditLog::log(
-                'card_manually_closed',
-                $customerCard,
-                ['previous_status' => 'active'],
-                ['reason' => 'CEO manual closure']
-            );
+            // Log activity (wrapped in try-catch to ensure card closure succeeds even if logging fails)
+            try {
+                AuditLog::log(
+                    'card_manually_closed',
+                    $customerCard,
+                    ['previous_status' => 'active'],
+                    ['reason' => 'CEO manual closure']
+                );
+            } catch (\Exception $auditError) {
+                \Log::warning('Manual Card Closure Audit Log Failed', [
+                    'card_id' => $id,
+                    'error' => $auditError->getMessage()
+                ]);
+            }
 
             DB::commit();
 
