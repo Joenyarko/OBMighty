@@ -214,6 +214,12 @@ class CustomerCardController extends Controller
             'payment_method' => 'nullable|in:cash,mobile_money,bank_transfer,cheque',
             'notes' => 'nullable|string',
         ]);
+
+        if ($customerCard->status !== 'active') {
+            return response()->json([
+                'message' => 'Cannot record payment on a ' . $customerCard->status . ' card.'
+            ], 400);
+        }
         
         \Log::info('Validation passed', ['validated' => $validated]);
 

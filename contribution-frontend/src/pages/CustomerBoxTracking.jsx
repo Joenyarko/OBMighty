@@ -269,66 +269,83 @@ function CustomerBoxTracking() {
                 </div>
             </div>
 
-            {/* Quick Payment Form */}
-            <div className="quick-payment-section">
+            {/* Record Payment Section */}
+            <div className="payment-form-section card">
                 <h3>💰 Record Payment</h3>
-                <form onSubmit={handlePaymentSubmit} className="payment-form">
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Amount Paid (GHS)</label>
-                            <input
-                                type="number"
-                                name="amount_paid"
-                                value={paymentForm.amount_paid}
-                                onChange={handleInputChange}
-                                placeholder="e.g., 10.00"
-                                step="0.01"
-                                min="0"
-                            />
-                        </div>
-                        <div className="form-divider">OR</div>
-                        <div className="form-group">
-                            <label>Number of Boxes</label>
-                            <input
-                                type="number"
-                                name="boxes_to_check"
-                                value={paymentForm.boxes_to_check}
-                                onChange={handleInputChange}
-                                placeholder="e.g., 2"
-                                min="1"
-                                max={customerCard.boxes_remaining}
-                            />
-                        </div>
+
+                {customerCard.status !== 'active' ? (
+                    <div className="status-alert warning" style={{
+                        padding: '16px',
+                        background: 'rgba(253, 185, 19, 0.1)',
+                        border: '1px solid var(--primary-color)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        textAlign: 'center',
+                        fontWeight: '500'
+                    }}>
+                        ℹ️ This card is <strong>{customerCard.status}</strong>. No further payments can be recorded.
                     </div>
-                    <div className="form-row">
-                        <div className="form-group">
-                            <label>Payment Method</label>
-                            <select
-                                name="payment_method"
-                                value={paymentForm.payment_method}
-                                onChange={handleInputChange}
-                            >
-                                <option value="cash">Cash</option>
-                                <option value="mobile_money">Mobile Money</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                                <option value="cheque">Cheque</option>
-                            </select>
+                ) : (
+                    <form onSubmit={handlePaymentSubmit}>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Amount Paid (GHS)</label>
+                                <input
+                                    type="number"
+                                    name="amount_paid"
+                                    value={paymentForm.amount_paid}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g., 10.00"
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                />
+                            </div>
+                            <div className="form-divider">OR</div>
+                            <div className="form-group">
+                                <label>Number of Boxes</label>
+                                <input
+                                    type="number"
+                                    name="boxes_to_check"
+                                    value={paymentForm.boxes_to_check}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g., 2"
+                                    min="1"
+                                    max={customerCard.boxes_remaining}
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label>Notes (Optional)</label>
-                            <input
-                                type="text"
-                                name="notes"
-                                value={paymentForm.notes}
-                                onChange={handleInputChange}
-                                placeholder="Add any notes..."
-                            />
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Payment Method</label>
+                                <select
+                                    name="payment_method"
+                                    value={paymentForm.payment_method}
+                                    onChange={handleInputChange}
+                                >
+                                    <option value="cash">Cash</option>
+                                    <option value="mobile_money">Mobile Money</option>
+                                    <option value="bank_transfer">Bank Transfer</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Notes (Optional)</label>
+                                <input
+                                    type="text"
+                                    name="notes"
+                                    value={paymentForm.notes}
+                                    onChange={handleInputChange}
+                                    placeholder="Add any notes..."
+                                />
+                            </div>
                         </div>
-                    </div>
-                    <button type="submit" className="btn-primary">
-                        Record Payment
-                    </button>
-                </form>
+                        <button type="submit" className="btn-primary">
+                            Record Payment
+                        </button>
+                    </form>
+                )}
             </div>
 
             {/* Box Grid */}
