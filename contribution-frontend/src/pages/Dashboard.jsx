@@ -209,9 +209,9 @@ function CEODashboard({ data }) {
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Net Flow</h3>
-                    <p className="stat-value" style={{ color: (overview.overall_revenue - overview.overall_expense) >= 0 ? '#2ecc71' : '#e74c3c' }}>
-                        GHS{(overview.overall_revenue - overview.overall_expense).toFixed(2)}
+                    <h3>Overall Profit</h3>
+                    <p className="stat-value" style={{ color: (overview.overall_profit) >= 0 ? '#2ecc71' : '#e74c3c' }}>
+                        GHS{overview.overall_profit ? overview.overall_profit.toFixed(2) : '0.00'}
                     </p>
                 </div>
                 <div className="stat-card">
@@ -238,19 +238,19 @@ function CEODashboard({ data }) {
                 <div className="stat-card highlight">
                     <h3>Today Collections</h3>
                     <p className="stat-value">
-                        GHS{companyTotal.total_collections || 0}
+                        GHS{overview.today_revenue || 0}
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Total Payments</h3>
-                    <p className="stat-value">
-                        {companyTotal.total_payments || 0}
+                    <h3>Total Profit</h3>
+                    <p className="stat-value" style={{ color: (overview.overall_profit) >= 0 ? '#2ecc71' : '#e74c3c' }}>
+                        GHS{overview.overall_profit ? overview.overall_profit.toFixed(2) : '0.00'}
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Active Branches</h3>
+                    <h3>Total Branches</h3>
                     <p className="stat-value">
-                        {companyTotal.total_branches_active || 0}
+                        {overview.total_branches || 0}
                     </p>
                 </div>
             </div>
