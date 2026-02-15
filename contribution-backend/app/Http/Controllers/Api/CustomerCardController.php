@@ -119,7 +119,8 @@ class CustomerCardController extends Controller
 
         $customerCard = CustomerCard::with(['customer', 'card'])
             ->where('customer_id', $customerId)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'closed', 'completed'])
+            ->latest()
             ->first();
 
         if (!$customerCard) {
