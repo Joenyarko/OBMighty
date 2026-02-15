@@ -1,54 +1,13 @@
-# Dependencies
-contribution-backend/vendor/
-contribution-frontend/node_modules/
-
-# Environment files
-contribution-backend/.env
-contribution-frontend/.env
-contribution-frontend/.env.local
-contribution-frontend/.env.production
-
-# IDE
+# Development
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Build outputs
-contribution-frontend/dist/
-contribution-frontend/build/
-
-# Logs
-contribution-backend/storage/logs/*.log
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+.gemini/
+.agent/
+ZAP by Checkmarx Scanning Report2.html
+ZAP by Checkmarx Scanning Report2_files/
 
-# Cache
-contribution-backend/bootstrap/cache/*
-contribution-backend/storage/framework/cache/*
-contribution-backend/storage/framework/sessions/*
-contribution-backend/storage/framework/views/*
-!contribution-backend/storage/framework/cache/.gitignore
-!contribution-backend/storage/framework/sessions/.gitignore
-!contribution-backend/storage/framework/views/.gitignore
-
-# Compiled files
-
-
-# Testing
-contribution-backend/coverage/
-contribution-frontend/coverage/
-
-# Temporary files
-*.tmp
-*.temp
-
-# Debug files
-contribution-backend/debug_*.php
+# Environment
+.env
+contribution-backend/.env
+contribution-frontend/.env
