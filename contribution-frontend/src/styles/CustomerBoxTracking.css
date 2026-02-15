@@ -366,3 +366,29 @@
         grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
     }
 }
+
+/* Close Card Button Styling */
+.btn-close-card {
+    background-color: #e74c3c !important;
+    /* Force red for visibility */
+    color: white !important;
+    border: 2px solid var(--primary-color) !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-close-card:hover {
+    background-color: #c0392b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.btn-close-card:active {
+    transform: translateY(0);
+}
