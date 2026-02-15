@@ -56,7 +56,14 @@ function Customers() {
     // ... fetch functions ...
 
     const handleDeleteCustomer = async (customerId) => {
-        // ... (unchanged)
+        try {
+            await customerAPI.delete(customerId);
+            fetchCustomers(pagination.current_page);
+            showSuccess('Customer deleted successfully');
+        } catch (error) {
+            console.error('Failed to delete customer:', error);
+            showError('Failed to delete customer');
+        }
     };
 
     // ... (handleUpdateCustomer unchanged)
@@ -294,20 +301,22 @@ function Customers() {
                                             >
                                                 ✏️
                                             </button>
-                                            <button
-                                                className="btn-icon-small delete"
-                                                onClick={() => {
-                                                    showConfirm('Are you sure you want to delete this customer?', 'Delete Customer').then((result) => {
-                                                        if (result.isConfirmed) {
-                                                            handleDeleteCustomer(customer.id);
-                                                        }
-                                                    });
-                                                }}
-                                                title="Delete"
-                                                style={{ padding: '8px', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', borderRadius: '4px', cursor: 'pointer' }}
-                                            >
-                                                🗑️
-                                            </button>
+                                            {isCEO && (
+                                                <button
+                                                    className="btn-icon-small delete"
+                                                    onClick={() => {
+                                                        showConfirm('Are you sure you want to delete this customer?', 'Delete Customer').then((result) => {
+                                                            if (result.isConfirmed) {
+                                                                handleDeleteCustomer(customer.id);
+                                                            }
+                                                        });
+                                                    }}
+                                                    title="Delete"
+                                                    style={{ padding: '8px', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', borderRadius: '4px', cursor: 'pointer' }}
+                                                >
+                                                    🗑️
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerAPI, userAPI, branchAPI } from '../services/api';
-import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
+import { showSuccess, showError, showConfirm, showWarning } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Filter, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
 import TransferCustomerModal from '../components/TransferCustomerModal';
@@ -410,13 +410,15 @@ function CustomerList() {
                                 >
                                     ✏️ Edit
                                 </button>
-                                <button
-                                    className="btn-icon delete"
-                                    onClick={() => handleDelete(customer.id)}
-                                    title="Delete Customer"
-                                >
-                                    🗑️ Delete
-                                </button>
+                                {isCEO && (
+                                    <button
+                                        className="btn-icon delete"
+                                        onClick={() => handleDelete(customer.id)}
+                                        title="Delete Customer"
+                                    >
+                                        🗑️ Delete
+                                    </button>
+                                )}
                                 {/* Transfer Button - CEO Only */}
                                 {isCEO && (
                                     <button
