@@ -75,8 +75,9 @@ class CompanyController extends Controller
             // 1. Create Company
             // Handle File Upload
             if ($request->hasFile('logo')) {
-                $path = $request->file('logo')->store('companies', 'public');
-                $validated['logo_url'] = url('storage/' . $path);
+                $imageService = new \App\Services\ImageUploadService();
+                $result = $imageService->upload($request->file('logo'), 'logos', 'company_admin_');
+                $validated['logo_url'] = $result['url'];
             }
             
             // Remove CEO fields from company data
@@ -129,8 +130,9 @@ class CompanyController extends Controller
 
         // Handle File Upload
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('companies', 'public');
-            $validated['logo_url'] = url('storage/' . $path);
+            $imageService = new \App\Services\ImageUploadService();
+            $result = $imageService->upload($request->file('logo'), 'logos', 'company_admin_');
+            $validated['logo_url'] = $result['url'];
         }
 
         $company->update($validated);
