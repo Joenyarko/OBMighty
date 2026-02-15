@@ -70,7 +70,7 @@ class ReportController extends Controller
                         'payment_amount' => $boxPayment->amount_paid,
                         'boxes_filled' => $boxPayment->boxes_checked,
                         'created_at' => $boxPayment->created_at,
-                        'customer' => $boxPayment->customerCard->customer ?? ['name' => 'Unknown']
+                        'customer' => $boxPayment->customerCard?->customer ?? ['name' => 'Deleted Customer']
                     ];
                 });
             

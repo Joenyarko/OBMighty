@@ -166,9 +166,9 @@ class CompanyDashboardController extends Controller
                 $q->whereBetween('payment_date', [$startOfMonth, $endOfMonth]);
             }])
             ->get()
-            ->map(function ($worker) {
-                $monthRevenue = $worker->payments
-                    ->whereBetween('payment_date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])
+            ->map(function ($worker) use ($startOfMonth, $endOfMonth) {
+                $monthRevenue = $worker->payments()
+                    ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
                     ->sum('payment_amount');
 
                 return [
@@ -197,10 +197,10 @@ class CompanyDashboardController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'customer_name' => $payment->customer->name,
-                    'worker_name' => $payment->worker->name,
+                    'customer_name' => $payment->customer?->name ?? 'Deleted Customer',
+                    'worker_name' => $payment->worker?->name ?? 'Deleted Worker',
                     'amount' => $payment->payment_amount,
-                    'date' => $payment->payment_date->format('Y-m-d'),
+                    'date' => $payment->payment_date?->format('Y-m-d') ?? 'N/A',
                     'method' => $payment->payment_method,
                 ];
             });
