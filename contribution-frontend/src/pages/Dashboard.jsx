@@ -27,7 +27,12 @@ function Dashboard() {
 
     const fetchDailyReport = async () => {
         try {
-            const response = await reportAPI.daily();
+            let response;
+            if (isCEO) {
+                response = await reportAPI.ceoDashboard();
+            } else {
+                response = await reportAPI.daily();
+            }
             setDailyData(response.data);
         } catch (error) {
             console.error('Failed to fetch daily report:', error);

@@ -75,6 +75,7 @@ export const reportAPI = {
     monthly: (params) => api.get('/reports/monthly', { params }),
     workerPerformance: (params) => api.get('/reports/worker-performance', { params }),
     defaultingCustomers: () => api.get('/reports/defaulting-customers'),
+    ceoDashboard: () => api.get('/company/dashboard'),
 };
 
 // Card API
