@@ -80,6 +80,30 @@ class Company extends Model
     }
 
     /**
+     * Get all expenses in this company
+     */
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
+    /**
+     * Get all card templates in this company
+     */
+    public function cards()
+    {
+        return $this->hasMany(Card::class);
+    }
+
+    /**
+     * Get all issued customer cards in this company
+     */
+    public function customerCards()
+    {
+        return $this->hasMany(CustomerCard::class);
+    }
+
+    /**
      * Get company daily totals
      */
     public function dailyTotals()

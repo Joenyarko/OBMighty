@@ -53,14 +53,17 @@ class CompanyDashboardController extends Controller
             ->count();
 
         $totalBranches = $company->branches()->count();
+        $totalCardTemplates = $company->cards()->count();
 
         // Overall stats for CEO
         $overallRevenue = $company->payments()->sum('payment_amount');
         $overallExpense = $company->expenses()->sum('amount');
-        $totalCards = \App\Models\CustomerCard::where('company_id', $company->id)->count();
+        $totalCardsIssued = $company->customerCards()->count();
+        
+        // Total staff includes workers, managers, and secretaries
         $totalStaff = $company->users()
             ->whereHas('roles', function($q) {
-                $q->whereIn('name', ['worker', 'manager']);
+                $q->whereIn('name', ['worker', 'manager', 'secretary']);
             })->count();
 
         return [
@@ -74,9 +77,10 @@ class CompanyDashboardController extends Controller
             'total_branches' => $totalBranches,
             'total_users' => $company->users()->count(),
             'total_staff' => $totalStaff,
-            'total_cards_issued' => $totalCards,
-            'overall_revenue' => $overallRevenue,
-            'overall_expense' => $overallExpense,
+            'total_cards_issued' => $totalCardsIssued,
+            'total_card_templates' => $totalCardTemplates,
+            'overall_revenue' => round($overallRevenue, 2),
+            'overall_expense' => round($overallExpense, 2),
         ];
     }
 
