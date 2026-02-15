@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+// Version: 1.0.1 - CEO Stats
 import { useAuth } from '../context/AuthContext';
 import { reportAPI } from '../services/api';
 import SimpleBarChart from '../components/Charts/SimpleBarChart';
