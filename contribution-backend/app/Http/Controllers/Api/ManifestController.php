@@ -57,25 +57,8 @@ class ManifestController extends Controller
     protected function generateManifestResponse($company = null)
     {
         if ($company) {
-            $logoUrl = $company->logo_url ? '/storage/logos/' . basename($company->logo_url) : null;
-
-            $icons = [];
-            if ($logoUrl) {
-                $icons = [
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => (str_contains($logoUrl, '.png')) ? 'image/png' : 'image/jpeg',
-                        'purpose' => 'any'
-                    ],
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '512x512',
-                        'type' => (str_contains($logoUrl, '.png')) ? 'image/png' : 'image/jpeg',
-                        'purpose' => 'any'
-                    ]
-                ];
-            }
+            $logoUrl = $company->logo_url ? '/storage/logos/' . basename($company->logo_url) : '/logo.jpeg';
+            $isPng = str_contains($logoUrl, '.png');
 
             $manifest = [
                 'id' => 'company_' . $company->id,
@@ -88,10 +71,39 @@ class ManifestController extends Controller
                 'orientation' => 'any',
                 'theme_color' => $company->primary_color ?? '#4F46E5',
                 'background_color' => '#ffffff',
-                'icons' => $icons,
+                'icons' => [
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '192x192',
+                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '512x512',
+                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '192x192',
+                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'purpose' => 'maskable'
+                    ]
+                ],
+                'screenshots' => [
+                    [
+                        'src' => $logoUrl, // Placeholder using logo as screenshot
+                        'sizes' => '512x512',
+                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'form_factor' => 'narrow',
+                        'label' => 'Dashboard Overview'
+                    ]
+                ],
                 'categories' => ['productivity', 'finance']
             ];
         } else {
+            $logoUrl = '/Neziz-logo2.png';
             $manifest = [
                 'id' => 'default_system',
                 'name' => 'Management System',
@@ -103,7 +115,35 @@ class ManifestController extends Controller
                 'orientation' => 'any',
                 'theme_color' => '#4F46E5',
                 'background_color' => '#ffffff',
-                'icons' => [],
+                'icons' => [
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '192x192',
+                        'type' => 'image/png',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '512x512',
+                        'type' => 'image/png',
+                        'purpose' => 'any'
+                    ],
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '192x192',
+                        'type' => 'image/png',
+                        'purpose' => 'maskable'
+                    ]
+                ],
+                'screenshots' => [
+                    [
+                        'src' => $logoUrl,
+                        'sizes' => '512x512',
+                        'type' => 'image/png',
+                        'form_factor' => 'narrow',
+                        'label' => 'System Dashboard'
+                    ]
+                ],
                 'categories' => ['productivity', 'finance']
             ];
         }
