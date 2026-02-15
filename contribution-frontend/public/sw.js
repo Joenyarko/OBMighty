@@ -35,6 +35,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Skip cross-origin requests - let browser handle them normally
+  // This prevents CSP issues with external API domains
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Skip manifest - let browser fetch it normally (same origin, no caching needed)
   if (url.pathname.endsWith('/manifest.webmanifest')) {
     return;
