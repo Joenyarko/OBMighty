@@ -190,6 +190,8 @@
     border-radius: 12px;
     padding: 24px;
     transition: all 0.3s ease;
+    overflow: hidden;
+    /* Safety against extreme internal content */
 }
 
 .customer-card:hover {
@@ -302,6 +304,8 @@
 .customer-actions {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
+    /* Important for mobile fitting */
 }
 
 .btn-view-boxes {
@@ -331,6 +335,9 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .btn-icon.edit {
@@ -428,5 +435,30 @@
 
     .page-header h1 {
         font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .customer-card {
+        padding: 16px;
+    }
+
+    .customer-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .btn-view-boxes,
+    .btn-icon {
+        padding: 10px 12px;
+        font-size: 13px;
+        flex: 1 1 calc(50% - 8px);
+        min-width: 100px;
+        justify-content: center;
+        border-width: 1px;
+    }
+
+    .btn-view-boxes {
+        flex-basis: 100%;
     }
 }
