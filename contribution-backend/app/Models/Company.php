@@ -109,6 +109,14 @@ class Company extends Model
     }
 
     /**
+     * Get all stock items in this company
+     */
+    public function stockItems()
+    {
+        return $this->hasMany(StockItem::class);
+    }
+
+    /**
      * Get company daily totals
      */
     public function dailyTotals()

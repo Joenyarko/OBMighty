@@ -228,13 +228,13 @@ class CompanyDashboardController extends Controller
 
         // Check for low inventory
         $lowStock = $company->stockItems()
-            ->whereRaw('quantity < minimum_level')
+            ->whereRaw('quantity <= reorder_level')
             ->count();
 
         if ($lowStock > 0) {
             $alerts[] = [
                 'type' => 'warning',
-                'message' => "$lowStock inventory items are below minimum level",
+                'message' => "$lowStock inventory items are below reorder level",
                 'action' => 'view_inventory',
             ];
         }
