@@ -29,22 +29,22 @@ class Company extends Model
     public function getLogoUrlAttribute($value)
     {
         // Default logo if none set
-        if (!$value) return url('/logo.jpeg');
+        if (!$value) return '/logo.jpeg';
         
         // If it's already a full URL, return it
         if (str_starts_with($value, 'http')) {
             return $value;
         }
- 
-        // Ensure it starts with / if not already
+
+        // Ensure it starts with /
         $path = str_starts_with($value, '/') ? $value : '/' . $value;
         
-        // Ensure it includes /storage/ if it's a local path
-        if (!str_contains($path, '/storage/')) {
+        // Don't prepend /storage if it's already an API image path or already has /storage
+        if (!str_starts_with($path, '/api/images/') && !str_starts_with($path, '/storage/')) {
             $path = '/storage' . $path;
         }
         
-        return url($path);
+        return $path;
     }
 
     protected $casts = [

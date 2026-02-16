@@ -23,13 +23,20 @@ class SalesController extends Controller
         // Determine date range based on period
         $dateRange = $this->getDateRange($period);
         
-        // Build base query - explicitly filter by company
-        $query = User::role('worker')
-            ->where('company_id', $user->company_id)
+        // Build base query - include workers AND any other user who has recorded sales
+        $query = User::where('company_id', $user->company_id)
+            ->where(function($q) {
+                $q->role('worker')
+                  ->orWhereExists(function ($sub) {
+                      $sub->select(DB::raw(1))
+                          ->from('payments')
+                          ->whereColumn('payments.worker_id', 'users.id');
+                  });
+            })
             ->with('branch')
             ->select('users.*');
         
-        // Apply branch filtering for non-CEO users
+        // Apply branch filtering for non-CEO/Super Admin users
         if ($user->hasRole('secretary')) {
             $query->where('branch_id', $user->branch_id);
         } elseif ($user->hasRole('worker')) {
