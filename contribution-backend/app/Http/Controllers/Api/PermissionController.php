@@ -23,10 +23,24 @@ class PermissionController extends Controller
      */
     public function syncUserPermissions(Request $request, $userId)
     {
-        $request->validate([
-            'permissions' => 'required|array',
+        // Use a validator instance to get detailed error info if it fails
+        $validator = \Validator::make($request->all(), [
+            'permissions' => 'present|array',
             'permissions.*' => 'exists:permissions,name',
         ]);
+
+        if ($validator->fails()) {
+            \Log::error('Permission Sync Validation Failed', [
+                'user_id' => $userId,
+                'errors' => $validator->errors()->toArray(),
+                'input' => $request->all()
+            ]);
+            
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $user = User::findOrFail($userId);
         
