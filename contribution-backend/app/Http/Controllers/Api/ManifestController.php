@@ -57,8 +57,8 @@ class ManifestController extends Controller
     protected function generateManifestResponse($company = null)
     {
         if ($company) {
-            // Dynamically extract the relative path from the full logo URL
-            $logoUrl = $company->logo_url ? parse_url($company->logo_url, PHP_URL_PATH) : '/logo.jpeg';
+            // Use the full absolute URL from the Company model
+            $logoUrl = $company->logo_url ?: config('app.url') . '/logo.jpeg';
             $isPng = str_contains($logoUrl, '.png');
 
             $manifest = [
