@@ -1,5 +1,5 @@
 // Service Worker for O.B. Mighty PWA
-const CACHE_NAME = 'obmighty-cache-v1';
+const CACHE_NAME = 'obmighty-cache-v2';
 
 // Install event
 self.addEventListener('install', () => {
