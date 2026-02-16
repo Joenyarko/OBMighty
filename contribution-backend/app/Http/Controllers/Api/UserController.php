@@ -18,11 +18,11 @@ class UserController extends Controller
         $user = auth()->user();
         
         if ($user->hasRole('ceo')) {
-            $users = User::with('roles', 'branch')->get();
+            $users = User::with('roles', 'branch', 'permissions')->get();
         } else {
             // Secretary can only see workers in their branch
             $users = User::where('branch_id', $user->branch_id)
-                ->with('roles', 'branch')
+                ->with('roles', 'branch', 'permissions')
                 ->get();
         }
 
@@ -92,7 +92,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => $user->load('roles', 'branch'),
+            'user' => $user->load('roles', 'branch', 'permissions'),
         ], 201);
     }
 
@@ -101,7 +101,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with('roles', 'branch')->findOrFail($id);
+        $user = User::with('roles', 'branch', 'permissions')->findOrFail($id);
         return response()->json($user);
     }
 
@@ -155,7 +155,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user->load('roles', 'branch'),
+            'user' => $user->load('roles', 'branch', 'permissions'),
         ]);
     }
 
