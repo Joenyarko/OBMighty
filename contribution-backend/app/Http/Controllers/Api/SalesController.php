@@ -225,35 +225,32 @@ class SalesController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        // Get all-time stats
+        // Get all-time stats (based on who RECORDED the payment)
         $allTimeStats = DB::table('payments')
-            ->join('customers', 'payments.customer_id', '=', 'customers.id')
-            ->where('customers.worker_id', $workerId)
+            ->where('payments.worker_id', $workerId)
             ->select(
                 DB::raw('SUM(payments.payment_amount) as total_sales'),
-                DB::raw('COUNT(DISTINCT customers.id) as total_customers'),
+                DB::raw('COUNT(DISTINCT payments.customer_id) as total_customers'),
                 DB::raw('COUNT(payments.id) as total_transactions'),
                 DB::raw('AVG(payments.payment_amount) as avg_transaction')
             )
             ->first();
         
-        // Get this month stats
+        // Get this month stats (based on who RECORDED the payment)
         $thisMonthStats = DB::table('payments')
-            ->join('customers', 'payments.customer_id', '=', 'customers.id')
-            ->where('customers.worker_id', $workerId)
+            ->where('payments.worker_id', $workerId)
             ->whereMonth('payments.payment_date', Carbon::now()->month)
             ->whereYear('payments.payment_date', Carbon::now()->year)
             ->select(
                 DB::raw('SUM(payments.payment_amount) as total_sales'),
-                DB::raw('COUNT(DISTINCT customers.id) as customers_paid'),
+                DB::raw('COUNT(DISTINCT payments.customer_id) as customers_paid'),
                 DB::raw('COUNT(payments.id) as transactions')
             )
             ->first();
         
-        // Get this week stats
+        // Get this week stats (based on who RECORDED the payment)
         $thisWeekStats = DB::table('payments')
-            ->join('customers', 'payments.customer_id', '=', 'customers.id')
-            ->where('customers.worker_id', $workerId)
+            ->where('payments.worker_id', $workerId)
             ->whereBetween('payments.payment_date', [
                 Carbon::now()->startOfWeek(),
                 Carbon::now()->endOfWeek()
@@ -280,13 +277,12 @@ class SalesController extends Controller
         // 1. Sales Score (40 points max)
         // Compare against branch average total sales per worker
         $branchTotalSales = DB::table('payments')
-            ->join('customers', 'payments.customer_id', '=', 'customers.id')
-            ->where('customers.branch_id', $worker->branch_id)
+            ->where('payments.branch_id', $worker->branch_id)
             ->whereMonth('payments.payment_date', Carbon::now()->month)
             ->whereYear('payments.payment_date', Carbon::now()->year)
             ->sum('payments.payment_amount');
             
-        $workerCount = User::role('worker')->where('branch_id', $worker->branch_id)->count();
+        $workerCount = User::where('branch_id', $worker->branch_id)->count();
         $avgWorkerSales = $workerCount > 0 ? $branchTotalSales / $workerCount : 1;
         
         // If they match the average, they get 30/40 (75%). To get 40/40, they need ~1.3x average.
@@ -310,10 +306,10 @@ class SalesController extends Controller
         
         $performanceScore = round($salesScore + $retentionScore + $completionScore + $transactionScore);
         
-        // Get recent activity (last 10 payments)
+        // Get recent activity (last 10 payments recorded by this user)
         $recentActivity = DB::table('payments')
             ->join('customers', 'payments.customer_id', '=', 'customers.id')
-            ->where('customers.worker_id', $workerId)
+            ->where('payments.worker_id', $workerId)
             ->orderBy('payments.payment_date', 'desc')
             ->orderBy('payments.created_at', 'desc')
             ->limit(10)

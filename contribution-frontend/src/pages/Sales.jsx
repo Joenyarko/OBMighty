@@ -112,7 +112,7 @@ function Sales() {
                 {/* Worker List - Only show for branch managers/secretaries */}
                 {user.role !== 'worker' && (
                     <div className="workers-list">
-                        <h2>Workers</h2>
+                        <h2>Team</h2>
                         {workers.map((worker) => (
                             <div
                                 key={worker.id}
