@@ -28,8 +28,8 @@ class Company extends Model
      */
     public function getLogoUrlAttribute($value)
     {
-        // Default logo if none set
-        if (!$value) return '/logo.jpeg';
+        // Default logo
+        if (!$value) return config('app.url') . '/logo.jpeg';
         
         // If it's already a full URL, return it
         if (str_starts_with($value, 'http')) {
@@ -39,12 +39,14 @@ class Company extends Model
         // Ensure it starts with /
         $path = str_starts_with($value, '/') ? $value : '/' . $value;
         
-        // Don't prepend /storage if it's already an API image path or already has /storage
+        // Handle /api/images/ vs /storage/ logic - ensure we map correctly to where files are served
+        // If it's a storage path, ensure it has /storage
         if (!str_starts_with($path, '/api/images/') && !str_starts_with($path, '/storage/')) {
             $path = '/storage' . $path;
         }
         
-        return $path;
+        // Return ABSOLUTE URL
+        return config('app.url') . $path;
     }
 
     protected $casts = [

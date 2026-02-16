@@ -79,6 +79,7 @@ class ImageUploadService
     private function generateUrl(string $folder, string $filename): string
     {
         // Return a relative path starting with /api/images
+        // The Company model accessor will handle prepending the APP_URL
         return "/api/images/{$folder}/{$filename}";
     }
 
