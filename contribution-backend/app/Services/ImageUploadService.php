@@ -78,8 +78,8 @@ class ImageUploadService
      */
     private function generateUrl(string $folder, string $filename): string
     {
-        // Return the API endpoint URL that handles CORS
-        return url("/api/images/{$folder}/{$filename}");
+        // Return a relative path starting with /api/images
+        return "/api/images/{$folder}/{$filename}";
     }
 
     /**
