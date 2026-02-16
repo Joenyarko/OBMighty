@@ -243,15 +243,23 @@ function CompanyDashboard() {
             <div className="summary-stats">
                 <div className="stat">
                     <span className="stat-label">Total Branches</span>
-                    <span className="stat-value">{overview.total_branches}</span>
+                    <span className="stat-value">{overview.total_branches || 0}</span>
                 </div>
                 <div className="stat">
-                    <span className="stat-label">Total Users</span>
-                    <span className="stat-value">{overview.total_users}</span>
+                    <span className="stat-label">Total Staff</span>
+                    <span className="stat-value">{overview.total_staff || 0}</span>
+                </div>
+                <div className="stat">
+                    <span className="stat-label">Cards Issued</span>
+                    <span className="stat-value">{overview.total_cards_issued || 0}</span>
                 </div>
                 <div className="stat">
                     <span className="stat-label">Total Customers</span>
                     <span className="stat-value">{overview.total_customers}</span>
+                </div>
+                <div className="stat">
+                    <span className="stat-label">Card Templates</span>
+                    <span className="stat-value">{overview.total_card_templates || 0}</span>
                 </div>
                 <div className="stat">
                     <span className="stat-label">Monthly Transactions</span>
