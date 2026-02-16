@@ -29,10 +29,10 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Super Admin User
         $superAdmin = \App\Models\User::firstOrCreate(
-            ['email' => 'admin@neziz.com'],
+            ['email' => 'neziz@gmail.com'],
             [
                 'name' => 'Super Admin',
-                'password' => \Illuminate\Support\Facades\Hash::make(env('DEFAULT_USER_PASSWORD', 'password')),
+                'password' => \Illuminate\Support\Facades\Hash::make('Neziz@1234'),
                 'status' => 'active',
                 'company_id' => $company->id,
                 'branch_id' => null,
@@ -40,13 +40,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $superAdmin->assignRole('super_admin');
-        
-        // Also assign 'ceo' role so they can access tenant features if needed for testing, 
-        // but strictly 'super_admin' is enough for the Admin Dashboard.
-        // Let's stick to super_admin.
 
         $this->command->info('Production Seeding Complete.');
         $this->command->info('Company: Neziz');
-        $this->command->info('User: admin@neziz.com / password123');
+        $this->command->info('User: neziz@gmail.com / Neziz@1234');
     }
 }
