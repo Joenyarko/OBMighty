@@ -28,6 +28,16 @@ class ImageController extends Controller
                 return response()->json(['message' => 'Invalid path'], 400);
             }
 
+            // Debug logging to help diagnose 404s
+            $storagePath = 'public/images/' . $folder . '/' . $filename;
+            \Log::info('ImageController@serve', [
+                'folder' => $folder,
+                'filename' => $filename,
+                'storage_path' => $storagePath,
+                'file_exists' => \Storage::exists($storagePath),
+                'full_disk_path' => storage_path('app/' . $storagePath),
+            ]);
+
             $content = $this->imageService->getFile($folder, $filename);
             
             // Determine MIME type
@@ -40,6 +50,13 @@ class ImageController extends Controller
                 ->header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
                 ->header('Access-Control-Max-Age', '3600');
         } catch (\Exception $e) {
+            \Log::error('ImageController@serve FAILED', [
+                'folder' => $folder,
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+                'storage_path' => 'public/images/' . $folder . '/' . $filename,
+                'full_disk_path' => storage_path('app/public/images/' . $folder . '/' . $filename),
+            ]);
             return response()->json(['message' => 'Image not found'], 404);
         }
     }
