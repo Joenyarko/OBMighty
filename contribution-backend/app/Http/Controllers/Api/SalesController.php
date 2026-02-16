@@ -102,13 +102,13 @@ class SalesController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'customer_name' => $payment->customer->name,
-                    'customer_phone' => $payment->customer->phone,
+                    'customer_name' => $payment->customer?->name ?? 'Unknown',
+                    'customer_phone' => $payment->customer?->phone ?? '',
                     'amount' => $payment->payment_amount,
                     'boxes_filled' => $payment->boxes_filled,
-                    'payment_method' => $payment->payment_method,
-                    'payment_date' => $payment->payment_date->format('Y-m-d'),
-                    'payment_time' => $payment->created_at->format('H:i:s'),
+                    'payment_method' => $payment->payment_method ?? 'cash',
+                    'payment_date' => $payment->payment_date ? $payment->payment_date->format('Y-m-d') : now()->format('Y-m-d'),
+                    'payment_time' => $payment->created_at ? $payment->created_at->format('H:i:s') : '',
                     'reference_number' => $payment->reference_number,
                     'notes' => $payment->notes,
                 ];
