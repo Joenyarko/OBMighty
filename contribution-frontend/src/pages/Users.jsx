@@ -401,8 +401,8 @@ function Users({ roleFilter, title }) {
             )}
 
             {/* Permission Management Modal */}
-            {showPermissionModal && selectedUser && (
-                <div className="custom-modal-overlay" onClick={() => setShowPermissionModal(false)}>
+            {showPermissionsModal && selectedUser && (
+                <div className="custom-modal-overlay" onClick={() => setShowPermissionsModal(false)}>
                     <div className="custom-modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <h2 style={{ marginBottom: '8px', color: 'var(--primary-color)' }}>Manage Permissions</h2>
                         <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
@@ -413,7 +413,7 @@ function Users({ roleFilter, title }) {
                             display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
                             gap: '12px', maxHeight: '400px', overflowY: 'auto', marginBottom: '24px'
                         }}>
-                            {availablePermissions.map(perm => (
+                            {allPermissions.map(perm => (
                                 <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px' }}>
                                     <input
                                         type="checkbox"
@@ -428,8 +428,10 @@ function Users({ roleFilter, title }) {
                         </div>
 
                         <div style={{ display: 'flex', gap: '12px' }}>
-                            <button type="button" className="btn-secondary" onClick={() => setShowPermissionModal(false)} style={{ flex: 1 }}>Cancel</button>
-                            <button type="button" className="btn-primary" onClick={handleSavePermissions} style={{ flex: 1 }}>Save Changes</button>
+                            <button type="button" className="btn-secondary" onClick={() => setShowPermissionsModal(false)} style={{ flex: 1 }}>Cancel</button>
+                            <button type="button" className="btn-primary" onClick={handleSavePermissions} style={{ flex: 1 }} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </button>
                         </div>
                     </div>
                 </div>
