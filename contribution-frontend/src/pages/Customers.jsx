@@ -55,17 +55,25 @@ function Customers() {
 
     // ... fetch functions ...
 
-    const handleDeleteCustomer = async (customerId) => {
+    const handleDeactivateCustomer = async (customerId, customerName) => {
+        const result = await showConfirm(
+            `Deactivate Customer "${customerName}"?`,
+            'This customer will be marked as inactive. This action can be reversed by updating their status.',
+            'Deactivate',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
         try {
-            await customerAPI.delete(customerId);
+            await customerAPI.deactivate(customerId);
             fetchCustomers(pagination.current_page);
-            showSuccess('Customer deleted successfully');
+            showSuccess('Customer deactivated successfully');
         } catch (error) {
-            console.error('Failed to delete customer:', error);
-            showError('Failed to delete customer');
+            console.error('Failed to deactivate customer:', error);
+            showError('Failed to deactivate customer');
         }
     };
-
     // ... (handleUpdateCustomer unchanged)
     const handleUpdateCustomer = async (id, formData) => {
         try {
@@ -304,14 +312,8 @@ function Customers() {
                                             {isCEO && (
                                                 <button
                                                     className="btn-icon-small delete"
-                                                    onClick={() => {
-                                                        showConfirm('Are you sure you want to delete this customer?', 'Delete Customer').then((result) => {
-                                                            if (result.isConfirmed) {
-                                                                handleDeleteCustomer(customer.id);
-                                                            }
-                                                        });
-                                                    }}
-                                                    title="Delete"
+                                                    onClick={() => handleDeactivateCustomer(customer.id, customer.name)}
+                                                    title="Deactivate"
                                                     style={{ padding: '8px', background: 'transparent', border: '1px solid var(--danger-color)', color: 'var(--danger-color)', borderRadius: '4px', cursor: 'pointer' }}
                                                 >
                                                     🗑️

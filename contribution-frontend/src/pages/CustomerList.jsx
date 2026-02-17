@@ -161,24 +161,23 @@ function CustomerList() {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDeactivate = async (id, name) => {
         const result = await showConfirm(
-            'Are you sure you want to delete this customer?',
-            'Delete Customer'
+            `Deactivate Customer "${name}"?`,
+            'This customer will be marked as inactive and will no longer appear in active lists. This can be reversed later.'
         );
 
         if (result.isConfirmed) {
             try {
-                await customerAPI.delete(id);
+                await customerAPI.deactivate(id);
                 setCustomers(customers.filter(c => c.id !== id));
-                showSuccess('Customer deleted successfully');
+                showSuccess('Customer deactivated successfully');
             } catch (error) {
-                console.error('Failed to delete customer:', error);
-                showError('Failed to delete customer');
+                console.error('Failed to deactivate customer:', error);
+                showError('Failed to deactivate customer');
             }
         }
     };
-
     const handleMarkAsServed = async (customer) => {
         // Confirmation with Logo
         const result = await showConfirm(
@@ -412,10 +411,10 @@ function CustomerList() {
                                 {isCEO && (
                                     <button
                                         className="btn-icon delete"
-                                        onClick={() => handleDelete(customer.id)}
-                                        title="Delete Customer"
+                                        onClick={() => handleDeactivate(customer.id, customer.name)}
+                                        title="Deactivate"
                                     >
-                                        🗑️ Delete
+                                        <Trash2 size={18} />
                                     </button>
                                 )}
                                 {/* Transfer Button - CEO Only */}

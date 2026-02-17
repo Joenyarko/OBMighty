@@ -172,19 +172,19 @@ function Cards() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id) => {
+    const handleDeactivate = async (id, cardName) => {
         const result = await showConfirm(
-            'Are you sure you want to delete this card?',
-            'This action cannot be undone!'
+            `Deactivate Card "${cardName}"?`,
+            'This card will no longer be available for new assignments. Existing assignments will remain unaffected.'
         );
 
         if (result.isConfirmed) {
             try {
                 await cardAPI.delete(id);
-                showSuccess('Card deleted successfully!');
+                showSuccess('Card deactivated successfully!');
                 fetchCards();
             } catch (error) {
-                showError('Failed to delete card');
+                showError('Failed to deactivate card');
             }
         }
     };
@@ -248,8 +248,8 @@ function Cards() {
                                 <button className="btn-edit" onClick={() => handleEdit(card)}>
                                     Edit
                                 </button>
-                                <button className="btn-delete" onClick={() => handleDelete(card.id)}>
-                                    Delete
+                                <button className="btn-delete" onClick={() => handleDeactivate(card.id, card.card_name)}>
+                                    Deactivate
                                 </button>
                             </div>
                         </div>

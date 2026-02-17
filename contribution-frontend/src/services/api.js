@@ -57,6 +57,7 @@ export const customerAPI = {
     create: (data) => api.post('/customers', data),
     update: (id, data) => api.put(`/customers/${id}`, data),
     delete: (id) => api.delete(`/customers/${id}`),
+    deactivate: (id) => api.post(`/customers/${id}/deactivate`),
     transfer: (id, newWorkerId) => api.post(`/customers/${id}/transfer`, { new_worker_id: newWorkerId }),
     markServed: (id) => api.post(`/customers/${id}/serve`),
 };
@@ -103,6 +104,8 @@ export const userAPI = {
     create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
     delete: (id) => api.delete(`/users/${id}`),
+    deactivate: (id) => api.post(`/users/${id}/deactivate`),
+    deactivateWorker: (id, transferToWorkerId) => api.post(`/workers/${id}/deactivate-with-transfer`, { transfer_to_worker_id: transferToWorkerId }),
 };
 
 // Inventory API

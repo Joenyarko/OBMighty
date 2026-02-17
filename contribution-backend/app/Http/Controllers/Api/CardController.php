@@ -122,15 +122,19 @@ class CardController extends Controller
     }
 
     /**
-     * Delete a card (images are auto-deleted via model event)
+     * Deactivate a card (soft delete)
      */
     public function destroy($id)
     {
         $card = Card::findOrFail($id);
-        $card->delete();
+        $oldStatus = $card->status;
+        $card->update(['status' => 'inactive']);
+
+        // Create audit log
+        \App\Models\AuditLog::log('card_deactivated', $card, ['status' => $oldStatus], ['status' => 'inactive']);
 
         return response()->json([
-            'message' => 'Card deleted successfully',
+            'message' => 'Card deactivated successfully',
         ]);
     }
 }

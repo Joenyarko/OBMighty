@@ -179,9 +179,10 @@ function ActivityLog() {
                         <option value="payment_recorded">Payment Recorded</option>
                         <option value="customer_created">Customer Created</option>
                         <option value="customer_updated">Customer Updated</option>
-                        <option value="customer_deleted">Customer Deleted</option>
+                        <option value="customer_deactivated">Customer Deactivated</option>
                         <option value="user_created">User Created</option>
                         <option value="user_updated">User Updated</option>
+                        <option value="user_deactivated">User Deactivated</option>
                         <option value="user_deleted">User Deleted</option>
                     </select>
                 </div>
@@ -221,10 +222,10 @@ function ActivityLog() {
                                                 padding: '4px 8px',
                                                 borderRadius: '4px',
                                                 fontSize: '12px',
-                                                background: log.action.includes('delete') ? 'rgba(244, 67, 54, 0.1)' :
+                                                background: (log.action.includes('delete') || log.action.includes('deactivate')) ? 'rgba(244, 67, 54, 0.1)' :
                                                     log.action.includes('create') || log.action.includes('payment') ? 'rgba(76, 175, 80, 0.1)' :
                                                         'rgba(33, 150, 243, 0.1)',
-                                                color: log.action.includes('delete') ? '#f44336' :
+                                                color: (log.action.includes('delete') || log.action.includes('deactivate')) ? '#f44336' :
                                                     log.action.includes('create') || log.action.includes('payment') ? '#4caf50' :
                                                         '#2196f3'
                                             }}>

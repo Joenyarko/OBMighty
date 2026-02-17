@@ -16,10 +16,18 @@ function Users({ roleFilter, title }) {
     const [showModal, setShowModal] = useState(false);
 
     // Permission Management State
-    const [showPermissionModal, setShowPermissionModal] = useState(false);
+    const [showPermissionsModal, setShowPermissionsModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [availablePermissions, setAvailablePermissions] = useState([]);
     const [userPermissions, setUserPermissions] = useState([]);
+    const [allPermissions, setAllPermissions] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Worker deactivation state
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [workerToDeactivate, setWorkerToDeactivate] = useState(null);
+    const [transferToWorkerId, setTransferToWorkerId] = useState('');
+    const [activeWorkers, setActiveWorkers] = useState([]);
+    const [customerCount, setCustomerCount] = useState(0);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -77,7 +85,7 @@ function Users({ roleFilter, title }) {
         if (!isCEO) return;
         try {
             const permsRes = await permissionAPI.getAll();
-            setAvailablePermissions(permsRes.data);
+            setAllPermissions(permsRes.data); // Store all available permissions
 
             // Fetch fresh details
             const userDetails = await userAPI.get(user.id);
@@ -88,7 +96,7 @@ function Users({ roleFilter, title }) {
             // Map permissions (assuming direct permissions for now as per requirement for granular control)
             const effectivePerms = freshUser.permissions ? freshUser.permissions.map(p => p.name) : [];
             setUserPermissions(effectivePerms);
-            setShowPermissionModal(true);
+            setShowPermissionsModal(true);
         } catch (error) {
             console.error('Failed to load permissions', error);
         }
@@ -110,14 +118,17 @@ function Users({ roleFilter, title }) {
 
         if (!result.isConfirmed) return;
 
+        setIsSaving(true);
         try {
             await permissionAPI.syncUser(selectedUser.id, userPermissions);
-            setShowPermissionModal(false);
+            setShowPermissionsModal(false);
             fetchData(); // Refresh list
             showSuccess('Permissions updated successfully');
         } catch (error) {
             console.error('Failed to sync permissions', error);
             showError('Failed to update permissions');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -161,37 +172,86 @@ function Users({ roleFilter, title }) {
         }
     };
 
-    const handleDelete = async (userId, userName) => {
-        // Only CEO can delete
+    const handleDeactivate = async (targetUser) => {
+        const userId = targetUser.id;
+        const userName = targetUser.name;
+        const isWorker = targetUser.roles?.[0]?.name === 'worker';
+
+        // Only CEO can deactivate
         if (!isCEO) {
-            showError('Only CEO has permission to delete users');
+            showError('Only CEO has permission to deactivate users');
             return;
         }
 
-        // Prevent deleting yourself
+        // Prevent deactivating yourself
         if (userId === user?.id) {
-            showError('You cannot delete your own account');
+            showError('You cannot deactivate your own account');
             return;
         }
 
         const result = await showConfirm(
-            `Delete User "${userName}"?`,
-            'This action cannot be undone.',
-            'Delete',
+            `Deactivate User "${userName}"?`,
+            'This user will no longer be able to log in. This action can be reversed by updating their status.',
+            'Deactivate',
             'Cancel'
         );
 
         if (!result.isConfirmed) return;
 
         try {
-            await userAPI.delete(userId);
-            fetchData();
-            showSuccess(`${userName} has been deleted successfully`);
+            if (isWorker) {
+                // Try deactivating worker directly first
+                try {
+                    const response = await userAPI.deactivateWorker(userId, null);
+                    showSuccess(`${userName} has been deactivated successfully`);
+                    fetchData();
+                } catch (err) {
+                    if (err.response?.status === 422 && err.response?.data?.error === 'Worker has customers') {
+                        // Show transfer modal
+                        setWorkerToDeactivate(targetUser);
+                        setCustomerCount(err.response.data.customer_count);
+                        // Filter other active workers (same branch if not CEO, but here isCEO is true)
+                        const otherWorkers = users.filter(u =>
+                            u.id !== userId &&
+                            u.roles?.[0]?.name === 'worker' &&
+                            u.status === 'active'
+                        );
+                        setActiveWorkers(otherWorkers);
+                        setShowTransferModal(true);
+                    } else {
+                        throw err;
+                    }
+                }
+            } else {
+                await userAPI.deactivate(userId);
+                fetchData();
+                showSuccess(`${userName} has been deactivated successfully`);
+            }
         } catch (error) {
-            console.error('Failed to delete user', error);
-            showError(error.response?.data?.message || 'Error deleting user.');
+            console.error('Failed to deactivate user', error);
+            showError(error.response?.data?.message || 'Error deactivating user.');
         }
     };
+
+    const handleConfirmTransferDeactivate = async () => {
+        if (!transferToWorkerId) {
+            showError('Please select a worker to transfer customers to.');
+            return;
+        }
+
+        try {
+            await userAPI.deactivateWorker(workerToDeactivate.id, transferToWorkerId);
+            setShowTransferModal(false);
+            setWorkerToDeactivate(null);
+            setTransferToWorkerId('');
+            fetchData();
+            showSuccess(`${workerToDeactivate.name} has been deactivated and customers transferred.`);
+        } catch (error) {
+            console.error('Failed to transfer and deactivate', error);
+            showError(error.response?.data?.message || 'Error transferring customers.');
+        }
+    };
+
 
     return (
         <div className="users-page">
@@ -260,9 +320,9 @@ function Users({ roleFilter, title }) {
                                             <button
                                                 className="btn-danger"
                                                 style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(244, 67, 54, 0.1)', color: '#f44336', border: '1px solid rgba(244, 67, 54, 0.3)' }}
-                                                onClick={() => handleDelete(user.id, user.name)}
+                                                onClick={() => handleDeactivate(user)}
                                             >
-                                                Delete
+                                                Deactivate
                                             </button>
                                         )}
                                     </td>
@@ -370,6 +430,58 @@ function Users({ roleFilter, title }) {
                         <div style={{ display: 'flex', gap: '12px' }}>
                             <button type="button" className="btn-secondary" onClick={() => setShowPermissionModal(false)} style={{ flex: 1 }}>Cancel</button>
                             <button type="button" className="btn-primary" onClick={handleSavePermissions} style={{ flex: 1 }}>Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Deactivate Worker with Transfer Modal */}
+            {showTransferModal && (
+                <div className="custom-modal-overlay" onClick={() => setShowTransferModal(false)}>
+                    <div className="custom-modal-content" onClick={e => e.stopPropagation()}>
+                        <h2 style={{ marginBottom: '16px', color: 'var(--danger-color)' }}>Transfer Customers</h2>
+                        <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+                            Worker <strong>{workerToDeactivate?.name}</strong> has <strong>{customerCount}</strong> active customers.
+                            Please select another active worker to transfer these customers to before deactivation.
+                        </p>
+
+                        <div className="form-group" style={{ marginBottom: '24px' }}>
+                            <label>Transfer Customers To:</label>
+                            <select
+                                value={transferToWorkerId}
+                                onChange={e => setTransferToWorkerId(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    borderRadius: '8px',
+                                    backgroundColor: 'rgba(255,255,255,0.05)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    marginTop: '8px'
+                                }}
+                                required
+                            >
+                                <option value="">Select Target Worker</option>
+                                {activeWorkers.map(w => (
+                                    <option key={w.id} value={w.id}>{w.name} ({w.branch?.name || 'N/A'})</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setShowTransferModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="btn-danger"
+                                onClick={handleConfirmTransferDeactivate}
+                                disabled={!transferToWorkerId}
+                                style={{ padding: '10px 20px' }}
+                            >
+                                Transfer & Deactivate
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -117,15 +117,15 @@ function CompanyManagement() {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDeactivate = async (id) => {
         const result = await Swal.fire({
-            title: 'Delete Organization?',
-            text: "This will deactivate the organization immediately.",
+            title: 'Deactivate Organization?',
+            text: "This will deactivate the organization and all its users immediately.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#374151',
-            confirmButtonText: 'Yes, delete it',
+            confirmButtonText: 'Yes, deactivate it',
             background: '#161920',
             color: '#fff'
         });
@@ -135,7 +135,7 @@ function CompanyManagement() {
                 await api.delete(`/admin/companies/${id}`);
                 fetchCompanies();
                 Swal.fire({
-                    title: 'Deleted!',
+                    title: 'Deactivated!',
                     text: 'Organization has been deactivated.',
                     icon: 'success',
                     background: '#161920',
@@ -276,7 +276,7 @@ function CompanyManagement() {
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="nex-btn-icon" onClick={() => handleDelete(company.id)} title="Delete">
+                                        <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
                                             <Trash2 size={16} />
                                         </button>
                                         <button className="nex-btn-icon" onClick={() => openEditModal(company)} title="Edit">

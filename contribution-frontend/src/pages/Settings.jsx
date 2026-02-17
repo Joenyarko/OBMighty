@@ -742,7 +742,7 @@ function Settings() {
                                     <th style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>Read</th>
                                     <th style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>Write</th>
                                     <th style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>Edit</th>
-                                    <th style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>Delete</th>
+                                    <th style={{ textAlign: 'center', padding: '16px', color: 'var(--text-secondary)' }}>Deactivate</th>
                                     <th style={{ textAlign: 'center', padding: '16px', color: 'var(--primary-color)' }}>Full Access</th>
                                     <th style={{ textAlign: 'center', padding: '16px', color: 'var(--danger-color)' }}>No Access</th>
                                 </tr>
@@ -756,8 +756,8 @@ function Settings() {
                                         <tr key={module.name} style={{ borderBottom: '1px solid var(--border-color)', background: noAccess ? 'rgba(255,0,0,0.05)' : 'transparent' }}>
                                             <td style={{ padding: '16px', fontWeight: '500' }}>{module.name}</td>
 
-                                            {/* Columns for Read, Write, Edit, Delete */}
-                                            {['read', 'write', 'edit', 'delete'].map(action => (
+                                            {/* Columns for Read, Write, Edit, Deactivate */}
+                                            {['read', 'write', 'edit', 'deactivate'].map(action => (
                                                 <td key={action} style={{ textAlign: 'center', padding: '16px' }}>
                                                     {module.permissions[action] ? (
                                                         <input
