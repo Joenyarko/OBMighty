@@ -13,17 +13,29 @@ class UserController extends Controller
     /**
      * Get all users (CEO/Secretary filtered)
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
+        $includeInactive = $request->query('include_inactive', false);
         
         if ($user->hasRole('ceo')) {
-            $users = User::with('roles', 'branch', 'permissions')->get();
+            $query = User::with('roles', 'branch', 'permissions');
+            
+            if (!$includeInactive) {
+                $query->where('status', 'active');
+            }
+            
+            $users = $query->get();
         } else {
             // Secretary can only see workers in their branch
-            $users = User::where('branch_id', $user->branch_id)
-                ->with('roles', 'branch', 'permissions')
-                ->get();
+            $query = User::where('branch_id', $user->branch_id)
+                ->with('roles', 'branch', 'permissions');
+                
+            if (!$includeInactive) {
+                $query->where('status', 'active');
+            }
+            
+            $users = $query->get();
         }
 
         return response()->json($users);

@@ -25,6 +25,11 @@ class CustomerController extends Controller
         }
         // CEO sees all
 
+        // Default to active customers only (unless status filter is explicitly provided)
+        if (!$request->has('status') || $request->status === '') {
+            $query->where('status', 'active');
+        }
+
         // Apply status filter
         if ($request->has('status') && $request->status !== '') {
             $status = $request->status;
