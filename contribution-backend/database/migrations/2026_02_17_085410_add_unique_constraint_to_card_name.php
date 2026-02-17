@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('customer_cards', function (Blueprint $table) {
-            $table->unique('card_name');
+        Schema::table('cards', function (Blueprint $table) {
+            $table->unique('name');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('customer_cards', function (Blueprint $table) {
-            $table->dropUnique(['card_name']);
+        Schema::table('cards', function (Blueprint $table) {
+            $table->dropUnique(['name']);
         });
     }
 };

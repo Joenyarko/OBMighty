@@ -24,14 +24,14 @@ class CardController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'card_name' => 'required|string|max:255|unique:customer_cards,card_name',
+            'name' => 'required|string|max:255|unique:cards,name',
             'number_of_boxes' => 'required|integer|min:1',
             'amount' => 'required|numeric|min:0',
             'front_image' => 'required|image|mimes:jpeg,jpg,png|max:5120', // 5MB max
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'nullable|in:active,inactive',
         ], [
-            'card_name.unique' => 'A card with this name already exists. Please choose a different name.',
+            'name.unique' => 'A card with this name already exists. Please choose a different name.',
         ]);
 
         // Handle front image upload
@@ -77,14 +77,14 @@ class CardController extends Controller
         $card = Card::findOrFail($id);
 
         $validated = $request->validate([
-            'card_name' => 'sometimes|string|max:255|unique:customer_cards,card_name,' . $id,
+            'name' => 'sometimes|string|max:255|unique:cards,name,' . $id,
             'number_of_boxes' => 'sometimes|integer|min:1',
             'amount' => 'sometimes|numeric|min:0',
             'front_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'sometimes|in:active,inactive',
         ], [
-            'card_name.unique' => 'A card with this name already exists. Please choose a different name.',
+            'name.unique' => 'A card with this name already exists. Please choose a different name.',
         ]);
 
         // Handle front image replacement
