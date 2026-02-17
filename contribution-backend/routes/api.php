@@ -119,6 +119,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Customers (All roles, scoped by policy)
     Route::apiResource('customers', CustomerController::class);
+    
+    // User Deactivation (CEO only)
+    Route::post('/users/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('role:ceo|super_admin');
+    Route::post('/workers/{id}/deactivate-with-transfer', [UserController::class, 'deactivateWorker'])->middleware('role:ceo|super_admin');
+    
+    // Customer Deactivation (CEO and Secretary)
+    Route::post('/customers/{id}/deactivate', [CustomerController::class, 'deactivate'])->middleware('role:ceo|secretary|super_admin');
+
 
     // Cards (View All - Accessible to Workers/Secretary/CEO for selection)
     Route::get('/cards', [CardController::class, 'index']);

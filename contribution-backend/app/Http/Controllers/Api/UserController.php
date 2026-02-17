@@ -160,30 +160,100 @@ class UserController extends Controller
     }
 
     /**
-     * Delete user
+     * Deactivate user (soft delete)
      */
-    public function destroy($id)
+    public function deactivate($id)
     {
         $user = User::findOrFail($id);
         
-        // Only CEO can delete users
+        // Only CEO can deactivate users
         if (!auth()->user()->hasRole('ceo')) {
-            abort(403, 'Unauthorized. Only CEO can delete users.');
+            abort(403, 'Unauthorized. Only CEO can deactivate users.');
         }
         
-        // Prevent deleting yourself
+        // Prevent deactivating yourself
         if ($user->id === auth()->id()) {
-            abort(403, 'Cannot delete yourself');
+            abort(403, 'Cannot deactivate yourself');
         }
 
         $oldValues = $user->toArray();
-        $user->delete();
+        $user->update(['status' => 'inactive']);
 
         // Create audit log
-        \App\Models\AuditLog::log('user_deleted', $user, $oldValues, null);
+        \App\Models\AuditLog::log('user_deactivated', $user, $oldValues, ['status' => 'inactive']);
 
         return response()->json([
-            'message' => 'User deleted successfully',
+            'message' => 'User deactivated successfully',
         ]);
+    }
+
+    /**
+     * Deactivate worker with optional customer transfer
+     */
+    public function deactivateWorker(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'transfer_to_worker_id' => 'nullable|exists:users,id',
+        ]);
+
+        return \DB::transaction(function () use ($id, $validated) {
+            $worker = User::findOrFail($id);
+            
+            // Only CEO can deactivate workers
+            if (!auth()->user()->hasRole('ceo')) {
+                abort(403, 'Unauthorized. Only CEO can deactivate workers.');
+            }
+
+            // Check if worker has customers
+            $customerCount = \App\Models\Customer::where('worker_id', $id)->count();
+
+            if ($customerCount > 0) {
+                if (!isset($validated['transfer_to_worker_id'])) {
+                    return response()->json([
+                        'error' => 'Worker has customers',
+                        'message' => 'This worker has ' . $customerCount . ' customer(s). Please select a worker to transfer them to.',
+                        'customer_count' => $customerCount,
+                    ], 422);
+                }
+
+                // Validate new worker is active
+                $newWorker = User::findOrFail($validated['transfer_to_worker_id']);
+                if ($newWorker->status !== 'active') {
+                    return response()->json([
+                        'error' => 'Invalid target worker',
+                        'message' => 'Target worker must be active',
+                    ], 422);
+                }
+
+                // Transfer customers ONLY (not payments)
+                \App\Models\Customer::where('worker_id', $id)
+                    ->update(['worker_id' => $validated['transfer_to_worker_id']]);
+
+                // Log the transfer
+                \App\Models\AuditLog::create([
+                    'company_id' => auth()->user()->company_id,
+                    'user_id' => auth()->id(),
+                    'action' => 'customers_transferred',
+                    'details' => json_encode([
+                        'from_worker_id' => $id,
+                        'to_worker_id' => $validated['transfer_to_worker_id'],
+                        'customer_count' => $customerCount,
+                    ]),
+                    'ip_address' => request()->ip(),
+                ]);
+            }
+
+            // Deactivate worker
+            $oldValues = $worker->toArray();
+            $worker->update(['status' => 'inactive']);
+
+            // Audit log
+            \App\Models\AuditLog::log('worker_deactivated', $worker, $oldValues, ['status' => 'inactive']);
+
+            return response()->json([
+                'message' => 'Worker deactivated successfully',
+                'customers_transferred' => $customerCount,
+            ]);
+        });
     }
 }

@@ -240,32 +240,32 @@ class CustomerController extends Controller
     }
 
     /**
-     * Delete a customer (soft delete)
-     */
-    public function destroy(Request $request, $id)
-    {
-        $user = $request->user();
-        $customer = Customer::findOrFail($id);
+ * Deactivate a customer (soft delete)
+ */
+public function deactivate(Request $request, $id)
+{
+    $user = $request->user();
+    $customer = Customer::findOrFail($id);
 
-        // Only CEO and Secretary can delete
-        if ($user->hasRole('worker')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $oldValues = $customer->toArray();
-        $customer->delete();
-
-        // Create audit log
-        \App\Models\AuditLog::log('customer_deleted', $customer, $oldValues, null);
-
-        return response()->json([
-            'message' => 'Customer deleted successfully',
-        ]);
+    // Only CEO and Secretary can deactivate
+    if ($user->hasRole('worker')) {
+        return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+    if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    $oldValues = $customer->toArray();
+    $customer->update(['status' => 'inactive']);
+
+    // Create audit log
+    \App\Models\AuditLog::log('customer_deactivated', $customer, $oldValues, ['status' => 'inactive']);
+
+    return response()->json([
+        'message' => 'Customer deactivated successfully',
+    ]);
+}    
     /**
      * Transfer customer to another worker (CEO only)
      */
