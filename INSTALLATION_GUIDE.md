@@ -114,6 +114,7 @@ Package operations: 100+ installs, 0 updates, 0 removals
 Generating optimized autoload files
 ```
 
+
 ✅ Dependencies installed!
 
 ---

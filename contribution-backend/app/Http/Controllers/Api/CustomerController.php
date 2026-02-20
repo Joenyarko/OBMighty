@@ -27,7 +27,7 @@ class CustomerController extends Controller
 
         // Default to active customers only (unless status filter is explicitly provided)
         if (!$request->has('status') || $request->status === '') {
-            $query->where('status', 'active');
+            $query->where('status', '!=', 'inactive');
         }
 
         // Apply status filter
@@ -70,7 +70,7 @@ class CustomerController extends Controller
             $query->where('is_served', $isServed);
         }
 
-        $customers = $query->orderBy('created_at', 'desc')->paginate(10);
+        $customers = $query->orderBy('created_at', 'desc')->paginate(12);
 
         return response()->json($customers);
     }
