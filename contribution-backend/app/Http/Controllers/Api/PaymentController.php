@@ -131,7 +131,7 @@ class PaymentController extends Controller
     public function bulkStore(Request $request)
     {
         $validated = $request->validate([
-            'payments' => 'required|array|min:1',
+            'payments' => 'required|array|min:1|max:100',
             'payments.*.customer_id' => 'required|exists:customers,id',
             'payments.*.payment_amount' => 'required|numeric|min:0.01',
             'payments.*.payment_date' => 'nullable|date',

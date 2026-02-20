@@ -254,7 +254,19 @@ class CustomerCardController extends Controller
 
         DB::beginTransaction();
         try {
-            $payment = $customerCard->checkBoxes(
+            // Lock the customer card row to prevent concurrent box checking/race conditions
+            $lockedCard = CustomerCard::lockForUpdate()->find($id);
+
+            // Re-check remaining boxes just in case it changed since the start of request
+            if ($boxesToCheck > $lockedCard->boxes_remaining) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'Cannot check more boxes than remaining',
+                    'boxes_remaining' => $lockedCard->boxes_remaining
+                ], 400);
+            }
+
+            $payment = $lockedCard->checkBoxes(
                 $boxesToCheck,
                 $request->user()->id,
                 $validated['payment_method'] ?? 'cash',
