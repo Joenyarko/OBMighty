@@ -222,9 +222,19 @@ function CustomerBoxTracking() {
                     <p>📞 {customerCard.customer.phone}</p>
                     <p>📍 {customerCard.customer.location}</p>
                 </div>
-                <div className="card-info">
-                    <h3>{customerCard.card.card_name}</h3>
-                    <span className="card-code">{customerCard.card.card_code}</span>
+                <div className="card-info" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    {customerCard.card.front_image_url && (
+                        <img
+                            src={customerCard.card.front_image_url}
+                            alt={customerCard.card.card_name}
+                            style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }}
+                            onError={(e) => e.target.style.display = 'none'}
+                        />
+                    )}
+                    <div>
+                        <h3>{customerCard.card.card_name}</h3>
+                        <span className="card-code">{customerCard.card.card_code}</span>
+                    </div>
                 </div>
             </div>
 

@@ -70,11 +70,13 @@ function Surplus() {
         try {
             setLoading(true);
             const data = await surplusAPI.getAll(statusFilter === 'all' ? null : statusFilter);
-            setEntries(data.entries.data || []);
-            setTotals(data.totals);
+            setEntries(data.entries?.data || []);
+            setTotals(data.totals || { total_available: 0, total_allocated: 0, total_withdrawn: 0 });
         } catch (error) {
             console.error('Failed to fetch surplus entries:', error);
-            showError('Failed to load surplus entries');
+            showError(error.message || 'Failed to load surplus entries');
+            setEntries([]);
+            setTotals({ total_available: 0, total_allocated: 0, total_withdrawn: 0 });
         } finally {
             setLoading(false);
         }
@@ -125,21 +127,21 @@ function Surplus() {
                     <div className="card-icon">💵</div>
                     <div className="card-content">
                         <h3>Available</h3>
-                        <p className="card-value">GHS{parseFloat(totals.total_available).toFixed(2)}</p>
+                        <p className="card-value">GHS{(parseFloat(totals?.total_available) || 0).toFixed(2)}</p>
                     </div>
                 </div>
                 <div className="summary-card allocated">
                     <div className="card-icon">🔗</div>
                     <div className="card-content">
                         <h3>Allocated</h3>
-                        <p className="card-value">GHS{parseFloat(totals.total_allocated).toFixed(2)}</p>
+                        <p className="card-value">GHS{(parseFloat(totals?.total_allocated) || 0).toFixed(2)}</p>
                     </div>
                 </div>
                 <div className="summary-card withdrawn">
                     <div className="card-icon">💸</div>
                     <div className="card-content">
                         <h3>Withdrawn</h3>
-                        <p className="card-value">GHS{parseFloat(totals.total_withdrawn).toFixed(2)}</p>
+                        <p className="card-value">GHS{(parseFloat(totals?.total_withdrawn) || 0).toFixed(2)}</p>
                     </div>
                 </div>
             </div>

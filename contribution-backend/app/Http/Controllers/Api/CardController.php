@@ -12,9 +12,13 @@ class CardController extends Controller
     /**
      * Get all cards
      */
-    public function index()
+    public function index(Request $request)
     {
-        $cards = Card::active()->orderBy('card_name')->paginate(12);
+        $perPage = $request->query('per_page', 12);
+        // Limit per_page to a reasonable max to prevent DoS
+        $perPage = min((int)$perPage, 100);
+        
+        $cards = Card::active()->orderBy('card_name')->paginate($perPage);
         return response()->json($cards);
     }
 

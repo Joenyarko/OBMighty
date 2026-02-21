@@ -146,9 +146,9 @@ function Customers() {
 
     const fetchCards = async () => {
         try {
-            // Fetch all active cards (or first page for now, since controller is paginated)
-            const response = await cardAPI.getAll();
-            // Handle paginated response (response.data.data) or flat array (response.data)
+            // Fetch more cards (up to 100) for selection to avoid missing any
+            const response = await cardAPI.getAll({ per_page: 100 });
+            // Handle paginated response (data.data) or flat array (data)
             const cardsData = response.data.data ? response.data.data : response.data;
             setCards(Array.isArray(cardsData) ? cardsData : []);
         } catch (error) {
@@ -372,49 +372,51 @@ function Customers() {
                 <h2>Available Cards</h2>
                 <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Click on a card to add a new customer with that card pre-selected.</p>
 
-                <div className="card-selection-grid">
-                    {cards.map(card => (
-                        <div
-                            key={card.id}
-                            className="card-selection-item"
-                            onClick={() => {
-                                setPreSelectedCardId(card.id);
-                                setShowAddForm(true);
-                            }}
-                        >
-                            {card.front_image_url ? (
-                                <img
-                                    src={card.front_image_url}
-                                    alt={card.card_name}
-                                    className="card-item-image"
-                                    onError={(e) => {
-                                        e.target.onerror = null;
-                                        e.target.style.display = 'none';
-                                        e.target.nextSibling.style.display = 'flex';
-                                    }}
-                                />
-                            ) : null}
-                            <div className="card-item-placeholder" style={{ display: card.front_image_url ? 'none' : 'flex' }}>
-                                💳
-                            </div>
+                <div className="card-selection-container" style={{ maxHeight: '500px', overflowY: 'auto', padding: '10px', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
+                    <div className="card-selection-grid">
+                        {cards.map(card => (
+                            <div
+                                key={card.id}
+                                className="card-selection-item"
+                                onClick={() => {
+                                    setPreSelectedCardId(card.id);
+                                    setShowAddForm(true);
+                                }}
+                            >
+                                {card.front_image_url ? (
+                                    <img
+                                        src={card.front_image_url}
+                                        alt={card.card_name}
+                                        className="card-item-image"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
+                                <div className="card-item-placeholder" style={{ display: card.front_image_url ? 'none' : 'flex' }}>
+                                    💳
+                                </div>
 
-                            <div className="card-item-content">
-                                <h4 className="card-item-title">{card.card_name}</h4>
-                                <span className="card-item-code">{card.card_code}</span>
+                                <div className="card-item-content">
+                                    <h4 className="card-item-title">{card.card_name}</h4>
+                                    <span className="card-item-code">{card.card_code}</span>
 
-                                <div className="card-item-stats">
-                                    <div className="card-stat-box">
-                                        <span className="card-stat-label">Price</span>
-                                        <span className="card-stat-value">GHS{card.amount}</span>
-                                    </div>
-                                    <div className="card-stat-box">
-                                        <span className="card-stat-label">Boxes</span>
-                                        <span className="card-stat-value">{card.number_of_boxes}</span>
+                                    <div className="card-item-stats">
+                                        <div className="card-stat-box">
+                                            <span className="card-stat-label">Price</span>
+                                            <span className="card-stat-value">GHS{card.amount}</span>
+                                        </div>
+                                        <div className="card-stat-box">
+                                            <span className="card-stat-label">Boxes</span>
+                                            <span className="card-stat-value">{card.number_of_boxes}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
 

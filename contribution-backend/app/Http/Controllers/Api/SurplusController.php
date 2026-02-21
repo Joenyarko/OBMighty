@@ -14,49 +14,61 @@ class SurplusController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-        $query = SurplusEntry::with(['branch', 'worker', 'creator', 'allocatedPayment']);
-        
-        // Apply branch filtering for non-CEO users
-        if ($user->hasRole('secretary')) {
-            $query->forBranch($user->branch_id);
+        try {
+            $user = $request->user();
+            $query = SurplusEntry::with(['branch', 'worker', 'creator', 'allocatedPayment']);
+            
+            // Apply branch filtering for non-CEO users
+            if ($user->hasRole('secretary')) {
+                $query->forBranch($user->branch_id);
+            }
+            
+            // Apply status filter if provided
+            if ($request->has('status')) {
+                $query->byStatus($request->status);
+            }
+            
+            // Apply date range filter if provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('entry_date', [$request->start_date, $request->end_date]);
+            }
+            
+            $entries = $query->orderBy('entry_date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->paginate($request->query('per_page', 20));
+            
+            // Calculate totals with defensive casting
+            $totals = [
+                'total_available' => (float) SurplusEntry::getTotalAvailable(
+                    $user->hasRole('secretary') ? $user->branch_id : null
+                ),
+                'total_allocated' => (float) SurplusEntry::byStatus('allocated')
+                    ->when($user->hasRole('secretary'), function ($q) use ($user) {
+                        $q->forBranch($user->branch_id);
+                    })
+                    ->sum('amount'),
+                'total_withdrawn' => (float) SurplusEntry::byStatus('withdrawn')
+                    ->when($user->hasRole('secretary'), function ($q) use ($user) {
+                        $q->forBranch($user->branch_id);
+                    })
+                    ->sum('amount'),
+            ];
+            
+            return response()->json([
+                'entries' => $entries,
+                'totals' => $totals,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Surplus Index Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => $request->user()->id ?? null
+            ]);
+            return response()->json([
+                'message' => 'Failed to load surplus entries: ' . $e->getMessage(),
+                'entries' => ['data' => []],
+                'totals' => ['total_available' => 0, 'total_allocated' => 0, 'total_withdrawn' => 0]
+            ], 500);
         }
-        
-        // Apply status filter if provided
-        if ($request->has('status')) {
-            $query->byStatus($request->status);
-        }
-        
-        // Apply date range filter if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('entry_date', [$request->start_date, $request->end_date]);
-        }
-        
-        $entries = $query->orderBy('entry_date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-        
-        // Calculate totals
-        $totals = [
-            'total_available' => SurplusEntry::getTotalAvailable(
-                $user->hasRole('secretary') ? $user->branch_id : null
-            ),
-            'total_allocated' => SurplusEntry::byStatus('allocated')
-                ->when($user->hasRole('secretary'), function ($q) use ($user) {
-                    $q->forBranch($user->branch_id);
-                })
-                ->sum('amount'),
-            'total_withdrawn' => SurplusEntry::byStatus('withdrawn')
-                ->when($user->hasRole('secretary'), function ($q) use ($user) {
-                    $q->forBranch($user->branch_id);
-                })
-                ->sum('amount'),
-        ];
-        
-        return response()->json([
-            'entries' => $entries,
-            'totals' => $totals,
-        ]);
     }
 
     /**
