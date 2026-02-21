@@ -35,11 +35,18 @@ class ReportController extends Controller
                 'company_total' => $companyTotal,
                 'branch_totals' => $branchTotals,
             ];
-        } elseif ($user->hasRole('secretary')) {
             // Secretary sees branch data
             $branchTotal = BranchDailyTotal::where('branch_id', $user->branch_id)
                 ->where('date', $date)
                 ->first();
+                
+            // Inject total customers count
+            if ($branchTotal) {
+                $branchTotal = $branchTotal->toArray();
+                $branchTotal['total_customers'] = Customer::where('branch_id', $user->branch_id)->count();
+            } else {
+                $branchTotal = ['total_customers' => Customer::where('branch_id', $user->branch_id)->count()];
+            }
             
             $workerTotals = WorkerDailyTotal::with('worker')
                 ->where('branch_id', $user->branch_id)
@@ -56,6 +63,14 @@ class ReportController extends Controller
             $workerTotal = WorkerDailyTotal::where('worker_id', $user->id)
                 ->where('date', $date)
                 ->first();
+                
+            // Inject total customers count
+            if ($workerTotal) {
+                $workerTotal = $workerTotal->toArray();
+                $workerTotal['total_customers'] = Customer::where('worker_id', $user->id)->count();
+            } else {
+                $workerTotal = ['total_customers' => Customer::where('worker_id', $user->id)->count()];
+            }
             
             // Use BoxPayment for recent history (and map to expected format)
             $payments = \App\Models\BoxPayment::with('customerCard.customer')

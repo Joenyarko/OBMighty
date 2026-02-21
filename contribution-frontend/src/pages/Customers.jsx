@@ -237,9 +237,27 @@ function Customers() {
 
     return (
         <div className="customers-page">
-            <div className="page-header">
-                <h1>Add Customer</h1>
-                <p>Add, edit, and manage customer information</p>
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+                <div>
+                    <h1>Customer Management</h1>
+                    <p>Add, edit, and manage customer information</p>
+                </div>
+
+                {/* Global Total Badge */}
+                <div className="total-customers-badge" style={{
+                    background: 'var(--primary-color)',
+                    color: 'white',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}>
+                    <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>Total Enrolled Customers</span>
+                    <span style={{ fontSize: '1.5rem', marginTop: '4px' }}>{pagination.total}</span>
+                </div>
             </div>
 
             {/* Search and Add Section */}

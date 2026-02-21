@@ -83,7 +83,22 @@ class CustomerController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('customers', 'name')->where(function ($query) use ($request, $user) {
+                    // Extract worker_id from request, or default to current user if worker
+                    $workerId = $request->input('worker_id');
+                    if (!$workerId && $user->hasRole('worker')) {
+                        $workerId = $user->id;
+                    }
+                    if ($workerId) {
+                        return $query->where('worker_id', $workerId);
+                    }
+                    return $query;
+                }),
+            ],
             'phone' => 'required|string|regex:/^[0-9]{10}$/',
             'location' => 'required|string',
             'card_id' => 'required|exists:cards,id',
@@ -225,7 +240,14 @@ class CustomerController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
+            'name' => [
+                'sometimes',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('customers', 'name')->where(function ($query) use ($customer) {
+                    return $query->where('worker_id', $customer->worker_id);
+                })->ignore($customer->id),
+            ],
             'phone' => 'sometimes|string|regex:/^[0-9]{10}$/',
             'location' => 'sometimes|string',
         ], [

@@ -112,6 +112,12 @@ function WorkerDashboard({ data }) {
                         {workerTotal.total_customers_paid || 0}
                     </p>
                 </div>
+                <div className="stat-card highlight">
+                    <h3>Total Customers</h3>
+                    <p className="stat-value">
+                        {workerTotal.total_customers || 0}
+                    </p>
+                </div>
             </div>
 
             <div className="recent-payments">
@@ -148,6 +154,12 @@ function SecretaryDashboard({ data }) {
                     <h3>Branch Collections</h3>
                     <p className="stat-value">
                         GHS{branchTotal.total_collections || 0}
+                    </p>
+                </div>
+                <div className="stat-card highlight">
+                    <h3>Total Customers</h3>
+                    <p className="stat-value">
+                        {branchTotal.total_customers || 0}
                     </p>
                 </div>
                 <div className="stat-card">
@@ -239,6 +251,12 @@ function CEODashboard({ data }) {
                     <h3>Today Collections</h3>
                     <p className="stat-value">
                         GHS{overview.today_revenue || 0}
+                    </p>
+                </div>
+                <div className="stat-card highlight" style={{ background: '#2c3e50', color: 'white' }}>
+                    <h3 style={{ color: 'white' }}>Total Customers</h3>
+                    <p className="stat-value">
+                        {overview.total_customers || 0}
                     </p>
                 </div>
                 <div className="stat-card">
