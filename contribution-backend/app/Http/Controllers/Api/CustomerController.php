@@ -70,9 +70,31 @@ class CustomerController extends Controller
             $query->where('is_served', $isServed);
         }
 
+        // --- Calculate Global Stats (Ignoring status filter for the stats themselves) ---
+        $statsQuery = clone $query;
+        // remove the status filter from stats query to get overall counts for the active view
+        $statsQuery->getQuery()->wheres = array_filter($statsQuery->getQuery()->wheres, function($where) {
+            return !isset($where['column']) || $where['column'] !== 'status';
+        });
+        
+        $stats = [
+            'total' => (clone $statsQuery)->where('status', '!=', 'inactive')->count(),
+            'in_progress' => (clone $statsQuery)->where('status', 'in_progress')->count(),
+            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
+            'defaulting' => (clone $statsQuery)->where('status', 'defaulting')->count(),
+        ];
+
         $customers = $query->orderBy('created_at', 'desc')->paginate(12);
 
-        return response()->json($customers);
+        return response()->json([
+            'data' => $customers->items(),
+            'current_page' => $customers->currentPage(),
+            'last_page' => $customers->lastPage(),
+            'total' => $customers->total(),
+            'from' => $customers->firstItem(),
+            'to' => $customers->lastItem(),
+            'stats' => $stats
+        ]);
     }
 
     /**

@@ -29,7 +29,8 @@ function CustomerList() {
         last_page: 1,
         total: 0,
         from: 0,
-        to: 0
+        to: 0,
+        stats: { total: 0, in_progress: 0, completed: 0, defaulting: 0 }
     });
 
     const { isCEO, isSecretary, user } = useAuth();
@@ -127,7 +128,8 @@ function CustomerList() {
                 last_page: data.last_page,
                 total: data.total,
                 from: data.from,
-                to: data.to
+                to: data.to,
+                stats: data.stats || { total: 0, in_progress: 0, completed: 0, defaulting: 0 }
             });
         } catch (error) {
             showError('Failed to fetch customers');
@@ -300,13 +302,7 @@ function CustomerList() {
                     <div className="stat-content">
                         <h3>In Progress</h3>
                         <p className="stat-value">
-                            {/* Note: This count is only accurate if we fetch all or separate stats endpoint. 
-                                Currently it filters the *current page* or *fetched list*. 
-                                Ideally stats should come from a report endpoint. 
-                                For now, we leave as is, acknowledging it counts from the current view list 
-                                which might be paginated. The previous implementation had this limitation too. 
-                            */}
-                            {customers.filter(c => c.status === 'in_progress').length}
+                            {pagination.stats?.in_progress || 0}
                         </p>
                     </div>
                 </div>
@@ -315,7 +311,7 @@ function CustomerList() {
                     <div className="stat-content">
                         <h3>Completed</h3>
                         <p className="stat-value">
-                            {customers.filter(c => c.status === 'completed').length}
+                            {pagination.stats?.completed || 0}
                         </p>
                     </div>
                 </div>
@@ -324,7 +320,7 @@ function CustomerList() {
                     <div className="stat-content">
                         <h3>Defaulting</h3>
                         <p className="stat-value">
-                            {customers.filter(c => c.status === 'defaulting').length}
+                            {pagination.stats?.defaulting || 0}
                         </p>
                     </div>
                 </div>
