@@ -289,7 +289,7 @@ function CustomerList() {
                     <div className="stat-icon">👥</div>
                     <div className="stat-content">
                         <h3>Total Customers</h3>
-                        <p className="stat-value">{customers.length}</p>
+                        <p className="stat-value">{pagination.total}</p>
                     </div>
                 </div>
                 {/* Remove or adjust stats if needed based on served/unserved view? 
