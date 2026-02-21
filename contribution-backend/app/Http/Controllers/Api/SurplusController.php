@@ -19,7 +19,7 @@ class SurplusController extends Controller
             $query = SurplusEntry::with(['branch', 'worker', 'creator', 'allocatedPayment']);
             
             // Apply branch filtering for non-CEO users
-            if ($user->hasRole('secretary')) {
+            if ($user->hasRole(['secretary', 'manager', 'worker'])) {
                 $query->forBranch($user->branch_id);
             }
             
@@ -40,15 +40,15 @@ class SurplusController extends Controller
             // Calculate totals with defensive casting
             $totals = [
                 'total_available' => (float) SurplusEntry::getTotalAvailable(
-                    $user->hasRole('secretary') ? $user->branch_id : null
+                    $user->hasRole(['secretary', 'manager', 'worker']) ? $user->branch_id : null
                 ),
                 'total_allocated' => (float) SurplusEntry::byStatus('allocated')
-                    ->when($user->hasRole('secretary'), function ($q) use ($user) {
+                    ->when($user->hasRole(['secretary', 'manager', 'worker']), function ($q) use ($user) {
                         $q->forBranch($user->branch_id);
                     })
                     ->sum('amount'),
                 'total_withdrawn' => (float) SurplusEntry::byStatus('withdrawn')
-                    ->when($user->hasRole('secretary'), function ($q) use ($user) {
+                    ->when($user->hasRole(['secretary', 'manager', 'worker']), function ($q) use ($user) {
                         $q->forBranch($user->branch_id);
                     })
                     ->sum('amount'),

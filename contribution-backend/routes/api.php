@@ -152,8 +152,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{worker}/performance', [SalesController::class, 'performance']);
     });
     
-    // Surplus (CEO, Secretary, Manager, Super Admin)
-    Route::prefix('surplus')->middleware('role:ceo|secretary|manager|super_admin')->group(function () {
+    // Surplus (CEO, Secretary, Manager, Super Admin, Worker)
+    Route::prefix('surplus')->middleware('role:ceo|secretary|manager|super_admin|worker')->group(function () {
         Route::get('/', [SurplusController::class, 'index']);
         Route::post('/', [SurplusController::class, 'store']);
         Route::get('/{id}', [SurplusController::class, 'show']);

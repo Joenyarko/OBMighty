@@ -34,6 +34,9 @@ function Customers() {
         to: 0
     });
 
+    const [cardPage, setCardPage] = useState(1);
+    const cardsPerPage = 12;
+
     useEffect(() => {
         // console.log('Customers.jsx: useEffect triggered', { user });
         if (!user) return;
@@ -223,6 +226,11 @@ function Customers() {
         }
     };
 
+    const indexOfLastCard = cardPage * cardsPerPage;
+    const indexOfFirstCard = indexOfLastCard - cardsPerPage;
+    const currentCards = cards.slice(indexOfFirstCard, indexOfLastCard);
+    const totalCardPages = Math.ceil(cards.length / cardsPerPage);
+
     if (loading) {
         return <div className="loading">Loading Customers Page... Please wait.</div>;
     }
@@ -372,9 +380,9 @@ function Customers() {
                 <h2>Available Cards</h2>
                 <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Click on a card to add a new customer with that card pre-selected.</p>
 
-                <div className="card-selection-container" style={{ maxHeight: '500px', overflowY: 'auto', padding: '10px', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
+                <div className="card-selection-container" style={{ padding: '10px', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
                     <div className="card-selection-grid">
-                        {cards.map(card => (
+                        {currentCards.map(card => (
                             <div
                                 key={card.id}
                                 className="card-selection-item"
@@ -418,6 +426,45 @@ function Customers() {
                         ))}
                     </div>
                 </div>
+
+                {/* Card Pagination Controls */}
+                {totalCardPages > 1 && (
+                    <div className="pagination-controls" style={{ marginTop: '16px' }}>
+                        <div className="pagination-info">
+                            Showing {indexOfFirstCard + 1}–{Math.min(indexOfLastCard, cards.length)} of {cards.length} cards
+                        </div>
+                        <div className="pagination-buttons">
+                            <button
+                                onClick={() => setCardPage(1)}
+                                disabled={cardPage === 1}
+                                className="btn-secondary"
+                            >
+                                First
+                            </button>
+                            <button
+                                onClick={() => setCardPage(prev => prev - 1)}
+                                disabled={cardPage === 1}
+                                className="btn-secondary"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={() => setCardPage(prev => prev + 1)}
+                                disabled={cardPage === totalCardPages}
+                                className="btn-secondary"
+                            >
+                                Next
+                            </button>
+                            <button
+                                onClick={() => setCardPage(totalCardPages)}
+                                disabled={cardPage === totalCardPages}
+                                className="btn-secondary"
+                            >
+                                Last
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {showAddForm && (
