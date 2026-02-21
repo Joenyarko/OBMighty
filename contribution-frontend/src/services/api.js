@@ -81,7 +81,7 @@ export const reportAPI = {
 
 // Card API
 export const cardAPI = {
-    getAll: () => api.get('/cards'),
+    getAll: (params) => api.get('/cards', { params }),
     getOne: (id) => api.get(`/cards/${id}`),
     create: (data) => api.post('/cards', data),
     update: (id, data) => api.put(`/cards/${id}`, data),

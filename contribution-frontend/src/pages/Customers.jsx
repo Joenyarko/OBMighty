@@ -146,8 +146,8 @@ function Customers() {
 
     const fetchCards = async () => {
         try {
-            // Fetch more cards (up to 100) for selection to avoid missing any
-            const response = await cardAPI.getAll({ per_page: 100 });
+            // Fetch more cards (up to 500) for selection to avoid missing any
+            const response = await cardAPI.getAll({ per_page: 500 });
             // Handle paginated response (data.data) or flat array (data)
             const cardsData = response.data.data ? response.data.data : response.data;
             setCards(Array.isArray(cardsData) ? cardsData : []);

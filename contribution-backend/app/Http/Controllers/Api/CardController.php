@@ -16,7 +16,7 @@ class CardController extends Controller
     {
         $perPage = $request->query('per_page', 12);
         // Limit per_page to a reasonable max to prevent DoS
-        $perPage = min((int)$perPage, 100);
+        $perPage = min((int)$perPage, 500);
         
         $cards = Card::active()->orderBy('card_name')->paginate($perPage);
         return response()->json($cards);
