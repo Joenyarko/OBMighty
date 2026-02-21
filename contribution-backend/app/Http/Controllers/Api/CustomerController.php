@@ -27,7 +27,7 @@ class CustomerController extends Controller
 
         // Default to active customers only (unless status filter is explicitly provided)
         if (!$request->has('status') || $request->status === '') {
-            $query->where('status', '!=', 'inactive');
+            $query->where('customers.status', '!=', 'inactive');
         }
 
         // Apply status filter
@@ -40,7 +40,7 @@ class CustomerController extends Controller
             } elseif ($status === 'in_progress') {
                 $query->inProgress();
             } else {
-                $query->where('status', $status);
+                $query->where('customers.status', $status);
             }
         }
 
@@ -74,14 +74,14 @@ class CustomerController extends Controller
         $statsQuery = clone $query;
         // remove the status filter from stats query to get overall counts for the active view
         $statsQuery->getQuery()->wheres = array_filter($statsQuery->getQuery()->wheres, function($where) {
-            return !isset($where['column']) || $where['column'] !== 'status';
+            return !isset($where['column']) || ($where['column'] !== 'status' && $where['column'] !== 'customers.status');
         });
         
         $stats = [
-            'total' => (clone $statsQuery)->where('status', '!=', 'inactive')->count(),
-            'in_progress' => (clone $statsQuery)->where('status', 'in_progress')->count(),
-            'completed' => (clone $statsQuery)->where('status', 'completed')->count(),
-            'defaulting' => (clone $statsQuery)->where('status', 'defaulting')->count(),
+            'total' => (clone $statsQuery)->where('customers.status', '!=', 'inactive')->count(),
+            'in_progress' => (clone $statsQuery)->where('customers.status', 'in_progress')->count(),
+            'completed' => (clone $statsQuery)->where('customers.status', 'completed')->count(),
+            'defaulting' => (clone $statsQuery)->where('customers.status', 'defaulting')->count(),
         ];
 
         $customers = $query->orderBy('created_at', 'desc')->paginate(12);
