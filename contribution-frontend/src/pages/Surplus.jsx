@@ -73,6 +73,24 @@ const surplusAPI = {
             throw new Error(error.message || 'Failed to allocate surplus');
         }
         return response.json();
+    },
+
+    adjust: async (workerId, amount, notes) => {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/adjust`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ worker_id: workerId, amount, notes }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to adjust surplus balance');
+        }
+        return response.json();
     }
 };
 
@@ -170,6 +188,7 @@ function Surplus() {
             inputLabel: `Amount to Withdraw (Max: GHS ${maxAmount.toFixed(2)})`,
             inputPlaceholder: 'Enter amount...',
             showCancelButton: true,
+            confirmButtonColor: '#FF4444',
             inputValidator: (value) => {
                 if (!value) return 'You need to write an amount!';
                 const val = parseFloat(value);
@@ -190,6 +209,48 @@ function Surplus() {
         } catch (error) {
             console.error('Failed to withdraw surplus:', error);
             showError(error.message || 'Failed to withdraw surplus');
+        }
+    };
+
+    const handleAdjust = async (worker) => {
+        const { value: formValues } = await Swal.fire({
+            title: 'Adjust Worker Balance',
+            html:
+                '<div style="text-align: left; margin-bottom: 10px;">' +
+                '<label style="display: block; margin-bottom: 5px;">Adjustment Amount (positive to add, negative to subtract)</label>' +
+                '<input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="e.g. 10.00 or -5.00">' +
+                '</div>' +
+                '<div style="text-align: left;">' +
+                '<label style="display: block; margin-bottom: 5px;">Reason for Adjustment</label>' +
+                '<textarea id="swal-notes" class="swal2-textarea" placeholder="Describe why you are changing the balance..."></textarea>' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Record Adjustment',
+            preConfirm: () => {
+                const amount = document.getElementById('swal-amount').value;
+                const notes = document.getElementById('swal-notes').value;
+                if (!amount) {
+                    Swal.showValidationMessage('Please enter an amount');
+                    return false;
+                }
+                if (!notes) {
+                    Swal.showValidationMessage('Please enter a reason');
+                    return false;
+                }
+                return { amount: parseFloat(amount), notes: notes };
+            }
+        });
+
+        if (!formValues) return;
+
+        try {
+            await surplusAPI.adjust(worker.worker_id, formValues.amount, formValues.notes);
+            fetchEntries();
+            showSuccess('Worker balance adjusted successfully!');
+        } catch (error) {
+            console.error('Failed to adjust surplus:', error);
+            showError(error.message || 'Failed to adjust surplus');
         }
     };
 
@@ -277,24 +338,30 @@ function Surplus() {
                                     </td>
                                     {isCEO && (
                                         <td data-label="Actions">
-                                            {worker.current_balance > 0 ? (
-                                                <div style={{ display: 'flex', gap: '8px' }}>
-                                                    <button
-                                                        className="btn-small btn-success"
-                                                        onClick={() => setAllocatingWorker(worker)}
-                                                    >
-                                                        Allocate
-                                                    </button>
-                                                    <button
-                                                        className="btn-small btn-danger"
-                                                        onClick={() => handleWithdraw(worker)}
-                                                    >
-                                                        Withdraw
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <span style={{ color: '#999', fontSize: '0.9em' }}>No funds</span>
-                                            )}
+                                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                                <button
+                                                    className="btn-icon-small edit"
+                                                    style={{ backgroundColor: '#22c55e', color: 'white', border: 'none' }}
+                                                    onClick={() => setAllocatingWorker(worker)}
+                                                    disabled={worker.current_balance <= 0}
+                                                >
+                                                    Allocate
+                                                </button>
+                                                <button
+                                                    className="btn-icon-small"
+                                                    style={{ backgroundColor: '#3b82f6', color: 'white', border: 'none' }}
+                                                    onClick={() => handleAdjust(worker)}
+                                                >
+                                                    Adjust
+                                                </button>
+                                                <button
+                                                    className="btn-icon-small delete"
+                                                    onClick={() => handleWithdraw(worker)}
+                                                    disabled={worker.current_balance <= 0}
+                                                >
+                                                    Withdraw
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
@@ -327,6 +394,7 @@ function Surplus() {
 
 function AllocateSurplusModal({ onClose, onSubmit, worker }) {
     const [customers, setCustomers] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [selectedCardId, setSelectedCardId] = useState('');
     const [allocationAmount, setAllocationAmount] = useState('');
     const [loadingCustomers, setLoadingCustomers] = useState(false);
@@ -341,15 +409,11 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
         setLoadingCustomers(true);
         try {
             const token = localStorage.getItem('token');
-            // Fetch customers assigned to this worker to find their active cards
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}&status=in_progress`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            // In a real system you'd want to fetch active cards or rely on the customer object returning them.
-            // Our standard pattern in other components evaluates customer.active_card 
-            const customersWithCards = (data.data || []).filter(c => c.active_card);
-            setCustomers(customersWithCards);
+            setCustomers(data.data || []);
         } catch (error) {
             console.error('Failed to load customers', error);
         } finally {
@@ -357,21 +421,26 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
         }
     };
 
+    const filteredCustomers = customers.filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.phone?.includes(searchTerm)
+    );
+
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!selectedCardId) {
-            showError('Please select a customer card.');
+            showError('Please select a customer.');
             return;
         }
 
         const numericAmount = parseFloat(allocationAmount) || 0;
-        if (isNaN(numericAmount) || numericAmount <= 0) {
-            showError('Please enter a valid amount greater than 0.');
+        if (numericAmount <= 0) {
+            showError('Please enter a valid amount.');
             return;
         }
 
         if (numericAmount > worker.current_balance) {
-            showError(`Amount cannot exceed the worker's current balance of GHS ${(parseFloat(worker.current_balance) || 0).toFixed(2)}.`);
+            showError('Amount exceeds worker balance.');
             return;
         }
 
@@ -382,35 +451,56 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Allocate Surplus Funds</h2>
-                <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
-                    <strong>Worker: </strong> {worker.worker_name} <br />
-                    <strong>Max Available Balance: </strong> GHS {(parseFloat(worker.current_balance) || 0).toFixed(2)}
+                <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: 'rgba(212, 175, 55, 0.1)', borderLeft: '4px solid var(--primary-color)', borderRadius: '4px' }}>
+                    <strong>Worker:</strong> {worker.worker_name} <br />
+                    <strong>Max Available:</strong> GHS {(parseFloat(worker.current_balance) || 0).toFixed(2)}
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>1. Select Customer Card *</label>
-                        <select
-                            value={selectedCardId}
-                            onChange={(e) => setSelectedCardId(e.target.value)}
-                            required
-                            disabled={loadingCustomers}
-                        >
-                            <option value="">
-                                {loadingCustomers ? 'Loading customers...' : 'Select a customer...'}
-                            </option>
-                            {customers.map((c) => {
-                                const boxPrice = c.active_card.box_price || 0;
-                                return (
-                                    <option key={c.active_card.id} value={c.active_card.id}>
-                                        {c.name} - {c.active_card.card_name} (Box Price: GHS {boxPrice})
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-                            Only customers with active cards assigned to this worker are shown.
-                        </small>
+                        <label>1. Search & Select Customer *</label>
+                        <input
+                            type="text"
+                            placeholder="Type name here to search..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ marginBottom: '10px' }}
+                        />
+
+                        <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '5px' }}>
+                            {loadingCustomers ? (
+                                <p style={{ padding: '10px' }}>Loading workers customers...</p>
+                            ) : filteredCustomers.length === 0 ? (
+                                <p style={{ padding: '10px' }}>No customers found for this worker.</p>
+                            ) : (
+                                filteredCustomers.map(c => (
+                                    <div
+                                        key={c.id}
+                                        onClick={() => {
+                                            if (c.active_card) {
+                                                setSelectedCardId(c.active_card.id);
+                                                setSearchTerm(c.name);
+                                            } else {
+                                                showError("This customer doesn't have an active card.");
+                                            }
+                                        }}
+                                        style={{
+                                            padding: '8px 12px',
+                                            cursor: 'pointer',
+                                            backgroundColor: selectedCardId == c.active_card?.id ? 'var(--primary-color)' : 'transparent',
+                                            color: selectedCardId == c.active_card?.id ? 'black' : 'inherit',
+                                            borderBottom: '1px solid var(--border-color)',
+                                            borderRadius: '4px'
+                                        }}
+                                    >
+                                        <div style={{ fontWeight: 'bold' }}>{c.name}</div>
+                                        <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                                            {c.active_card ? `Active Card: ${c.active_card.card_name} (Price: GHS ${c.active_card.box_price})` : 'No Active Card'}
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
 
                     <div className="form-group">
@@ -418,35 +508,16 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
                         <input
                             type="number"
                             step="0.01"
-                            min="0.01"
-                            max={worker.current_balance}
                             value={allocationAmount}
                             onChange={(e) => setAllocationAmount(e.target.value)}
                             required
-                            placeholder={`Max: GHS ${(parseFloat(worker.current_balance) || 0).toFixed(2)}`}
+                            placeholder="Enter amount to pay"
                         />
-                        {allocationAmount && selectedCardId && (
-                            <div style={{ marginTop: '5px', fontSize: '13px', color: 'green' }}>
-                                {(() => {
-                                    const card = customers.find(c => c.active_card?.id === parseInt(selectedCardId));
-                                    const boxPrice = card?.active_card?.box_price || 0;
-                                    if (boxPrice > 0) {
-                                        const boxes = Math.floor((parseFloat(allocationAmount) || 0) / boxPrice);
-                                        return `Translates to roughly ~${boxes} boxes marked.`;
-                                    }
-                                    return '';
-                                })()}
-                            </div>
-                        )}
                     </div>
 
                     <div className="modal-actions">
-                        <button type="button" className="btn-secondary" onClick={onClose}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn-success">
-                            Confirm Allocation
-                        </button>
+                        <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="btn-success">Confirm Allocation</button>
                     </div>
                 </form>
             </div>

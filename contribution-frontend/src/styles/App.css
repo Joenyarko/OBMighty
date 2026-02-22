@@ -96,6 +96,22 @@ body {
   color: var(--black);
 }
 
+.btn-success {
+  background-color: #22c55e;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-success:hover {
+  background-color: #16a34a;
+}
+
+
 .btn-logout {
   background-color: var(--danger-color);
   color: white;
