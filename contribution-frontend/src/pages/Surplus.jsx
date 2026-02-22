@@ -161,7 +161,7 @@ function Surplus() {
     };
 
     const handleWithdraw = async (worker) => {
-        const maxAmount = parseFloat(worker.current_balance);
+        const maxAmount = parseFloat(worker.current_balance) || 0;
         const { value: amountStr } = await Swal.fire({
             title: 'Withdraw Surplus',
             input: 'number',
@@ -262,16 +262,16 @@ function Surplus() {
                                     </td>
                                     <td data-label="Branch">{worker.branch_name}</td>
                                     <td data-label="Total Accumulated" className="amount-cell success-text">
-                                        +GHS {parseFloat(worker.total_added).toFixed(2)}
+                                        +GHS {(parseFloat(worker.total_added) || 0).toFixed(2)}
                                     </td>
                                     <td data-label="Total Allocated" className="amount-cell primary-text">
-                                        -GHS {parseFloat(worker.total_allocated).toFixed(2)}
+                                        -GHS {(parseFloat(worker.total_allocated) || 0).toFixed(2)}
                                     </td>
                                     <td data-label="Total Withdrawn" className="amount-cell danger-text">
-                                        -GHS {parseFloat(worker.total_withdrawn).toFixed(2)}
+                                        -GHS {(parseFloat(worker.total_withdrawn) || 0).toFixed(2)}
                                     </td>
                                     <td data-label="Current Balance" className="amount-cell">
-                                        <strong>GHS {parseFloat(worker.current_balance).toFixed(2)}</strong>
+                                        <strong>GHS {(parseFloat(worker.current_balance) || 0).toFixed(2)}</strong>
                                     </td>
                                     {isCEO && (
                                         <td data-label="Actions">
@@ -362,14 +362,14 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
             return;
         }
 
-        const numericAmount = parseFloat(allocationAmount);
+        const numericAmount = parseFloat(allocationAmount) || 0;
         if (isNaN(numericAmount) || numericAmount <= 0) {
             showError('Please enter a valid amount greater than 0.');
             return;
         }
 
         if (numericAmount > worker.current_balance) {
-            showError(`Amount cannot exceed the worker's current balance of GHS ${parseFloat(worker.current_balance).toFixed(2)}.`);
+            showError(`Amount cannot exceed the worker's current balance of GHS ${(parseFloat(worker.current_balance) || 0).toFixed(2)}.`);
             return;
         }
 
@@ -382,7 +382,7 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
                 <h2>Allocate Surplus Funds</h2>
                 <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
                     <strong>Worker: </strong> {worker.worker_name} <br />
-                    <strong>Max Available Balance: </strong> GHS {parseFloat(worker.current_balance).toFixed(2)}
+                    <strong>Max Available Balance: </strong> GHS {(parseFloat(worker.current_balance) || 0).toFixed(2)}
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -421,7 +421,7 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
                             value={allocationAmount}
                             onChange={(e) => setAllocationAmount(e.target.value)}
                             required
-                            placeholder={`Max: GHS ${parseFloat(worker.current_balance).toFixed(2)}`}
+                            placeholder={`Max: GHS ${(parseFloat(worker.current_balance) || 0).toFixed(2)}`}
                         />
                         {allocationAmount && selectedCardId && (
                             <div style={{ marginTop: '5px', fontSize: '13px', color: 'green' }}>
@@ -429,7 +429,7 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
                                     const card = customers.find(c => c.active_card?.id === parseInt(selectedCardId));
                                     const boxPrice = card?.active_card?.box_price || 0;
                                     if (boxPrice > 0) {
-                                        const boxes = Math.floor(parseFloat(allocationAmount) / boxPrice);
+                                        const boxes = Math.floor((parseFloat(allocationAmount) || 0) / boxPrice);
                                         return `Translates to roughly ~${boxes} boxes marked.`;
                                     }
                                     return '';
