@@ -159,8 +159,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [SurplusController::class, 'show']);
         Route::put('/{id}', [SurplusController::class, 'update']);
         Route::delete('/{id}', [SurplusController::class, 'destroy']);
-        Route::post('/{id}/allocate', [SurplusController::class, 'allocate']);
-        Route::post('/{id}/withdraw', [SurplusController::class, 'withdraw']);
+        Route::post('/allocate', [SurplusController::class, 'allocate']);
+        Route::post('/withdraw', [SurplusController::class, 'withdraw']);
         Route::post('/adjust', [SurplusController::class, 'adjust']);
     });
     

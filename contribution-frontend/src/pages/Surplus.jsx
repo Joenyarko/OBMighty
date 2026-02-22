@@ -257,13 +257,6 @@ function Surplus() {
                         <p className="card-value">GHS{(parseFloat(totals?.total_allocated) || 0).toFixed(2)}</p>
                     </div>
                 </div>
-                <div className="summary-card withdrawn">
-                    <div className="card-icon">💸</div>
-                    <div className="card-content">
-                        <h3>Withdrawn</h3>
-                        <p className="card-value">GHS{(parseFloat(totals?.total_withdrawn) || 0).toFixed(2)}</p>
-                    </div>
-                </div>
             </div>
 
             {/* Entries Table */}
@@ -275,7 +268,6 @@ function Surplus() {
                             <th>Branch</th>
                             <th className="amount-cell success-text">Total Accumulated</th>
                             <th className="amount-cell primary-text">Total Allocated</th>
-                            <th className="amount-cell danger-text">Total Withdrawn</th>
                             <th className="amount-cell">Current Pool Balance</th>
                             {isCEO && <th>Actions</th>}
                         </tr>
@@ -283,7 +275,7 @@ function Surplus() {
                     <tbody>
                         {workerBalances.length === 0 ? (
                             <tr>
-                                <td colSpan={isCEO ? "7" : "6"} className="empty-state">
+                                <td colSpan={isCEO ? "6" : "5"} className="empty-state">
                                     No worker surplus balances found
                                 </td>
                             </tr>
@@ -301,9 +293,6 @@ function Surplus() {
                                     </td>
                                     <td data-label="Total Allocated" className="amount-cell primary-text">
                                         -GHS {(parseFloat(worker.total_allocated) || 0).toFixed(2)}
-                                    </td>
-                                    <td data-label="Total Withdrawn" className="amount-cell danger-text">
-                                        -GHS {(parseFloat(worker.total_withdrawn) || 0).toFixed(2)}
                                     </td>
                                     <td data-label="Current Balance" className="amount-cell">
                                         <strong>GHS {(parseFloat(worker.current_balance) || 0).toFixed(2)}</strong>
