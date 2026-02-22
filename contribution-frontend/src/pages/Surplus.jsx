@@ -52,19 +52,66 @@ const surplusAPI = {
         if (!response.ok) throw new Error('Failed to withdraw surplus');
         return response.json();
     },
+
+    allocate: async (id, customerCardId, notes) => {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/${id}/allocate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ customer_card_id: customerCardId, notes }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to allocate surplus');
+        }
+        return response.json();
+    }
+};
+
+const usersAPI = {
+    getAll: async () => {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json',
+            },
+        });
+        if (!response.ok) throw new Error('Failed to fetch users');
+        return response.json();
+    }
 };
 
 function Surplus() {
     const [entries, setEntries] = useState([]);
     const [totals, setTotals] = useState({ total_available: 0, total_allocated: 0, total_withdrawn: 0 });
     const [showAddForm, setShowAddForm] = useState(false);
+    const [allocatingEntry, setAllocatingEntry] = useState(null);
+    const [workers, setWorkers] = useState([]);
     const [statusFilter, setStatusFilter] = useState('all');
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
 
     useEffect(() => {
         fetchEntries();
-    }, [statusFilter]);
+        if (user?.role === 'ceo') {
+            fetchWorkers();
+        }
+    }, [statusFilter, user]);
+
+    const fetchWorkers = async () => {
+        try {
+            const data = await usersAPI.getAll();
+            // Filter strictly to roles that generate surplus
+            setWorkers(data.filter(u => ['worker', 'manager', 'secretary'].includes(u.role)));
+        } catch (error) {
+            console.error('Failed to load workers for surplus entry', error);
+        }
+    };
 
     const fetchEntries = async () => {
         try {
@@ -94,6 +141,18 @@ function Surplus() {
         }
     };
 
+    const handleAllocate = async (surplusId, customerCardId) => {
+        try {
+            await surplusAPI.allocate(surplusId, customerCardId, 'Allocated via CEO Dashboard');
+            fetchEntries();
+            setAllocatingEntry(null);
+            showSuccess('Surplus allocated successfully! Boxes have been updated.');
+        } catch (error) {
+            console.error('Failed to allocate surplus:', error);
+            showError(error.message || 'Failed to allocate surplus');
+        }
+    };
+
     const handleWithdraw = async (entryId) => {
         const result = await showTextareaPrompt('Enter withdrawal notes:', 'Withdraw Surplus', 'Enter reason for withdrawal...');
         if (!result.isConfirmed || !result.value) return;
@@ -116,9 +175,11 @@ function Surplus() {
         <div className="surplus-page">
             <div className="page-header">
                 <h1>Surplus Account</h1>
-                <button className="btn-primary" onClick={() => setShowAddForm(true)}>
-                    + Add Surplus Entry
-                </button>
+                {user?.role === 'ceo' && (
+                    <button className="btn-primary" onClick={() => setShowAddForm(true)}>
+                        + Add Surplus Entry
+                    </button>
+                )}
             </div>
 
             {/* Summary Cards */}
@@ -208,12 +269,20 @@ function Surplus() {
                                     <td data-label="Created By">{entry.creator?.name || 'N/A'}</td>
                                     <td data-label="Actions">
                                         {entry.status === 'available' && user.role === 'ceo' && (
-                                            <button
-                                                className="btn-small btn-danger"
-                                                onClick={() => handleWithdraw(entry.id)}
-                                            >
-                                                Withdraw
-                                            </button>
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                                <button
+                                                    className="btn-small btn-success"
+                                                    onClick={() => setAllocatingEntry(entry)}
+                                                >
+                                                    Allocate
+                                                </button>
+                                                <button
+                                                    className="btn-small btn-danger"
+                                                    onClick={() => handleWithdraw(entry.id)}
+                                                >
+                                                    Withdraw
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
                                 </tr>
@@ -228,16 +297,135 @@ function Surplus() {
                 <AddSurplusModal
                     onClose={() => setShowAddForm(false)}
                     onSubmit={handleAddEntry}
-                    userBranchId={user.branch_id}
+                    workers={workers}
+                />
+            )}
+
+            {/* Allocate Entry Modal */}
+            {allocatingEntry && (
+                <AllocateSurplusModal
+                    entry={allocatingEntry}
+                    workers={workers}
+                    onClose={() => setAllocatingEntry(null)}
+                    onSubmit={(cardId) => handleAllocate(allocatingEntry.id, cardId)}
                 />
             )}
         </div>
     );
 }
 
-function AddSurplusModal({ onClose, onSubmit, userBranchId }) {
+function AllocateSurplusModal({ onClose, onSubmit, workers, entry }) {
+    const [selectedWorkerId, setSelectedWorkerId] = useState(entry.worker_id || '');
+    const [customers, setCustomers] = useState([]);
+    const [selectedCardId, setSelectedCardId] = useState('');
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+
+    useEffect(() => {
+        if (selectedWorkerId) {
+            fetchCustomers(selectedWorkerId);
+        } else {
+            setCustomers([]);
+        }
+    }, [selectedWorkerId]);
+
+    const fetchCustomers = async (workerId) => {
+        setLoadingCustomers(true);
+        try {
+            const token = localStorage.getItem('token');
+            // Fetch customers assigned to this worker to find their active cards
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            // In a real system you'd want to fetch active cards or rely on the customer object returning them.
+            // Our standard pattern in other components evaluates customer.active_card 
+            const customersWithCards = (data.data || []).filter(c => c.active_card);
+            setCustomers(customersWithCards);
+        } catch (error) {
+            console.error('Failed to load customers', error);
+        } finally {
+            setLoadingCustomers(false);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!selectedCardId) {
+            showError('Please select a customer card.');
+            return;
+        }
+        onSubmit(selectedCardId);
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <h2>Allocate Surplus</h2>
+                <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
+                    <strong>Allocating: </strong> GHS {parseFloat(entry.amount).toFixed(2)} <br />
+                    <small>Generated by: {entry.worker?.name || 'Unknown'}</small>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>1. Select Worker (Filter) *</label>
+                        <select
+                            value={selectedWorkerId}
+                            onChange={(e) => {
+                                setSelectedWorkerId(e.target.value);
+                                setSelectedCardId('');
+                            }}
+                            required
+                        >
+                            <option value="">Select a worker...</option>
+                            {workers.map((w) => (
+                                <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-group">
+                        <label>2. Select Customer Card *</label>
+                        <select
+                            value={selectedCardId}
+                            onChange={(e) => setSelectedCardId(e.target.value)}
+                            required
+                            disabled={!selectedWorkerId || loadingCustomers}
+                        >
+                            <option value="">
+                                {loadingCustomers ? 'Loading customers...' : 'Select a customer...'}
+                            </option>
+                            {customers.map((c) => {
+                                const boxPrice = c.active_card.box_price || 0;
+                                const maxBoxes = Math.floor(entry.amount / boxPrice);
+                                return (
+                                    <option key={c.active_card.id} value={c.active_card.id}>
+                                        {c.name} - {c.active_card.card_name} (Price: GHS {boxPrice}, Translates to ~{maxBoxes} boxes)
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
+                            Only customers with active cards assigned to this worker are shown.
+                        </small>
+                    </div>
+
+                    <div className="modal-actions">
+                        <button type="button" className="btn-secondary" onClick={onClose}>
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn-success">
+                            Confirm Allocation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function AddSurplusModal({ onClose, onSubmit, workers }) {
     const [formData, setFormData] = useState({
-        branch_id: userBranchId || '',
         worker_id: '',
         amount: '',
         entry_date: new Date().toISOString().split('T')[0],
@@ -255,6 +443,20 @@ function AddSurplusModal({ onClose, onSubmit, userBranchId }) {
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                 <h2>Add Surplus Entry</h2>
                 <form onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Worker *</label>
+                        <select
+                            value={formData.worker_id}
+                            onChange={(e) => setFormData({ ...formData, worker_id: e.target.value })}
+                            required
+                        >
+                            <option value="">Select a worker...</option>
+                            {workers.map((w) => (
+                                <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="form-group">
                         <label>Amount *</label>
                         <input
