@@ -15,7 +15,7 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = Customer::with(['branch', 'worker', 'card']);
+        $query = Customer::with(['branch', 'worker', 'card', 'customerCard']);
 
         // Apply role-based filtering
         if ($user->hasRole('worker')) {

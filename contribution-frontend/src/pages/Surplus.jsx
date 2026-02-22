@@ -180,53 +180,25 @@ function Surplus() {
         }
     };
 
-    const handleWithdraw = async (worker) => {
-        const maxAmount = parseFloat(worker.current_balance) || 0;
-        const { value: amountStr } = await Swal.fire({
-            title: 'Withdraw Surplus',
-            input: 'number',
-            inputLabel: `Amount to Withdraw (Max: GHS ${maxAmount.toFixed(2)})`,
-            inputPlaceholder: 'Enter amount...',
-            showCancelButton: true,
-            confirmButtonColor: '#FF4444',
-            inputValidator: (value) => {
-                if (!value) return 'You need to write an amount!';
-                const val = parseFloat(value);
-                if (val <= 0) return 'Amount must be greater than zero.';
-                if (val > maxAmount) return 'Amount exceeds the worker\'s current surplus balance.';
-            }
-        });
-
-        if (!amountStr) return;
-
-        const result = await showTextareaPrompt('Enter withdrawal reason:', 'Reason for Withdrawal', 'Enter notes...');
-        if (!result.isConfirmed || !result.value) return;
-
-        try {
-            await surplusAPI.withdraw(worker.worker_id, parseFloat(amountStr), result.value);
-            fetchEntries();
-            showSuccess('Surplus withdrawn successfully!');
-        } catch (error) {
-            console.error('Failed to withdraw surplus:', error);
-            showError(error.message || 'Failed to withdraw surplus');
-        }
-    };
-
     const handleAdjust = async (worker) => {
         const { value: formValues } = await Swal.fire({
             title: 'Adjust Worker Balance',
+            background: '#1A1A1A',
+            color: '#FFFFFF',
             html:
-                '<div style="text-align: left; margin-bottom: 10px;">' +
-                '<label style="display: block; margin-bottom: 5px;">Adjustment Amount (positive to add, negative to subtract)</label>' +
-                '<input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="e.g. 10.00 or -5.00">' +
+                '<div style="text-align: left; margin-bottom: 20px;">' +
+                '<label style="display: block; margin-bottom: 8px; color: #B0B0B0; font-size: 14px;">Adjustment Amount (positive to add, negative to subtract)</label>' +
+                '<input id="swal-amount" class="swal2-input" type="number" step="0.01" placeholder="e.g. 10.00 or -5.00" style="background: #2A2A2A; color: white; border: 1px solid #333; width: 100%; margin: 0;">' +
                 '</div>' +
                 '<div style="text-align: left;">' +
-                '<label style="display: block; margin-bottom: 5px;">Reason for Adjustment</label>' +
-                '<textarea id="swal-notes" class="swal2-textarea" placeholder="Describe why you are changing the balance..."></textarea>' +
+                '<label style="display: block; margin-bottom: 8px; color: #B0B0B0; font-size: 14px;">Reason for Adjustment</label>' +
+                '<textarea id="swal-notes" class="swal2-textarea" placeholder="Describe why you are changing the balance..." style="background: #2A2A2A; color: white; border: 1px solid #333; width: 100%; margin: 0; min-height: 100px;"></textarea>' +
                 '</div>',
             focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: 'Record Adjustment',
+            confirmButtonColor: 'var(--primary-color)',
+            cancelButtonColor: '#333333',
             preConfirm: () => {
                 const amount = document.getElementById('swal-amount').value;
                 const notes = document.getElementById('swal-notes').value;
@@ -353,13 +325,6 @@ function Surplus() {
                                                     onClick={() => handleAdjust(worker)}
                                                 >
                                                     Adjust
-                                                </button>
-                                                <button
-                                                    className="btn-icon-small delete"
-                                                    onClick={() => handleWithdraw(worker)}
-                                                    disabled={worker.current_balance <= 0}
-                                                >
-                                                    Withdraw
                                                 </button>
                                             </div>
                                         </td>

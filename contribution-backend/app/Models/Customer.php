@@ -39,7 +39,7 @@ class Customer extends Model
         'is_served' => 'boolean',
     ];
 
-    protected $appends = ['balance', 'completion_percentage'];
+    protected $appends = ['balance', 'completion_percentage', 'active_card'];
 
     /**
      * Get the branch this customer belongs to
@@ -79,6 +79,14 @@ class Customer extends Model
     public function customerCard()
     {
         return $this->hasOne(\App\Models\CustomerCard::class)->where('status', 'active');
+    }
+
+    /**
+     * Get the active card (accessor)
+     */
+    public function getActiveCardAttribute()
+    {
+        return $this->customerCard;
     }
 
     /**
