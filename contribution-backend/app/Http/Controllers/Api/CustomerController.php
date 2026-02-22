@@ -303,10 +303,10 @@ public function deactivate(Request $request, $id)
     }
 
     $oldValues = $customer->toArray();
-    $customer->update(['status' => 'inactive']);
+    $customer->delete();
 
     // Create audit log
-    \App\Models\AuditLog::log('customer_deactivated', $customer, $oldValues, ['status' => 'inactive']);
+    \App\Models\AuditLog::log('customer_deactivated', $customer, $oldValues, ['deleted_at' => $customer->deleted_at]);
 
     return response()->json([
         'message' => 'Customer deactivated successfully',
