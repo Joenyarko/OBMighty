@@ -78,13 +78,11 @@ class SurplusController extends Controller
     {
         $user = $request->user();
         
-        // Only CEO and Secretary can create surplus entries
-        if ($user->hasRole('worker')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        // The frontend component allows all authorized roles to create entries.
+        // We will dynamically determine branch_id and worker_id based on role.
         
         $validated = $request->validate([
-            'branch_id' => 'required|exists:branches,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'worker_id' => 'nullable|exists:users,id',
             'amount' => 'required|numeric|min:0.01',
             'entry_date' => 'required|date',
@@ -92,9 +90,46 @@ class SurplusController extends Controller
             'notes' => 'nullable|string',
         ]);
         
-        // Verify branch access for secretaries
-        if ($user->hasRole('secretary') && $validated['branch_id'] != $user->branch_id) {
-            return response()->json(['message' => 'Unauthorized - can only create entries for your branch'], 403);
+        // Auto-assign branch and worker based on role
+        if ($user->hasRole(['worker', 'manager', 'secretary'])) {
+            $validated['branch_id'] = $user->branch_id;
+            
+            if ($user->hasRole('worker')) {
+                // Workers can only create surplus for themselves
+                $validated['worker_id'] = $user->id;
+            } elseif (!empty($validated['worker_id'])) {
+                // Manager/Secretary might assign surplus to a specific worker under them
+                $worker = \App\Models\User::find($validated['worker_id']);
+                if (!$worker || $worker->branch_id !== $user->branch_id) {
+                    return response()->json(['message' => 'Selected worker must belong to your branch'], 422);
+                }
+            }
+        } elseif ($user->hasRole(['ceo', 'super_admin'])) {
+            // For CEO/Super Admin
+            if (!empty($validated['worker_id'])) {
+                $worker = \App\Models\User::find($validated['worker_id']);
+                if ($worker) {
+                    // Try to inherit branch from worker if not explicitly provided
+                    if (empty($validated['branch_id']) && $worker->branch_id) {
+                        $validated['branch_id'] = $worker->branch_id;
+                    }
+                }
+            }
+            
+            // If branch_id is still empty, try to derive from CEO's own branch or systemic default
+            if (empty($validated['branch_id'])) {
+                if ($user->branch_id) {
+                    $validated['branch_id'] = $user->branch_id;
+                } else {
+                    $branch = \App\Models\Branch::first();
+                    if (!$branch) {
+                        return response()->json([
+                            'message' => 'No branches available in the system. A branch ID is required.',
+                        ], 422);
+                    }
+                    $validated['branch_id'] = $branch->id;
+                }
+            }
         }
         
         $validated['created_by'] = $user->id;
