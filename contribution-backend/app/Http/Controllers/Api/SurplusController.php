@@ -7,6 +7,7 @@ use App\Models\SurplusEntry;
 use App\Models\CustomerCard;
 use App\Models\Payment;
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -425,6 +426,8 @@ class SurplusController extends Controller
             'message' => 'Surplus withdrawn successfully from ledger',
             'entry' => $withdrawalEntry->load(['branch', 'worker', 'creator']),
         ]);
+    }
+
     /**
      * Adjust a worker's surplus balance (Correction)
      */
