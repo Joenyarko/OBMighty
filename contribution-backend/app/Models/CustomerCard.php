@@ -150,7 +150,31 @@ class CustomerCard extends Model
             $this->update(['status' => 'completed']);
         }
 
+        // Sync to parent customer
+        $this->syncToCustomer();
+
         return $payment;
+    }
+
+    /**
+     * Synchronize card progress and paid amount to parent Customer record
+     */
+    public function syncToCustomer()
+    {
+        $customer = $this->customer;
+        if (!$customer) return;
+
+        $newStatus = 'in_progress';
+        if ($this->status === 'completed' || $this->boxes_checked >= $this->total_boxes) {
+            $newStatus = 'completed';
+        }
+
+        $customer->update([
+            'boxes_filled' => $this->boxes_checked,
+            'amount_paid' => $this->amount_paid,
+            'last_payment_date' => now()->toDateString(),
+            'status' => $newStatus
+        ]);
     }
 
     /**

@@ -87,19 +87,25 @@ class PaymentService
             // Store old customer values for audit
             $oldCustomerValues = $customer->only(['boxes_filled', 'amount_paid', 'status', 'last_payment_date']);
             
-            // Update customer
-            $customer->boxes_filled += $boxesToMark;
-            $customer->amount_paid += $paymentAmount;
-            $customer->last_payment_date = $paymentDate;
-            
-            // Update customer status
-            if ($customer->boxes_filled >= $customer->total_boxes) {
-                $customer->status = 'completed';
+            if ($customerCard) {
+                // If we have a card, the card's totals are the source of truth
+                // checkBoxes already increments card totals, now we sync them to customer
+                $customerCard->syncToCustomer();
             } else {
-                $customer->status = 'in_progress';
+                // Fallback for logic that might not have a card yet
+                $customer->boxes_filled += $boxesToMark;
+                $customer->amount_paid += $paymentAmount;
+                $customer->last_payment_date = $paymentDate;
+                
+                // Update customer status
+                if ($customer->boxes_filled >= $customer->total_boxes) {
+                    $customer->status = 'completed';
+                } else {
+                    $customer->status = 'in_progress';
+                }
+                
+                $customer->save();
             }
-            
-            $customer->save();
             
             // Create payment record (Ledger)
             // This is required for "Recent Payments" view and reporting

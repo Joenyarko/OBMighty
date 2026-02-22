@@ -191,6 +191,15 @@ class CustomerCardController extends Controller
 
         // If card was found initially or recovered via self-healing
         // Apply self-healing sync if needed (even for existing cards)
+        
+        // 1. SMART SYNC: If Customer record has different totals than Card, fix it
+        if ($customer->boxes_filled != $customerCard->boxes_checked || 
+            (float)$customer->amount_paid != (float)$customerCard->amount_paid) {
+            \Log::info("Self-healing: Fixing Customer/Card total discrepancy for customer ID: " . $customerId);
+            $customerCard->syncToCustomer();
+        }
+
+        // 2. BOX CATCH-UP: If customer has paid but card has 0 boxes checked
         if ($customerCard->boxes_checked == 0 && $customer->amount_paid > 0) {
             try {
                 $customerCard->append('box_price');
@@ -647,17 +656,7 @@ class CustomerCardController extends Controller
             }
             
             // 4. Update parent customer
-            if ($customer) {
-                // Map card status 'active' to customer status 'in_progress'
-                $customerStatus = ($customerCard->status === 'completed') ? 'completed' : 'in_progress';
-                
-                $customer->update([
-                    'boxes_filled' => $customerCard->boxes_checked,
-                    'amount_paid' => $customerCard->amount_paid,
-                    'status' => $customerStatus,
-                    // 'balance' => $customerCard->amount_remaining // RE MOVED: Computed column
-                ]);
-            }
+            $customerCard->syncToCustomer();
             
             // 5. Delete corresponding general Payment record
             Payment::where('customer_id', $customer->id)
