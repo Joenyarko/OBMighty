@@ -299,8 +299,8 @@ class SurplusController extends Controller
             }
 
             // A surplus is treated effectively as cash generated organically
-            $paymentMethod = 'Surplus Allocation';
-            $paymentNotes = $validated['notes'] ?? 'Allocated from Pooled Surplus Ledger';
+            $paymentMethod = 'cash';
+            $paymentNotes = $validated['notes'] ?? 'Allocated from Pooled Surplus Ledger (Surplus Allocation)';
 
             $payment = $lockedCard->checkBoxes(
                 $boxesToCheck,
