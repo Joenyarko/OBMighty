@@ -260,12 +260,30 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    .sales-page {
+        padding: 1rem;
+        width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
     .sales-content {
         grid-template-columns: 1fr;
+        width: 100%;
     }
 
     .workers-list {
-        max-height: 400px;
+        max-height: 300px;
+    }
+
+    .worker-details {
+        padding: 1rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+        /* Force child contents to respect bounds */
+        min-width: 0;
     }
 
     .summary-cards {

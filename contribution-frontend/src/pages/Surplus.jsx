@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { showSuccess, showError, showTextareaPrompt } from '../utils/sweetalert';
+import Swal from 'sweetalert2';
 import '../styles/Surplus.css';
 
 // API service for surplus
