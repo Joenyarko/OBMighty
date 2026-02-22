@@ -34,7 +34,12 @@ function CompanyManagement() {
         is_active: true,
         ceo_name: '',
         ceo_email: '',
-        ceo_password: ''
+        ceo_password: '',
+        ceo_phone: '',
+        new_ceo_name: '',
+        new_ceo_email: '',
+        new_ceo_password: '',
+        new_ceo_phone: ''
     });
 
     useEffect(() => {
@@ -75,6 +80,14 @@ function CompanyManagement() {
             data.append('ceo_name', formData.ceo_name);
             data.append('ceo_email', formData.ceo_email);
             data.append('ceo_password', formData.ceo_password);
+            if (formData.ceo_phone) data.append('ceo_phone', formData.ceo_phone);
+        } else {
+            if (formData.new_ceo_name && formData.new_ceo_email && formData.new_ceo_password) {
+                data.append('new_ceo_name', formData.new_ceo_name);
+                data.append('new_ceo_email', formData.new_ceo_email);
+                data.append('new_ceo_password', formData.new_ceo_password);
+                if (formData.new_ceo_phone) data.append('new_ceo_phone', formData.new_ceo_phone);
+            }
         }
 
         if (logoFile) {
@@ -160,7 +173,13 @@ function CompanyManagement() {
             is_active: true,
             ceo_name: '',
             ceo_email: '',
-            ceo_password: ''
+            ceo_email: '',
+            ceo_password: '',
+            ceo_phone: '',
+            new_ceo_name: '',
+            new_ceo_email: '',
+            new_ceo_password: '',
+            new_ceo_phone: ''
         });
     };
 
@@ -172,7 +191,11 @@ function CompanyManagement() {
             subdomain: company.subdomain || '',
             primary_color: company.primary_color || '#007bff',
             logo_url: company.logo_url || '',
-            is_active: company.is_active
+            is_active: company.is_active,
+            new_ceo_name: '',
+            new_ceo_email: '',
+            new_ceo_password: '',
+            new_ceo_phone: ''
         });
         if (company.logo_url) {
             setLogoPreview(company.logo_url);
@@ -387,6 +410,59 @@ function CompanyManagement() {
                                             value={formData.ceo_password}
                                             onChange={e => setFormData({ ...formData, ceo_password: e.target.value })}
                                             required={!editingCompany}
+                                            style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label style={{ color: '#9ca3af' }}>Phone</label>
+                                        <input
+                                            type="text"
+                                            value={formData.ceo_phone}
+                                            onChange={e => setFormData({ ...formData, ceo_phone: e.target.value })}
+                                            style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
+                            {editingCompany && (
+                                <>
+                                    <div className="divider" style={{ margin: '20px 0', borderTop: '1px solid #242830' }}></div>
+                                    <h3 style={{ marginBottom: 5, fontSize: 16, color: 'white' }}>Add New CEO (Optional)</h3>
+                                    <p style={{ color: '#9ca3af', fontSize: '12px', marginBottom: 15 }}>Fill these fields only if you want to create an additional CEO for this organization.</p>
+                                    <div className="form-group">
+                                        <label style={{ color: '#9ca3af' }}>Name</label>
+                                        <input
+                                            type="text"
+                                            value={formData.new_ceo_name}
+                                            onChange={e => setFormData({ ...formData, new_ceo_name: e.target.value })}
+                                            style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label style={{ color: '#9ca3af' }}>Email</label>
+                                        <input
+                                            type="email"
+                                            value={formData.new_ceo_email}
+                                            onChange={e => setFormData({ ...formData, new_ceo_email: e.target.value })}
+                                            style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label style={{ color: '#9ca3af' }}>Password</label>
+                                        <input
+                                            type="password"
+                                            value={formData.new_ceo_password}
+                                            onChange={e => setFormData({ ...formData, new_ceo_password: e.target.value })}
+                                            style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label style={{ color: '#9ca3af' }}>Phone</label>
+                                        <input
+                                            type="text"
+                                            value={formData.new_ceo_phone}
+                                            onChange={e => setFormData({ ...formData, new_ceo_phone: e.target.value })}
                                             style={{ backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white' }}
                                         />
                                     </div>

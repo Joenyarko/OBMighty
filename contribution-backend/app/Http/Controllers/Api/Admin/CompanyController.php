@@ -117,8 +117,6 @@ class CompanyController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $company = Company::withTrashed()->findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'domain' => 'nullable|string|unique:companies,domain,' . $id,
@@ -126,23 +124,67 @@ class CompanyController extends Controller
             'primary_color' => 'nullable|string',
             'logo' => 'nullable|image|max:2048', // 2MB Max
             'is_active' => 'boolean',
+            // Optional new CEO Details
+            'new_ceo_name' => 'nullable|string|max:255',
+            'new_ceo_email' => 'nullable|email|max:255',
+            'new_ceo_password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'regex:/[a-z]/',
+                'regex:/[A-Z]/',
+                'regex:/[0-9]/',
+                'regex:/[@$!%*#?&]/',
+            ],
+            'new_ceo_phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+        ], [
+            'new_ceo_phone.regex' => 'The CEO phone number must be exactly 10 digits.',
+            'new_ceo_password.regex' => 'The CEO password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
-        // Handle File Upload
-        if ($request->hasFile('logo')) {
-            $imageService = new \App\Services\ImageUploadService();
-            $result = $imageService->upload($request->file('logo'), 'logos', 'company_admin_');
-            $validated['logo_url'] = $result['url'];
-        }
+        return DB::transaction(function () use ($request, $validated, $id) {
+            $company = Company::withTrashed()->findOrFail($id);
 
-        $company->update($validated);
-        
-        // If restoring
-        if ($request->has('restore') && $request->restore) {
-            $company->restore();
-        }
+            // Handle File Upload
+            if ($request->hasFile('logo')) {
+                $imageService = new \App\Services\ImageUploadService();
+                $result = $imageService->upload($request->file('logo'), 'logos', 'company_admin_');
+                $validated['logo_url'] = $result['url'];
+            }
 
-        return response()->json($company);
+            // Remove CEO fields from company data before update
+            $companyData = collect($validated)->except(['new_ceo_name', 'new_ceo_email', 'new_ceo_password', 'new_ceo_phone', 'logo'])->toArray();
+            $company->update($companyData);
+            
+            // If restoring
+            if ($request->has('restore') && $request->restore) {
+                $company->restore();
+            }
+
+            // Create Additional CEO if requested
+            if (!empty($validated['new_ceo_name']) && !empty($validated['new_ceo_email']) && !empty($validated['new_ceo_password'])) {
+                // Determine if this email already belongs to a user across the global system
+                $existingUser = User::where('email', $validated['new_ceo_email'])->first();
+                if ($existingUser) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'new_ceo_email' => ['A user with this email already exists.'],
+                    ]);
+                }
+
+                $user = User::create([
+                    'name' => $validated['new_ceo_name'],
+                    'email' => $validated['new_ceo_email'],
+                    'password' => Hash::make($validated['new_ceo_password']),
+                    'company_id' => $company->id,
+                    'status' => 'active',
+                    'phone' => $validated['new_ceo_phone'] ?? null,
+                ]);
+
+                $user->assignRole('ceo');
+            }
+
+            return response()->json($company);
+        });
     }
 
     /**
