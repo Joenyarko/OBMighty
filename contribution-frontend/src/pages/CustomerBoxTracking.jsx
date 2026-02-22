@@ -50,26 +50,29 @@ function CustomerBoxTracking() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [cardRes, boxStatesRes, historyRes, salesRes] = await Promise.all([
-                customerCardAPI.getCustomerCard(customerId),
-                customerCardAPI.getCustomerCard(customerId).then(res =>
-                    customerCardAPI.getBoxStates(res.data.id)
-                ),
-                customerCardAPI.getCustomerCard(customerId).then(res =>
-                    customerCardAPI.getPaymentHistory(res.data.id)
-                ),
-                customerCardAPI.getCustomerCard(customerId).then(res =>
-                    customerCardAPI.getDailySales(res.data.id, new Date().toISOString().split('T')[0])
-                ),
+            // 1. Get the card first so we have the ID for following calls
+            const cardRes = await customerCardAPI.getCustomerCard(customerId);
+            const card = cardRes.data;
+
+            if (!card || !card.id) {
+                throw new Error("Invalid card data received");
+            }
+
+            // 2. Fetch related data in parallel using the card ID
+            const [boxStatesRes, historyRes, salesRes] = await Promise.all([
+                customerCardAPI.getBoxStates(card.id),
+                customerCardAPI.getPaymentHistory(card.id),
+                customerCardAPI.getDailySales(card.id, new Date().toISOString().split('T')[0]),
             ]);
 
-            setCustomerCard(cardRes.data);
+            setCustomerCard(card);
             setBoxStates(boxStatesRes.data.box_states);
             setPaymentHistory(historyRes.data.data);
             setDailySales(salesRes.data.daily_sales);
         } catch (error) {
+            console.error('Fetch error:', error);
             showError(error.response?.data?.message || 'Failed to load customer card data');
-            navigate('/customers');
+            navigate('/customers/list');
         } finally {
             setLoading(false);
         }
