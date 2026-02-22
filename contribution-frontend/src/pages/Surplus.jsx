@@ -231,89 +231,75 @@ function Surplus() {
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="filter-tabs">
-                <button
-                    className={statusFilter === 'all' ? 'active' : ''}
-                    onClick={() => setStatusFilter('all')}
-                >
-                    All
-                </button>
-                <button
-                    className={statusFilter === 'available' ? 'active' : ''}
-                    onClick={() => setStatusFilter('available')}
-                >
-                    Available
-                </button>
-                <button
-                    className={statusFilter === 'allocated' ? 'active' : ''}
-                    onClick={() => setStatusFilter('allocated')}
-                >
-                    Allocated
-                </button>
-                <button
-                    className={statusFilter === 'withdrawn' ? 'active' : ''}
-                    onClick={() => setStatusFilter('withdrawn')}
-                >
-                    Withdrawn
-                </button>
-            </div>
-
             {/* Entries Table */}
             <div className="table-container surplus-table">
-                {entries.length === 0 ? (
-                    <p className="no-data">No surplus entries found.</p>
-                ) : (
-                    <table className="mobile-card-view">
-                        <thead>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Worker</th>
+                            <th>Branch</th>
+                            <th className="amount-cell success-text">Total Accumulated</th>
+                            <th className="amount-cell primary-text">Total Allocated</th>
+                            <th className="amount-cell danger-text">Total Withdrawn</th>
+                            <th className="amount-cell">Current Pool Balance</th>
+                            {isCEO && <th>Actions</th>}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {workerBalances.length === 0 ? (
                             <tr>
-                                <th>Date</th>
-                                <th>Branch</th>
-                                <th>Worker</th>
-                                <th>Amount</th>
-                                <th>Description</th>
-                                <th>Status</th>
-                                <th>Created By</th>
-                                <th>Actions</th>
+                                <td colSpan={isCEO ? "7" : "6"} className="empty-state">
+                                    No worker surplus balances found
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {entries.map((entry) => (
-                                <tr key={entry.id}>
-                                    <td data-label="Date">{new Date(entry.entry_date).toLocaleDateString()}</td>
-                                    <td data-label="Branch">{entry.branch?.name || 'N/A'}</td>
-                                    <td data-label="Worker">{entry.worker?.name || 'N/A'}</td>
-                                    <td data-label="Amount" className="amount">GHS{parseFloat(entry.amount).toFixed(2)}</td>
-                                    <td data-label="Description">{entry.description}</td>
-                                    <td data-label="Status">
-                                        <span className={`status-badge ${entry.status}`}>
-                                            {entry.status}
-                                        </span>
+                        ) : (
+                            workerBalances.map((worker) => (
+                                <tr key={worker.worker_id}>
+                                    <td data-label="Worker">
+                                        <div className="worker-info">
+                                            <span className="worker-name">{worker.worker_name}</span>
+                                        </div>
                                     </td>
-                                    <td data-label="Created By">{entry.creator?.name || 'N/A'}</td>
-                                    <td data-label="Actions">
-                                        {entry.status === 'available' && user.role === 'ceo' && (
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button
-                                                    className="btn-small btn-success"
-                                                    onClick={() => setAllocatingEntry(entry)}
-                                                >
-                                                    Allocate
-                                                </button>
-                                                <button
-                                                    className="btn-small btn-danger"
-                                                    onClick={() => handleWithdraw(entry.id)}
-                                                >
-                                                    Withdraw
-                                                </button>
-                                            </div>
-                                        )}
+                                    <td data-label="Branch">{worker.branch_name}</td>
+                                    <td data-label="Total Accumulated" className="amount-cell success-text">
+                                        +GHS {parseFloat(worker.total_added).toFixed(2)}
                                     </td>
+                                    <td data-label="Total Allocated" className="amount-cell primary-text">
+                                        -GHS {parseFloat(worker.total_allocated).toFixed(2)}
+                                    </td>
+                                    <td data-label="Total Withdrawn" className="amount-cell danger-text">
+                                        -GHS {parseFloat(worker.total_withdrawn).toFixed(2)}
+                                    </td>
+                                    <td data-label="Current Balance" className="amount-cell">
+                                        <strong>GHS {parseFloat(worker.current_balance).toFixed(2)}</strong>
+                                    </td>
+                                    {isCEO && (
+                                        <td data-label="Actions">
+                                            {worker.current_balance > 0 ? (
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <button
+                                                        className="btn-small btn-success"
+                                                        onClick={() => setAllocatingWorker(worker)}
+                                                    >
+                                                        Allocate
+                                                    </button>
+                                                    <button
+                                                        className="btn-small btn-danger"
+                                                        onClick={() => handleWithdraw(worker)}
+                                                    >
+                                                        Withdraw
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span style={{ color: '#999', fontSize: '0.9em' }}>No funds</span>
+                                            )}
+                                        </td>
+                                    )}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Add Entry Modal */}

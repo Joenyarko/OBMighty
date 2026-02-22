@@ -173,7 +173,6 @@ function CompanyManagement() {
             is_active: true,
             ceo_name: '',
             ceo_email: '',
-            ceo_email: '',
             ceo_password: '',
             ceo_phone: '',
             new_ceo_name: '',
