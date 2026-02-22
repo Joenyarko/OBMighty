@@ -30,9 +30,21 @@ class BranchController extends Controller
      */
     public function store(Request $request)
     {
+        $companyId = config('app.company_id');
+        
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:branches',
-            'code' => 'required|string|max:20|unique:branches',
+            'name' => [
+                'required', 'string', 'max:255',
+                \Illuminate\Validation\Rule::unique('branches')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
+            'code' => [
+                'required', 'string', 'max:20',
+                \Illuminate\Validation\Rule::unique('branches')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })
+            ],
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'status' => 'nullable|in:active,inactive',
@@ -69,9 +81,21 @@ class BranchController extends Controller
     {
         $branch = Branch::findOrFail($id);
 
+        $companyId = config('app.company_id');
+
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255|unique:branches,name,' . $id,
-            'code' => 'sometimes|string|max:20|unique:branches,code,' . $id,
+            'name' => [
+                'sometimes', 'string', 'max:255',
+                \Illuminate\Validation\Rule::unique('branches')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })->ignore($id)
+            ],
+            'code' => [
+                'sometimes', 'string', 'max:20',
+                \Illuminate\Validation\Rule::unique('branches')->where(function ($query) use ($companyId) {
+                    return $query->where('company_id', $companyId);
+                })->ignore($id)
+            ],
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'status' => 'sometimes|in:active,inactive',
