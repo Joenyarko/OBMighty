@@ -286,84 +286,36 @@ class SurplusController extends Controller
 
         DB::beginTransaction();
         try {
-            // Lock the customer card row to prevent concurrent box checking/race conditions
-            $lockedCard = CustomerCard::lockForUpdate()->find($customerCard->id);
-
-            // Re-check remaining boxes just in case it changed since the start of request
-            if ($boxesToCheck > $lockedCard->boxes_remaining) {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'Cannot check more boxes than remaining',
-                    'boxes_remaining' => $lockedCard->boxes_remaining
-                ], 400);
-            }
-
-            // A surplus is treated effectively as cash generated organically
-            $paymentMethod = 'cash';
-            $paymentNotes = $validated['notes'] ?? 'Allocated from Pooled Surplus Ledger (Surplus Allocation)';
-
-            $payment = $lockedCard->checkBoxes(
-                $boxesToCheck,
-                $user->id,
-                'cash', // fallback constraint for old enums
-                $paymentNotes
-            );
-
-            $date = now()->toDateString();
-            $amount = $payment->amount_paid;
-            // The worker responsible for collecting this payment is assigned from the chosen worker ID
-            $workerId = $validated['worker_id']; 
-            $customer = $customerCard->customer;
-            $branchId = $customer->branch_id;
-
-            // Sync to general Payment history
-            $generalPayment = Payment::create([
-                'company_id' => $customerCard->company_id,
-                'customer_id' => $customer->id,
-                'worker_id' => $workerId,
-                'branch_id' => $branchId,
-                'payment_amount' => $amount,
-                'boxes_filled' => $boxesToCheck,
-                'payment_date' => $date,
-                'payment_method' => $paymentMethod,
-                'notes' => $paymentNotes,
-                'created_by' => $user->id,
-            ]);
-
-            // Sync parent Customer record
-            $customer->increment('boxes_filled', $boxesToCheck);
-            $customer->increment('amount_paid', $amount);
-            $customer->updateStatus(); // Custom method on Customer model if exists, or manual check
+            // Use PaymentService to handle the complexities of box checking, analytics, and history
+            $paymentService = app(\App\Services\PaymentService::class);
             
-            $newPaymentId = $generalPayment->id;
+            $paymentData = [
+                'customer_id' => $customerCard->customer_id,
+                'payment_amount' => $validated['amount'],
+                'payment_date' => now()->toDateString(),
+                'payment_method' => 'cash', // Use supported enum value
+                'notes' => $validated['notes'] ?? 'Allocated from Pooled Surplus Ledger (Surplus Allocation)',
+                'worker_id' => $validated['worker_id'], // Explicitly set the worker responsible
+            ];
+
+            // recordPayment handles: Locked Card check, Box checking, BoxState updates, 
+            // general Payment record, AuditLog, and Analytics (Daily Totals)
+            $generalPayment = $paymentService->recordPayment($customerCard->customer, $paymentData);
 
             // Record the ledger deduction entry
             $deductionEntry = SurplusEntry::create([
                 'company_id' => $customerCard->company_id,
-                'branch_id' => $branchId,
-                'worker_id' => $workerId,
-                'amount' => $validated['amount'], // Ledger positive value, but status denotes meaning
-                'entry_date' => $date,
+                'branch_id' => $customerCard->customer->branch_id,
+                'worker_id' => $validated['worker_id'],
+                'amount' => $validated['amount'], 
+                'entry_date' => now()->toDateString(),
                 'status' => 'allocated',
-                'description' => 'Allocated to Customer: ' . $customer->name,
+                'description' => 'Allocated to Customer: ' . $customerCard->customer->name,
                 'notes' => $validated['notes'] ?? 'Ledger deduction via Allocation',
                 'created_by' => $user->id,
                 'allocated_to_payment_id' => $generalPayment->id,
                 'allocated_at' => now(),
             ]);
-
-            // Log Activity
-            AuditLog::log(
-                'payment_recorded_via_surplus',
-                $payment,
-                null,
-                [
-                    'customer_name' => $customer->name,
-                    'amount' => $amount,
-                    'boxes_checked' => $boxesToCheck,
-                    'surplus_ledger_id' => $deductionEntry->id
-                ]
-            );
 
             DB::commit();
         } catch (\Exception $e) {
