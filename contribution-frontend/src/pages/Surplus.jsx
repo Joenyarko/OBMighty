@@ -98,10 +98,7 @@ function Surplus() {
     const [workers, setWorkers] = useState([]);
     const [statusFilter, setStatusFilter] = useState('all'); // Kept for future raw entries tab but hidden for now
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
-
-    // Robust CEO check
-    const isCEO = user?.roles?.some(r => r.name === 'ceo') || user?.role === 'ceo';
+    const { user, isCEO } = useAuth();
 
     useEffect(() => {
         fetchEntries();
