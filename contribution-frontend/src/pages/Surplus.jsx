@@ -110,8 +110,13 @@ function Surplus() {
     const fetchWorkers = async () => {
         try {
             const data = await usersAPI.getAll();
-            // Filter strictly to roles that generate surplus
-            setWorkers(data.filter(u => ['worker', 'manager', 'secretary'].includes(u.role)));
+            // Include all staff roles: workers, managers, secretary, ceo
+            setWorkers(data.filter(u => {
+                // Roles are usually returned as an array of objects: [{id: 1, name: 'ceo', ...}]
+                // but some endpoints might return them as strings or in u.role
+                const roleNames = u.roles?.map(r => (typeof r === 'string' ? r : r.name)) || [u.role];
+                return roleNames.some(role => ['worker', 'manager', 'secretary', 'ceo', 'super_admin'].includes(role));
+            }));
         } catch (error) {
             console.error('Failed to load workers for surplus entry', error);
         }
@@ -476,9 +481,12 @@ function AddSurplusModal({ onClose, onSubmit, workers }) {
                             required
                         >
                             <option value="">Select a worker...</option>
-                            {workers.map((w) => (
-                                <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
-                            ))}
+                            {workers.map((w) => {
+                                const roleName = w.roles?.[0]?.name || w.roles?.[0] || w.role || 'Staff';
+                                return (
+                                    <option key={w.id} value={w.id}>{w.name} ({roleName})</option>
+                                );
+                            })}
                         </select>
                     </div>
 
