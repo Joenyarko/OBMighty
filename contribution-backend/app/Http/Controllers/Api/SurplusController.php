@@ -21,7 +21,12 @@ class SurplusController extends Controller
             $user = $request->user();
             
             // Base query for the ledger
-            $query = SurplusEntry::with(['branch', 'worker', 'creator', 'allocatedPayment']);
+            $query = SurplusEntry::with([
+                'branch' => fn($q) => $q->withTrashed(),
+                'worker' => fn($q) => $q->withTrashed(),
+                'creator' => fn($q) => $q->withTrashed(),
+                'allocatedPayment'
+            ]);
             
             // Apply branch filtering for non-CEO users
             if ($user->hasRole(['secretary', 'manager', 'worker'])) {
