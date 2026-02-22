@@ -184,12 +184,36 @@ class CustomerCardController extends Controller
                 }
             }
 
+            if ($customerCard) {
+                // SELF-HEALING: If customer has paid but card has 0 boxes checked, try to sync
+                if ($customerCard->boxes_checked == 0 && $customer->amount_paid > 0) {
+                     try {
+                         $customerCard->append('box_price');
+                         if ($customerCard->box_price > 0) {
+                             $boxesToCatchUp = floor($customer->amount_paid / $customerCard->box_price);
+                             if ($boxesToCatchUp > 0) {
+                                 DB::transaction(function() use ($customerCard, $boxesToCatchUp, $customer) {
+                                     $customerCard->checkBoxes(
+                                         $boxesToCatchUp, 
+                                         $customer->worker_id, 
+                                         'cash', 
+                                         'Initial Sync: Catching up payments recorded before card assignment'
+                                     );
+                                 });
+                                 $customerCard->refresh();
+                             }
+                         }
+                     } catch (\Exception $e) {
+                         \Log::error("Self-healing sync failed: " . $e->getMessage());
+                     }
+                }
+                return response()->json($customerCard->load(['customer', 'card']));
+            }
+
             return response()->json([
                 'message' => 'No active card found for this customer'
             ], 404);
         }
-
-        return response()->json($customerCard);
     }
 
     /**
