@@ -87,7 +87,17 @@ function Customers() {
             showSuccess('Customer updated successfully');
         } catch (error) {
             console.error('Failed to update customer:', error);
-            showError('Failed to update customer');
+            let errorMessage = 'Failed to update customer';
+
+            if (error.response?.data?.errors) {
+                // Flatten Laravel validation errors object into a single string
+                const validationErrors = Object.values(error.response.data.errors).flat();
+                errorMessage = validationErrors.join(' ');
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+
+            showError(errorMessage);
         }
     };
 
@@ -186,7 +196,17 @@ function Customers() {
             showSuccess('Customer created successfully');
         } catch (error) {
             console.error('Failed to add customer:', error);
-            showError('Failed to add customer');
+            let errorMessage = 'Failed to add customer';
+
+            if (error.response?.data?.errors) {
+                // Flatten Laravel validation errors object into a single string
+                const validationErrors = Object.values(error.response.data.errors).flat();
+                errorMessage = validationErrors.join(' ');
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+
+            showError(errorMessage);
         }
     };
 
