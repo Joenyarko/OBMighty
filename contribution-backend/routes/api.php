@@ -161,6 +161,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [SurplusController::class, 'destroy']);
         Route::post('/{id}/allocate', [SurplusController::class, 'allocate']);
         Route::post('/{id}/withdraw', [SurplusController::class, 'withdraw']);
+        Route::post('/adjust', [SurplusController::class, 'adjust']);
     });
     
     // Payroll (CEO only)

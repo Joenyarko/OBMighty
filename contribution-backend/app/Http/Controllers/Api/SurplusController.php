@@ -328,6 +328,11 @@ class SurplusController extends Controller
                 'notes' => $paymentNotes,
                 'created_by' => $user->id,
             ]);
+
+            // Sync parent Customer record
+            $customer->increment('boxes_filled', $boxesToCheck);
+            $customer->increment('amount_paid', $amount);
+            $customer->updateStatus(); // Custom method on Customer model if exists, or manual check
             
             $newPaymentId = $generalPayment->id;
 
@@ -419,6 +424,48 @@ class SurplusController extends Controller
         return response()->json([
             'message' => 'Surplus withdrawn successfully from ledger',
             'entry' => $withdrawalEntry->load(['branch', 'worker', 'creator']),
+        ]);
+    /**
+     * Adjust a worker's surplus balance (Correction)
+     */
+    public function adjust(Request $request)
+    {
+        $user = $request->user();
+        
+        // Only CEO can adjust
+        if (!$user->hasRole('ceo')) {
+            return response()->json(['message' => 'Unauthorized - only CEO can adjust surplus'], 403);
+        }
+        
+        $validated = $request->validate([
+            'worker_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric', // Can be negative
+            'notes' => 'required|string',
+        ]);
+        
+        $worker = User::findOrFail($validated['worker_id']);
+        $date = now()->toDateString();
+        
+        // Create an adjustment entry
+        // If amount is negative, it's effectively a withdrawal/deduction
+        // If positive, it's an addition
+        $entry = SurplusEntry::create([
+            'company_id' => $worker->company_id,
+            'branch_id' => $worker->branch_id,
+            'worker_id' => $worker->id,
+            'amount' => abs($validated['amount']),
+            'entry_date' => $date,
+            // If negative, mark as withdrawn (since it was removed from available)
+            // If positive, mark as available
+            'status' => $validated['amount'] < 0 ? 'withdrawn' : 'available',
+            'description' => 'Manual Adjustment: ' . $validated['notes'],
+            'notes' => $validated['notes'],
+            'created_by' => $user->id,
+        ]);
+        
+        return response()->json([
+            'message' => 'Balance adjusted successfully',
+            'entry' => $entry
         ]);
     }
 }
