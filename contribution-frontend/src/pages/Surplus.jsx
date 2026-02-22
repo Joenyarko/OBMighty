@@ -38,31 +38,34 @@ const surplusAPI = {
         return response.json();
     },
 
-    withdraw: async (id, notes) => {
+    withdraw: async (workerId, amount, notes) => {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/${id}/withdraw`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/withdraw`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ notes }),
+            body: JSON.stringify({ worker_id: workerId, amount, notes }),
         });
-        if (!response.ok) throw new Error('Failed to withdraw surplus');
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to withdraw surplus');
+        }
         return response.json();
     },
 
-    allocate: async (id, customerCardId, notes) => {
+    allocate: async (workerId, customerCardId, amount, notes) => {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/${id}/allocate`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/surplus/allocate`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ customer_card_id: customerCardId, notes }),
+            body: JSON.stringify({ worker_id: workerId, customer_card_id: customerCardId, amount, notes }),
         });
         if (!response.ok) {
             const error = await response.json();
@@ -87,18 +90,21 @@ const usersAPI = {
 };
 
 function Surplus() {
-    const [entries, setEntries] = useState([]);
+    const [workerBalances, setWorkerBalances] = useState([]);
     const [totals, setTotals] = useState({ total_available: 0, total_allocated: 0, total_withdrawn: 0 });
     const [showAddForm, setShowAddForm] = useState(false);
-    const [allocatingEntry, setAllocatingEntry] = useState(null);
+    const [allocatingWorker, setAllocatingWorker] = useState(null);
     const [workers, setWorkers] = useState([]);
-    const [statusFilter, setStatusFilter] = useState('all');
+    const [statusFilter, setStatusFilter] = useState('all'); // Kept for future raw entries tab but hidden for now
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
 
+    // Robust CEO check
+    const isCEO = user?.roles?.some(r => r.name === 'ceo') || user?.role === 'ceo';
+
     useEffect(() => {
         fetchEntries();
-        if (user?.role === 'ceo') {
+        if (isCEO) {
             fetchWorkers();
         }
     }, [statusFilter, user]);
@@ -117,12 +123,12 @@ function Surplus() {
         try {
             setLoading(true);
             const data = await surplusAPI.getAll(statusFilter === 'all' ? null : statusFilter);
-            setEntries(data.entries?.data || []);
+            setWorkerBalances(data.worker_balances || []);
             setTotals(data.totals || { total_available: 0, total_allocated: 0, total_withdrawn: 0 });
         } catch (error) {
-            console.error('Failed to fetch surplus entries:', error);
-            showError(error.message || 'Failed to load surplus entries');
-            setEntries([]);
+            console.error('Failed to fetch surplus worker balances:', error);
+            showError(error.message || 'Failed to load surplus balances');
+            setWorkerBalances([]);
             setTotals({ total_available: 0, total_allocated: 0, total_withdrawn: 0 });
         } finally {
             setLoading(false);
@@ -134,18 +140,18 @@ function Surplus() {
             await surplusAPI.create(formData);
             fetchEntries();
             setShowAddForm(false);
-            showSuccess('Surplus entry added successfully!');
+            showSuccess('Surplus amount added successfully!');
         } catch (error) {
-            console.error('Failed to add surplus entry:', error);
-            showError(error.message || 'Failed to add surplus entry');
+            console.error('Failed to add surplus:', error);
+            showError(error.message || 'Failed to add surplus');
         }
     };
 
-    const handleAllocate = async (surplusId, customerCardId) => {
+    const handleAllocate = async (workerId, customerCardId, amount) => {
         try {
-            await surplusAPI.allocate(surplusId, customerCardId, 'Allocated via CEO Dashboard');
+            await surplusAPI.allocate(workerId, customerCardId, amount, 'Allocated via CEO Dashboard');
             fetchEntries();
-            setAllocatingEntry(null);
+            setAllocatingWorker(null);
             showSuccess('Surplus allocated successfully! Boxes have been updated.');
         } catch (error) {
             console.error('Failed to allocate surplus:', error);
@@ -153,17 +159,34 @@ function Surplus() {
         }
     };
 
-    const handleWithdraw = async (entryId) => {
-        const result = await showTextareaPrompt('Enter withdrawal notes:', 'Withdraw Surplus', 'Enter reason for withdrawal...');
+    const handleWithdraw = async (worker) => {
+        const maxAmount = parseFloat(worker.current_balance);
+        const { value: amountStr } = await Swal.fire({
+            title: 'Withdraw Surplus',
+            input: 'number',
+            inputLabel: `Amount to Withdraw (Max: GHS ${maxAmount.toFixed(2)})`,
+            inputPlaceholder: 'Enter amount...',
+            showCancelButton: true,
+            inputValidator: (value) => {
+                if (!value) return 'You need to write an amount!';
+                const val = parseFloat(value);
+                if (val <= 0) return 'Amount must be greater than zero.';
+                if (val > maxAmount) return 'Amount exceeds the worker\'s current surplus balance.';
+            }
+        });
+
+        if (!amountStr) return;
+
+        const result = await showTextareaPrompt('Enter withdrawal reason:', 'Reason for Withdrawal', 'Enter notes...');
         if (!result.isConfirmed || !result.value) return;
 
         try {
-            await surplusAPI.withdraw(entryId, result.value);
+            await surplusAPI.withdraw(worker.worker_id, parseFloat(amountStr), result.value);
             fetchEntries();
             showSuccess('Surplus withdrawn successfully!');
         } catch (error) {
             console.error('Failed to withdraw surplus:', error);
-            showError('Failed to withdraw surplus');
+            showError(error.message || 'Failed to withdraw surplus');
         }
     };
 
@@ -174,10 +197,10 @@ function Surplus() {
     return (
         <div className="surplus-page">
             <div className="page-header">
-                <h1>Surplus Account</h1>
-                {user?.role === 'ceo' && (
+                <h1>Pooled Surplus Ledger</h1>
+                {isCEO && (
                     <button className="btn-primary" onClick={() => setShowAddForm(true)}>
-                        + Add Surplus Entry
+                        + Add Surplus Amount
                     </button>
                 )}
             </div>
@@ -302,31 +325,28 @@ function Surplus() {
             )}
 
             {/* Allocate Entry Modal */}
-            {allocatingEntry && (
+            {allocatingWorker && (
                 <AllocateSurplusModal
-                    entry={allocatingEntry}
-                    workers={workers}
-                    onClose={() => setAllocatingEntry(null)}
-                    onSubmit={(cardId) => handleAllocate(allocatingEntry.id, cardId)}
+                    worker={allocatingWorker}
+                    onClose={() => setAllocatingWorker(null)}
+                    onSubmit={(cardId, amount) => handleAllocate(allocatingWorker.worker_id, cardId, amount)}
                 />
             )}
         </div>
     );
 }
 
-function AllocateSurplusModal({ onClose, onSubmit, workers, entry }) {
-    const [selectedWorkerId, setSelectedWorkerId] = useState(entry.worker_id || '');
+function AllocateSurplusModal({ onClose, onSubmit, worker }) {
     const [customers, setCustomers] = useState([]);
     const [selectedCardId, setSelectedCardId] = useState('');
+    const [allocationAmount, setAllocationAmount] = useState('');
     const [loadingCustomers, setLoadingCustomers] = useState(false);
 
     useEffect(() => {
-        if (selectedWorkerId) {
-            fetchCustomers(selectedWorkerId);
-        } else {
-            setCustomers([]);
+        if (worker?.worker_id) {
+            fetchCustomers(worker.worker_id);
         }
-    }, [selectedWorkerId]);
+    }, [worker]);
 
     const fetchCustomers = async (workerId) => {
         setLoadingCustomers(true);
@@ -354,53 +374,47 @@ function AllocateSurplusModal({ onClose, onSubmit, workers, entry }) {
             showError('Please select a customer card.');
             return;
         }
-        onSubmit(selectedCardId);
+
+        const numericAmount = parseFloat(allocationAmount);
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+            showError('Please enter a valid amount greater than 0.');
+            return;
+        }
+
+        if (numericAmount > worker.current_balance) {
+            showError(`Amount cannot exceed the worker's current balance of GHS ${parseFloat(worker.current_balance).toFixed(2)}.`);
+            return;
+        }
+
+        onSubmit(selectedCardId, numericAmount);
     };
 
     return (
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <h2>Allocate Surplus</h2>
+                <h2>Allocate Surplus Funds</h2>
                 <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '4px' }}>
-                    <strong>Allocating: </strong> GHS {parseFloat(entry.amount).toFixed(2)} <br />
-                    <small>Generated by: {entry.worker?.name || 'Unknown'}</small>
+                    <strong>Worker: </strong> {worker.worker_name} <br />
+                    <strong>Max Available Balance: </strong> GHS {parseFloat(worker.current_balance).toFixed(2)}
                 </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
-                        <label>1. Select Worker (Filter) *</label>
-                        <select
-                            value={selectedWorkerId}
-                            onChange={(e) => {
-                                setSelectedWorkerId(e.target.value);
-                                setSelectedCardId('');
-                            }}
-                            required
-                        >
-                            <option value="">Select a worker...</option>
-                            {workers.map((w) => (
-                                <option key={w.id} value={w.id}>{w.name} ({w.role})</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="form-group">
-                        <label>2. Select Customer Card *</label>
+                        <label>1. Select Customer Card *</label>
                         <select
                             value={selectedCardId}
                             onChange={(e) => setSelectedCardId(e.target.value)}
                             required
-                            disabled={!selectedWorkerId || loadingCustomers}
+                            disabled={loadingCustomers}
                         >
                             <option value="">
                                 {loadingCustomers ? 'Loading customers...' : 'Select a customer...'}
                             </option>
                             {customers.map((c) => {
                                 const boxPrice = c.active_card.box_price || 0;
-                                const maxBoxes = Math.floor(entry.amount / boxPrice);
                                 return (
                                     <option key={c.active_card.id} value={c.active_card.id}>
-                                        {c.name} - {c.active_card.card_name} (Price: GHS {boxPrice}, Translates to ~{maxBoxes} boxes)
+                                        {c.name} - {c.active_card.card_name} (Box Price: GHS {boxPrice})
                                     </option>
                                 );
                             })}
@@ -408,6 +422,33 @@ function AllocateSurplusModal({ onClose, onSubmit, workers, entry }) {
                         <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
                             Only customers with active cards assigned to this worker are shown.
                         </small>
+                    </div>
+
+                    <div className="form-group">
+                        <label>2. Amount to Allocate *</label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            max={worker.current_balance}
+                            value={allocationAmount}
+                            onChange={(e) => setAllocationAmount(e.target.value)}
+                            required
+                            placeholder={`Max: GHS ${parseFloat(worker.current_balance).toFixed(2)}`}
+                        />
+                        {allocationAmount && selectedCardId && (
+                            <div style={{ marginTop: '5px', fontSize: '13px', color: 'green' }}>
+                                {(() => {
+                                    const card = customers.find(c => c.active_card?.id === parseInt(selectedCardId));
+                                    const boxPrice = card?.active_card?.box_price || 0;
+                                    if (boxPrice > 0) {
+                                        const boxes = Math.floor(parseFloat(allocationAmount) / boxPrice);
+                                        return `Translates to roughly ~${boxes} boxes marked.`;
+                                    }
+                                    return '';
+                                })()}
+                            </div>
+                        )}
                     </div>
 
                     <div className="modal-actions">
