@@ -25,25 +25,6 @@ class CustomerController extends Controller
         }
         // CEO sees all
 
-        // Default to active customers only (unless status filter is explicitly provided)
-        if (!$request->has('status') || $request->status === '') {
-            $query->where('customers.status', '!=', 'inactive');
-        }
-
-        // Apply status filter
-        if ($request->has('status') && $request->status !== '') {
-            $status = $request->status;
-            if ($status === 'defaulting') {
-                $query->defaulting();
-            } elseif ($status === 'completed') {
-                $query->completed();
-            } elseif ($status === 'in_progress') {
-                $query->inProgress();
-            } else {
-                $query->where('customers.status', $status);
-            }
-        }
-
         // Apply worker filter
         if ($request->has('worker_id')) {
             $query->where('worker_id', $request->worker_id);
@@ -70,19 +51,35 @@ class CustomerController extends Controller
             $query->where('is_served', $isServed);
         }
 
-        // --- Calculate Global Stats (Ignoring status filter for the stats themselves) ---
+        // --- Calculate Global Stats (Using cloned query before status filter is applied) ---
         $statsQuery = clone $query;
-        // remove the status filter from stats query to get overall counts for the active view
-        $statsQuery->getQuery()->wheres = array_filter($statsQuery->getQuery()->wheres, function($where) {
-            return !isset($where['column']) || ($where['column'] !== 'status' && $where['column'] !== 'customers.status');
-        });
         
         $stats = [
             'total' => (clone $statsQuery)->where('customers.status', '!=', 'inactive')->count(),
             'in_progress' => (clone $statsQuery)->where('customers.status', 'in_progress')->count(),
             'completed' => (clone $statsQuery)->where('customers.status', 'completed')->count(),
-            'defaulting' => (clone $statsQuery)->where('customers.status', 'defaulting')->count(),
+            'defaulting' => (clone $statsQuery)->defaulting()->count(),
         ];
+
+        // Default to active customers only (unless status filter is explicitly provided)
+        if (!$request->has('status') || $request->status === '') {
+            $query->where('customers.status', '!=', 'inactive');
+        }
+
+        // Apply status filter
+        if ($request->has('status') && $request->status !== '') {
+            $status = $request->status;
+            if ($status === 'defaulting') {
+                $query->defaulting();
+            } elseif ($status === 'completed') {
+                $query->completed();
+            } elseif ($status === 'in_progress') {
+                $query->inProgress();
+            } else {
+                $query->where('customers.status', $status);
+            }
+        }
+
 
         $customers = $query->orderBy('created_at', 'desc')->paginate(12);
 
