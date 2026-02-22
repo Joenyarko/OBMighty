@@ -81,6 +81,13 @@ class SurplusController extends Controller
         // The frontend component allows all authorized roles to create entries.
         // We will dynamically determine branch_id and worker_id based on role.
         
+        $companyId = config('app.company_id');
+        if (!$companyId && $user->hasRole('super_admin')) {
+            return response()->json([
+                'message' => 'Super Admins cannot create surplus entries on the central dashboard. Please log in to a specific company\'s domain.'
+            ], 422);
+        }
+
         $validated = $request->validate([
             'branch_id' => 'nullable|exists:branches,id',
             'worker_id' => 'nullable|exists:users,id',

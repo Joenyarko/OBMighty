@@ -32,6 +32,12 @@ class BranchController extends Controller
     {
         $companyId = config('app.company_id');
         
+        if (!$companyId && app()->has('is_super_admin')) {
+            return response()->json([
+                'message' => 'Super Admins cannot create branches on the central dashboard. Please log in to a specific company\'s domain to create branches.'
+            ], 422);
+        }
+
         $validated = $request->validate([
             'name' => [
                 'required', 'string', 'max:255',

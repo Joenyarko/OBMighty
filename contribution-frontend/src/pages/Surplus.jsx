@@ -195,7 +195,7 @@ function Surplus() {
                         <tbody>
                             {entries.map((entry) => (
                                 <tr key={entry.id}>
-                                    <td data-label="Date">{entry.entry_date}</td>
+                                    <td data-label="Date">{new Date(entry.entry_date).toLocaleDateString()}</td>
                                     <td data-label="Branch">{entry.branch?.name || 'N/A'}</td>
                                     <td data-label="Worker">{entry.worker?.name || 'N/A'}</td>
                                     <td data-label="Amount" className="amount">GHS{parseFloat(entry.amount).toFixed(2)}</td>
