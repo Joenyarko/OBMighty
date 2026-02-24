@@ -12,7 +12,6 @@ class AuditLog extends Model
     const UPDATED_AT = null; // Only created_at timestamp
 
     protected $fillable = [
-        'company_id',
         'user_id',
         'action',
         'auditable_type',

@@ -10,7 +10,6 @@ class SurplusEntry extends Model
     use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'branch_id',
         'worker_id',
         'amount',

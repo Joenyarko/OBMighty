@@ -10,14 +10,12 @@ class LedgerEntry extends Model
     use BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
+        'branch_id',
         'entry_date',
-        'account_type',
+        'type',
         'category',
         'description',
-        'debit',
-        'credit',
-        'reference_type',
+        'amount',
         'reference_id',
         'created_by',
     ];

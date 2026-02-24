@@ -11,7 +11,6 @@ class WorkerDailyTotal extends Model
     protected $fillable = [
         'worker_id',
         'branch_id',
-        'company_id',
         'date',
         'total_collections',
         'total_customers_paid',

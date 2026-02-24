@@ -11,7 +11,6 @@ class Branch extends Model
     use HasFactory, SoftDeletes, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'name',
         'code',
         'address',

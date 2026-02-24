@@ -11,14 +11,13 @@ class StockItem extends Model
     use HasFactory, SoftDeletes, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'name',
-        'description',
-        'sku',
+        'code',
+        'category',
         'unit',
-        'quantity',
         'unit_price',
-        'reorder_level',
+        'quantity',
+        'min_stock_level',
         'status',
     ];
 

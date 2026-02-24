@@ -106,9 +106,12 @@ class PaymentController extends Controller
             Log::info('Payment Recorded Successfully', [
                 'payment_id' => $payment->id,
                 'customer_id' => $customer->id,
-                'amount' => $payment->payment_amount,
-                'user_id' => $user->id,
+                'amount_summary' => number_format((float)$payment->payment_amount, 2),
                 'company_id' => config('app.company_id')
+            ]);
+
+            Log::debug('Payment Record Context', [
+                'user_id' => $user->id,
             ]);
 
             return response()->json([
@@ -129,11 +132,13 @@ class PaymentController extends Controller
         } catch (Exception $e) {
             Log::error('Payment Recording Failed', [
                 'error' => $e->getMessage(),
-                'user_id' => $request->user()->id,
                 'customer_id' => $validated['customer_id'] ?? null,
-                'payment_data' => $validated,
                 'company_id' => config('app.company_id')
             ]);
+            Log::debug('Failed Payment Context', [
+                'user_id' => $request->user()->id,
+            ]);
+            
             return response()->json([
                 'message' => 'Payment recording failed',
                 'error' => $e->getMessage(),
@@ -181,10 +186,13 @@ class PaymentController extends Controller
                 Log::info('Bulk Payment Item Success', [
                     'payment_id' => $payment->id,
                     'customer_id' => $customer->id,
-                    'amount' => $payment->payment_amount,
-                    'user_id' => $user->id,
+                    'amount_summary' => number_format((float)$payment->payment_amount, 2),
                     'index' => $index,
                     'company_id' => config('app.company_id')
+                ]);
+
+                Log::debug('Bulk Payment Success Context', [
+                    'user_id' => $user->id,
                 ]);
 
                 $results['successful'][] = [
@@ -199,9 +207,13 @@ class PaymentController extends Controller
                     'index' => $index,
                     'customer_id' => $paymentData['customer_id'] ?? null,
                     'error' => $e->getMessage(),
-                    'user_id' => $user->id,
                     'company_id' => config('app.company_id')
                 ]);
+
+                \Illuminate\Support\Facades\Log::debug('Bulk Payment Item Failure Context', [
+                    'user_id' => $user->id,
+                ]);
+                
 
                 $results['failed'][] = [
                     'customer_id' => $paymentData['customer_id'] ?? null,

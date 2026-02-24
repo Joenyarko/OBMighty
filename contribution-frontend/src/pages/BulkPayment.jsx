@@ -81,7 +81,8 @@ function BulkPayment() {
             const { successful, failed } = response.data.results;
 
             if (failed.length > 0) {
-                showError(`Saved ${successful.length} payments. ${failed.length} failed.`);
+                const firstError = failed[0].error || 'Unknown error';
+                showError(`Saved ${successful.length} payments. ${failed.length} failed. First error: ${firstError}`);
                 console.error('Failed payments:', failed);
             } else {
                 showSuccess(`Successfully recorded ${successful.length} payments!`);

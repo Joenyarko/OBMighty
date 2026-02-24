@@ -10,14 +10,13 @@ class EmployeeSalary extends Model
     use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'user_id',
-        'monthly_salary',
-        'allowances',
-        'deductions',
+        'branch_id',
+        'base_salary',
+        'allowance',
+        'status',
         'effective_from',
         'effective_to',
-        'status',
         'created_by',
     ];
 

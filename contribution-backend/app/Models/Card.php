@@ -12,7 +12,6 @@ class Card extends Model
     use HasFactory, SoftDeletes, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'card_name',
         'card_code',
         'number_of_boxes',

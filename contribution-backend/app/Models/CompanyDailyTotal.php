@@ -9,7 +9,6 @@ class CompanyDailyTotal extends Model
     use \App\Traits\BelongsToCompany;
 
     protected $fillable = [
-        'company_id',
         'date',
         'total_collections',
         'total_payments',

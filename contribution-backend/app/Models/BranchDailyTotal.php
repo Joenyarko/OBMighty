@@ -10,7 +10,6 @@ class BranchDailyTotal extends Model
 
     protected $fillable = [
         'branch_id',
-        'company_id',
         'date',
         'total_collections',
         'total_payments',
