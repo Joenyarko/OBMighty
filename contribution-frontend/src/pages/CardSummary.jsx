@@ -13,6 +13,7 @@ function CardSummary() {
     const [cardDetail, setCardDetail] = useState(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [page, setPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         fetchCards();
@@ -210,16 +211,25 @@ function CardSummary() {
     // Grid view
     return (
         <div className="card-summary-page">
-            <div className="page-header">
-                <h1>Card Summary</h1>
-                <p className="page-subtitle">Overview of all card categories and customer distribution</p>
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                    <h1>Card Summary</h1>
+                    <p className="page-subtitle">Overview of all card categories and customer distribution</p>
+                </div>
+                <input
+                    type="text"
+                    placeholder="Search card name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ padding: '8px 14px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '14px', minWidth: '200px' }}
+                />
             </div>
 
-            {cards.length === 0 ? (
-                <div className="no-data">No cards available</div>
+            {cards.filter(c => c.card_name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                <div className="no-data">{searchTerm ? 'No cards match your search' : 'No cards available'}</div>
             ) : (
                 <div className="cards-overview-grid">
-                    {cards.map((card) => (
+                    {cards.filter(c => c.card_name.toLowerCase().includes(searchTerm.toLowerCase())).map((card) => (
                         <div
                             key={card.id}
                             className="card-overview-item"

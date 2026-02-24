@@ -13,6 +13,18 @@ function BulkPayment() {
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ total: 0, last_page: 1 });
     const [searchTerm, setSearchTerm] = useState('');
+    const [workers, setWorkers] = useState([]);
+    const [selectedWorker, setSelectedWorker] = useState('');
+    const isCEO = user?.roles?.some(r => r.name === 'ceo');
+
+    useEffect(() => {
+        if (isCEO) {
+            userAPI.getAll().then(res => {
+                const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+                setWorkers(raw.filter(u => u.roles?.some(r => r.name === 'worker')));
+            }).catch(err => console.error('Failed to load workers', err));
+        }
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -20,7 +32,7 @@ function BulkPayment() {
         }, 500); // Debounce search
 
         return () => clearTimeout(timer);
-    }, [page, searchTerm]);
+    }, [page, searchTerm, selectedWorker]);
 
     const fetchCustomers = async (currentPage, search) => {
         try {
@@ -29,7 +41,8 @@ function BulkPayment() {
                 status: 'in_progress',
                 page: currentPage,
                 search: search,
-                per_page: 50 // Show more per page for bulk
+                per_page: 50,
+                ...(selectedWorker ? { worker_id: selectedWorker } : {})
             });
             const data = response.data.data || response.data;
             setCustomers(Array.isArray(data) ? data : []);
@@ -135,6 +148,18 @@ function BulkPayment() {
                         onChange={handleSearchChange}
                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
                     />
+                    {isCEO && (
+                        <select
+                            value={selectedWorker}
+                            onChange={(e) => { setSelectedWorker(e.target.value); setPage(1); }}
+                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
+                        >
+                            <option value="">All Workers</option>
+                            {workers.map(w => (
+                                <option key={w.id} value={w.id}>{w.name}</option>
+                            ))}
+                        </select>
+                    )}
                     <button
                         className="btn-primary"
                         onClick={handleSaveAll}

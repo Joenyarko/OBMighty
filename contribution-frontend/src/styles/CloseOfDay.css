@@ -1,0 +1,244 @@
+.close-of-day-page {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.cod-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.cod-header h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-color);
+    font-size: 24px;
+    margin: 0;
+}
+
+.cod-subtitle {
+    color: var(--text-secondary);
+    margin: 4px 0 0 0;
+    font-size: 14px;
+}
+
+.cod-date-picker {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.cod-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cod-summary-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.cod-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cod-value {
+    color: var(--text-primary);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.cod-table-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.cod-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+}
+
+.cod-table thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cod-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 14px;
+}
+
+.cod-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cod-table tbody tr.adjusted-row {
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.worker-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.worker-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.amount-cell {
+    font-family: 'SF Mono', monospace;
+    font-weight: 500;
+}
+
+.final-amount {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.adjusted-badge {
+    color: #ffc107;
+    font-weight: 600;
+}
+
+.adj-note {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 11px;
+    margin-top: 2px;
+    font-style: italic;
+}
+
+.no-adjustment {
+    color: var(--text-secondary);
+}
+
+.edit-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.edit-amount-input {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--primary-color);
+    background: var(--bg-color);
+    color: var(--text-primary);
+    font-size: 14px;
+    width: 120px;
+}
+
+.edit-note-input {
+    padding: 5px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-primary);
+    font-size: 12px;
+    width: 150px;
+}
+
+.action-btns {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-edit,
+.btn-save,
+.btn-cancel {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-edit {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.btn-edit:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-save {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-save:hover {
+    opacity: 0.9;
+}
+
+.btn-cancel {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+}
+
+.btn-cancel:hover {
+    background: rgba(255, 59, 48, 0.25);
+}
+
+@media (max-width: 768px) {
+    .close-of-day-page {
+        padding: 16px;
+    }
+
+    .cod-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .cod-table-container {
+        overflow-x: auto;
+    }
+
+    .cod-table {
+        min-width: 700px;
+    }
+}

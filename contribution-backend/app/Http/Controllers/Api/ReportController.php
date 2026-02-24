@@ -169,6 +169,48 @@ class ReportController extends Controller
     }
 
     /**
+     * Get yearly report — aggregates monthly totals for the current year
+     */
+    public function yearly(Request $request)
+    {
+        $user = $request->user();
+        $year = $request->input('year', Carbon::now()->year);
+        $startDate = Carbon::createFromDate($year, 1, 1)->startOfYear();
+        $endDate = Carbon::createFromDate($year, 12, 31)->endOfYear();
+
+        if ($user->hasRole('worker')) {
+            $totals = WorkerDailyTotal::where('worker_id', $user->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+        } elseif ($user->hasRole('secretary')) {
+            $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get();
+        } else {
+            $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
+                ->get();
+        }
+
+        // Group by month
+        $monthlyBreakdown = $totals->groupBy(function ($item) {
+            return Carbon::parse($item->date)->format('Y-m');
+        })->map(function ($monthData, $month) {
+            return [
+                'date' => $month,
+                'total_collections' => $monthData->sum('total_collections'),
+                'total_payments' => $monthData->sum('total_payments'),
+            ];
+        })->sortKeys()->values();
+
+        return response()->json([
+            'year' => $year,
+            'total_collections' => $totals->sum('total_collections'),
+            'total_payments' => $totals->sum('total_payments'),
+            'monthly_breakdown' => $monthlyBreakdown,
+        ]);
+    }
+
+    /**
      * Get worker performance (CEO and Secretary only)
      */
     public function workerPerformance(Request $request)

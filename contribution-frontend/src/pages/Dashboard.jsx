@@ -8,20 +8,52 @@ import '../styles/Dashboard.css';
 function Dashboard() {
     const { user, isCEO, isSecretary, isWorker } = useAuth();
     const [dailyData, setDailyData] = useState(null);
-    const [weeklyData, setWeeklyData] = useState(null);
+    const [trendPeriod, setTrendPeriod] = useState('weekly');
+    const [trendData, setTrendData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDailyReport();
-        fetchWeeklyReport();
     }, []);
 
-    const fetchWeeklyReport = async () => {
+    useEffect(() => {
+        fetchTrendData();
+    }, [trendPeriod]);
+
+    const fetchTrendData = async () => {
         try {
-            const response = await reportAPI.weekly();
-            setWeeklyData(response.data);
+            let response;
+            if (trendPeriod === 'weekly') {
+                response = await reportAPI.weekly();
+                setTrendData({
+                    label: 'Weekly Collections Trend',
+                    items: (response.data.daily_breakdown || []).map(d => ({
+                        date: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
+                        amount: d.total_collections
+                    }))
+                });
+            } else if (trendPeriod === 'monthly') {
+                response = await reportAPI.monthly();
+                setTrendData({
+                    label: 'Monthly Collections Trend',
+                    items: (response.data.daily_breakdown || []).map(d => ({
+                        date: new Date(d.date).getDate().toString(),
+                        amount: d.total_collections
+                    }))
+                });
+            } else {
+                response = await reportAPI.yearly();
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                setTrendData({
+                    label: 'Yearly Collections Trend',
+                    items: (response.data.monthly_breakdown || []).map(d => ({
+                        date: months[parseInt(d.date.split('-')[1]) - 1] || d.date,
+                        amount: d.total_collections
+                    }))
+                });
+            }
         } catch (error) {
-            console.error('Failed to fetch weekly report:', error);
+            console.error('Failed to fetch trend data:', error);
         }
     };
 
@@ -52,26 +84,36 @@ function Dashboard() {
                 <p className="role-badge">{user?.roles?.[0]?.toUpperCase()}</p>
             </div>
 
-            {/* Weekly Trend Chart for all users */}
-            {
-                weeklyData && weeklyData.daily_breakdown && (
-                    <div className="dashboard-chart-section" style={{ marginBottom: '24px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px' }}>
-                        <h3 style={{ marginBottom: '16px', fontSize: '16px', color: 'var(--text-secondary)' }}>Weekly Collections Trend</h3>
-                        <div style={{ height: '250px' }}>
-                            <SimpleBarChart
-                                data={weeklyData.daily_breakdown.map(d => ({
-                                    date: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
-                                    amount: d.total_collections
-                                }))}
-                                xKey="date"
-                                yKey="amount"
-                                color="var(--primary-color)"
-                                height={250}
-                            />
-                        </div>
+            {/* Trend Chart with period selector */}
+            <div className="dashboard-chart-section" style={{ marginBottom: '24px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '16px', color: 'var(--text-secondary)', margin: 0 }}>
+                        {trendData?.label || 'Collections Trend'}
+                    </h3>
+                    <select
+                        value={trendPeriod}
+                        onChange={(e) => setTrendPeriod(e.target.value)}
+                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '13px' }}
+                    >
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                {trendData && trendData.items && trendData.items.length > 0 ? (
+                    <div style={{ height: '250px' }}>
+                        <SimpleBarChart
+                            data={trendData.items}
+                            xKey="date"
+                            yKey="amount"
+                            color="var(--primary-color)"
+                            height={250}
+                        />
                     </div>
-                )
-            }
+                ) : (
+                    <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px 0' }}>No data available for this period</p>
+                )}
+            </div>
 
             {
                 isWorker && (

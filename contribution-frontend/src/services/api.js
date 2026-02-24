@@ -74,6 +74,7 @@ export const reportAPI = {
     daily: (params) => api.get('/reports/daily', { params }),
     weekly: (params) => api.get('/reports/weekly', { params }),
     monthly: (params) => api.get('/reports/monthly', { params }),
+    yearly: (params) => api.get('/reports/yearly', { params }),
     workerPerformance: (params) => api.get('/reports/worker-performance', { params }),
     defaultingCustomers: () => api.get('/reports/defaulting-customers'),
     ceoDashboard: () => api.get('/company/dashboard'),
@@ -92,6 +93,12 @@ export const cardAPI = {
 export const cardSummaryAPI = {
     getAll: () => api.get('/card-summary'),
     getOne: (id, params) => api.get(`/card-summary/${id}`, { params }),
+};
+
+// Close of Day API
+export const closeOfDayAPI = {
+    getAll: (params) => api.get('/close-of-day', { params }),
+    update: (workerId, data) => api.put(`/close-of-day/${workerId}`, data),
 };
 
 // Branch API

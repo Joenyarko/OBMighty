@@ -21,6 +21,7 @@ import Payroll from './pages/Payroll';
 import Performance from './pages/Performance';
 import CustomerBoxTracking from './pages/CustomerBoxTracking';
 import CardSummary from './pages/CardSummary';
+import CloseOfDay from './pages/CloseOfDay';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CompanyManagement from './pages/admin/CompanyManagement';
 import AdminUsers from './pages/admin/AdminUsers';
@@ -116,6 +117,7 @@ function App() {
                     <Route path="/bulk-entry" element={<ProtectedRoute><BulkPayment /></ProtectedRoute>} />
                     <Route path="/cards" element={<ProtectedRoute><Cards /></ProtectedRoute>} />
                     <Route path="/card-summary" element={<ProtectedRoute><CardSummary /></ProtectedRoute>} />
+                    <Route path="/close-of-day" element={<ProtectedRoute><CloseOfDay /></ProtectedRoute>} />
                     <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
                     <Route path="/performance/:workerId" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
                     <Route path="/surplus" element={<ProtectedRoute><Surplus /></ProtectedRoute>} />

@@ -230,6 +230,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/daily', [ReportController::class, 'daily']);
         Route::get('/weekly', [ReportController::class, 'weekly']);
         Route::get('/monthly', [ReportController::class, 'monthly']);
+        Route::get('/yearly', [ReportController::class, 'yearly']);
         Route::get('/worker-performance', [ReportController::class, 'workerPerformance']);
         Route::get('/defaulting-customers', [ReportController::class, 'defaultingCustomers']);
         
@@ -241,6 +242,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/ledger', [\App\Http\Controllers\Api\EnhancedReportController::class, 'ledgerReport']);
         Route::get('/audit-trail', [\App\Http\Controllers\Api\EnhancedReportController::class, 'auditTrail']);
     });
+
+    // Close of Day (CEO & Managers)
+    Route::get('/close-of-day', [\App\Http\Controllers\Api\CloseOfDayController::class, 'index']);
+    Route::put('/close-of-day/{workerId}', [\App\Http\Controllers\Api\CloseOfDayController::class, 'update']);
+
     // Permission Management (CEO & Super Admin)
     Route::middleware('role:ceo|super_admin')->group(function () {
         Route::get('/permissions', [App\Http\Controllers\Api\PermissionController::class, 'index']);
