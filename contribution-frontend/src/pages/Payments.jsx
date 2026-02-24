@@ -5,7 +5,7 @@ import Layout from '../components/Layout';
 import '../styles/App.css';
 
 function Payments() {
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
     const [payments, setPayments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [workers, setWorkers] = useState([]);
@@ -33,8 +33,8 @@ function Payments() {
         try {
             if (!user) return;
 
-            const isCEO = user?.roles?.some(r => r.name === 'ceo');
-            const isSecretary = user?.roles?.some(r => r.name === 'secretary');
+            const isCEO = hasRole('ceo');
+            const isSecretary = hasRole('secretary');
 
             let workerList = [];
             let branchList = [];
@@ -44,7 +44,7 @@ function Payments() {
                 try {
                     const workersRes = await userAPI.getAll();
                     const rawWorkers = Array.isArray(workersRes.data) ? workersRes.data : (workersRes.data?.data || []);
-                    workerList = rawWorkers.filter(u => u.roles?.some(r => r.name === 'worker'));
+                    workerList = rawWorkers.filter(u => u.roles?.some(r => (typeof r === 'string' ? r === 'worker' : r.name === 'worker')));
                 } catch (err) {
                     console.error('Failed to load workers', err);
                 }
@@ -101,8 +101,8 @@ function Payments() {
         });
     };
 
-    const isCEO = user?.roles?.some(r => r.name === 'ceo');
-    const isSecretary = user?.roles?.some(r => r.name === 'secretary');
+    const isCEO = hasRole('ceo');
+    const isSecretary = hasRole('secretary');
 
     return (
         <div className="payments-page">

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/App.css'; // Ensure global styles are available
 
 function BulkPayment() {
-    const { user } = useAuth();
+    const { user, hasRole } = useAuth();
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [payments, setPayments] = useState({}); // { customerId: amount }
@@ -15,13 +15,14 @@ function BulkPayment() {
     const [searchTerm, setSearchTerm] = useState('');
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState('');
-    const isCEO = user?.roles?.some(r => r.name === 'ceo');
+    const isCEO = hasRole('ceo');
+    const isManager = hasRole('secretary') || hasRole('manager');
 
     useEffect(() => {
-        if (isCEO) {
+        if (isCEO || isManager) {
             userAPI.getAll().then(res => {
                 const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-                setWorkers(raw.filter(u => u.roles?.some(r => r.name === 'worker')));
+                setWorkers(raw.filter(u => u.roles?.some(r => (typeof r === 'string' ? r === 'worker' : r.name === 'worker'))));
             }).catch(err => console.error('Failed to load workers', err));
         }
     }, []);
@@ -148,7 +149,7 @@ function BulkPayment() {
                         onChange={handleSearchChange}
                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
                     />
-                    {isCEO && (
+                    {(isCEO || isManager) && (
                         <select
                             value={selectedWorker}
                             onChange={(e) => { setSelectedWorker(e.target.value); setPage(1); }}
