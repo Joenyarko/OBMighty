@@ -78,9 +78,9 @@ function BulkPayment() {
         try {
             const response = await paymentAPI.bulkCreate({ payments: entriesToSave });
 
-            const { successful = [], failed = [] } = response.data?.results ?? {};
-
-            if (failed.length > 0) {
+            const results = response.data?.results ?? {};
+            const successful = Array.isArray(results.successful) ? results.successful : [];
+            const failed = Array.isArray(results.failed) ? results.failed : []; if (failed.length > 0) {
                 const rawError = failed[0].error || '';
                 const errorLower = rawError.toLowerCase();
                 let firstError;

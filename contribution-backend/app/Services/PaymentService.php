@@ -169,7 +169,7 @@ class PaymentService
         $companyId = config('app.company_id');
         
         if (!$companyId) {
-            throw new Exception('Company context is not set. Cannot update daily totals.');
+            throw new \RuntimeException('Company context is not set. Cannot update daily totals.');
         }
 
         $workerTotal = WorkerDailyTotal::firstOrNew([
