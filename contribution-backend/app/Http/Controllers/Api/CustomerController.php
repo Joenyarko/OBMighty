@@ -81,7 +81,7 @@ class CustomerController extends Controller
         }
 
 
-        $perPage = $request->get('per_page', 12);
+        $perPage = max(1, min((int) $request->get('per_page', 12), 100));
         $customers = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json([

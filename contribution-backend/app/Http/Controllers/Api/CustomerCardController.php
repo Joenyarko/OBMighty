@@ -193,8 +193,10 @@ class CustomerCardController extends Controller
         // Apply self-healing sync if needed (even for existing cards)
         
         // 1. SMART SYNC: If Customer record has different totals than Card, fix it
-        if ($customer->boxes_filled != $customerCard->boxes_checked || 
-            (float)$customer->amount_paid != (float)$customerCard->amount_paid) {
+        $amountDiff = abs((float)$customer->amount_paid - (float)$customerCard->amount_paid);
+        $tolerance = 0.01; // 1 cent tolerance
+
+        if ($customer->boxes_filled != $customerCard->boxes_checked || $amountDiff > $tolerance) {
             \Log::info("Self-healing: Fixing Customer/Card total discrepancy for customer ID: " . $customerId);
             $customerCard->syncToCustomer();
         }

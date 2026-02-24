@@ -173,6 +173,11 @@ class CustomerCard extends Model
         $lastPayment = $this->boxPayments()->latest('payment_date')->first();
         $lastPaymentDate = $lastPayment ? $lastPayment->payment_date : $customer->last_payment_date;
 
+        // Don't overwrite with an earlier date from another card's sync
+        if ($customer->last_payment_date && $lastPaymentDate < $customer->last_payment_date) {
+            $lastPaymentDate = $customer->last_payment_date;
+        }
+
         $customer->update([
             'boxes_filled' => $this->boxes_checked,
             'amount_paid' => $this->amount_paid,

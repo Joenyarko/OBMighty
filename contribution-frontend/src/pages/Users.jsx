@@ -398,6 +398,8 @@ function Users({ roleFilter, title }) {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        aria-pressed={showPassword}
                                         style={{
                                             position: 'absolute',
                                             right: '10px',
@@ -429,6 +431,8 @@ function Users({ roleFilter, title }) {
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                        aria-pressed={showConfirmPassword}
                                         style={{
                                             position: 'absolute',
                                             right: '10px',

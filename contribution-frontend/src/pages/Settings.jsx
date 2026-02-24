@@ -252,6 +252,8 @@ function Settings() {
 
             // Clear password fields
             setProfileData(prev => ({ ...prev, password: '', password_confirmation: '' }));
+            setShowPassword(false);
+            setShowConfirmPassword(false);
         } catch (error) {
             console.error('Error updating profile:', error);
             Swal.fire({
@@ -553,6 +555,8 @@ function Settings() {
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        aria-pressed={showPassword}
                                         style={{
                                             position: 'absolute',
                                             right: '12px',
@@ -593,6 +597,8 @@ function Settings() {
                                     <button
                                         type="button"
                                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                        aria-pressed={showConfirmPassword}
                                         style={{
                                             position: 'absolute',
                                             right: '12px',

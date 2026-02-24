@@ -366,11 +366,16 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
         setLoadingCustomers(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}&status=in_progress&search=${search}&per_page=100`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}&status=in_progress&search=${encodeURIComponent(search)}&per_page=100`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
             setCustomers(data.data || []);
+
+            // Log if results are truncated
+            if (data.total > 100) {
+                console.log("Top 100 results shown. Refine search to see more.");
+            }
         } catch (error) {
             console.error('Failed to load customers', error);
         } finally {
