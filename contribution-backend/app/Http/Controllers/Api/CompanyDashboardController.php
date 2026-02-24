@@ -20,16 +20,13 @@ class CompanyDashboardController extends Controller
             return response()->json(['message' => 'Company not found'], 404);
         }
 
+        // Ensure the global scope has the correct company_id
+        // This is critical when middleware fallback paths skip setting it
+        config(['app.company_id' => $company->id]);
+
         $today = Carbon::today();
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
-
-        \Illuminate\Support\Facades\Log::info('CEO Dashboard Access', [
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-            'company_name' => $company->name,
-            'app_company_id' => config('app.company_id')
-        ]);
 
         $companyTotal = \App\Models\CompanyDailyTotal::where('date', $today)->first();
 
