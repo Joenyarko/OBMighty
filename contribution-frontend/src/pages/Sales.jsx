@@ -33,6 +33,7 @@ function Sales() {
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [workerDetails, setWorkerDetails] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const [period, setPeriod] = useState('today');
     const [loading, setLoading] = useState(true);
     const { user } = useAuth();
@@ -193,12 +194,24 @@ function Sales() {
 
                         {/* Payment History */}
                         <div className="payment-history">
-                            <h3>Payment History</h3>
+                            <div className="history-header">
+                                <h3>Payment History</h3>
+                                <div className="history-search">
+                                    <input
+                                        type="text"
+                                        placeholder="Search by customer name..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="search-input"
+                                    />
+                                </div>
+                            </div>
+
                             {workerDetails.payments.length === 0 ? (
                                 <p className="no-data">No payments recorded for this period.</p>
                             ) : (
                                 <div className="table-container">
-                                    <table className="mobile-card-view">
+                                    <table className="standard-table">
                                         <thead>
                                             <tr>
                                                 <th>Customer</th>
@@ -211,21 +224,34 @@ function Sales() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {workerDetails.payments.map((payment) => (
-                                                <tr key={payment.id}>
-                                                    <td data-label="Customer">{payment.customer_name}</td>
-                                                    <td data-label="Phone">{payment.customer_phone}</td>
-                                                    <td data-label="Amount" className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
-                                                    <td data-label="Boxes">{payment.boxes_filled}</td>
-                                                    <td data-label="Method">
-                                                        <span className={`payment-method ${payment.payment_method}`}>
-                                                            {payment.payment_method.replace('_', ' ')}
-                                                        </span>
-                                                    </td>
-                                                    <td data-label="Date">{payment.payment_date}</td>
-                                                    <td data-label="Time">{payment.payment_time}</td>
-                                                </tr>
-                                            ))}
+                                            {workerDetails.payments
+                                                .filter(payment =>
+                                                    payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+                                                )
+                                                .map((payment) => (
+                                                    <tr key={payment.id}>
+                                                        <td data-label="Customer">{payment.customer_name}</td>
+                                                        <td data-label="Phone">{payment.customer_phone}</td>
+                                                        <td data-label="Amount" className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
+                                                        <td data-label="Boxes">{payment.boxes_filled}</td>
+                                                        <td data-label="Method">
+                                                            <span className={`payment-method ${payment.payment_method}`}>
+                                                                {payment.payment_method.replace('_', ' ')}
+                                                            </span>
+                                                        </td>
+                                                        <td data-label="Date">{payment.payment_date}</td>
+                                                        <td data-label="Time">{payment.payment_time}</td>
+                                                    </tr>
+                                                ))}
+                                            {workerDetails.payments.filter(payment =>
+                                                payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+                                            ).length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+                                                            No results matching "{searchTerm}"
+                                                        </td>
+                                                    </tr>
+                                                )}
                                         </tbody>
                                     </table>
                                 </div>
