@@ -215,10 +215,13 @@
 
 .table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 500px;
+    /* Limit height and enable vertical scroll */
     background: #1a1a1a;
     border-radius: 8px;
     border: 1px solid #2a2a2a;
-    /* Ensure the table can be scrolled horizontally on mobile */
+    /* Ensure smooth scrolling on mobile */
     -webkit-overflow-scrolling: touch;
 }
 
