@@ -166,12 +166,16 @@ class PaymentService
      */
     protected function updateWorkerDailyTotal($workerId, $branchId, $date, $amount)
     {
+        $companyId = config('app.company_id');
+
         $workerTotal = WorkerDailyTotal::firstOrNew([
-            'worker_id' => $workerId,
-            'date' => $date,
+            'worker_id'  => $workerId,
+            'company_id' => $companyId,
+            'date'       => $date,
         ]);
         
         $workerTotal->branch_id = $branchId;
+        $workerTotal->company_id = $companyId;
         $workerTotal->total_collections += $amount;
         $workerTotal->total_customers_paid += 1;
         $workerTotal->save();
@@ -182,15 +186,19 @@ class PaymentService
      */
     protected function updateBranchDailyTotal($branchId, $date, $amount)
     {
+        $companyId = config('app.company_id');
+
         $branchTotal = BranchDailyTotal::firstOrNew([
-            'branch_id' => $branchId,
-            'date' => $date,
+            'branch_id'  => $branchId,
+            'company_id' => $companyId,
+            'date'       => $date,
         ]);
         
+        $branchTotal->company_id = $companyId;
         $branchTotal->total_collections += $amount;
         $branchTotal->total_payments += 1;
         
-        // Count active workers for this branch on this date
+        // Count active workers for this branch on this date (scoped to company via global scope)
         $activeWorkers = WorkerDailyTotal::where('branch_id', $branchId)
             ->where('date', $date)
             ->distinct('worker_id')
@@ -205,14 +213,18 @@ class PaymentService
      */
     protected function updateCompanyDailyTotal($date, $amount)
     {
+        $companyId = config('app.company_id');
+
         $companyTotal = CompanyDailyTotal::firstOrNew([
-            'date' => $date,
+            'company_id' => $companyId,
+            'date'       => $date,
         ]);
         
+        $companyTotal->company_id = $companyId;
         $companyTotal->total_collections += $amount;
         $companyTotal->total_payments += 1;
         
-        // Count active branches for this date
+        // Count active branches for this company on this date (scoped via global scope)
         $activeBranches = BranchDailyTotal::where('date', $date)
             ->distinct('branch_id')
             ->count('branch_id');

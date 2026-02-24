@@ -81,8 +81,15 @@ function BulkPayment() {
             const { successful, failed } = response.data.results;
 
             if (failed.length > 0) {
-                const firstError = failed[0].error || 'Unknown error';
-                showError(`Saved ${successful.length} payments. ${failed.length} failed. First error: ${firstError}`);
+                let firstError = failed[0].error || 'Unknown error';
+                // Normalize error message to hide raw SQL details from the user
+                if (firstError.includes('Integrity constraint violation')) {
+                    firstError = 'A duplicate record exists or data is missing for this entry.';
+                } else if (firstError.includes('SQLSTATE')) {
+                    firstError = 'A database error occurred while processing this payment.';
+                }
+
+                showError(`Saved ${successful.length} payments. ${failed.length} failed. First reason: ${firstError}`);
                 console.error('Failed payments:', failed);
             } else {
                 showSuccess(`Successfully recorded ${successful.length} payments!`);

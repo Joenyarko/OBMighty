@@ -22,8 +22,7 @@ class LedgerEntry extends Model
 
     protected $casts = [
         'entry_date' => 'date',
-        'debit' => 'decimal:2',
-        'credit' => 'decimal:2',
+        'amount' => 'decimal:2',
     ];
 
     public function creator()
