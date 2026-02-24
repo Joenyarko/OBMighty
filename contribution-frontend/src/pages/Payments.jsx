@@ -15,7 +15,8 @@ function Payments() {
     const [filters, setFilters] = useState({
         date: '',
         worker_id: '',
-        branch_id: ''
+        branch_id: '',
+        searchTerm: '' // New search term state
     });
 
     useEffect(() => {
@@ -95,7 +96,8 @@ function Payments() {
         setFilters({
             date: '',
             worker_id: '',
-            branch_id: ''
+            branch_id: '',
+            searchTerm: ''
         });
     };
 
@@ -108,6 +110,18 @@ function Payments() {
 
             {/* Filters Section */}
             <div className="card" style={{ background: 'var(--card-bg)', padding: '16px', borderRadius: '12px', marginBottom: '24px', display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'end' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: '1', minWidth: '200px' }}>
+                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Search Customer</label>
+                    <input
+                        type="text"
+                        name="searchTerm"
+                        placeholder="Search by name..."
+                        value={filters.searchTerm}
+                        onChange={handleFilterChange}
+                        style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-dark)' }}
+                    />
+                </div>
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Filter by Date</label>
                     <input
@@ -166,7 +180,7 @@ function Payments() {
             </div>
 
             <div className="card" style={{ background: 'var(--card-bg)', borderRadius: '12px', overflow: 'hidden' }}>
-                <div style={{ overflowX: 'auto' }}> {/* Horizontal Scroll Wrapper */}
+                <div className="scrollable-table-view"> {/* New scrollable wrapper */}
                     <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-primary)', minWidth: '800px' }}>
                         <thead>
                             <tr style={{ borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
@@ -188,21 +202,36 @@ function Payments() {
                                     </td>
                                 </tr>
                             ) : (
-                                payments.map(payment => (
-                                    <tr key={payment.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                        <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{new Date(payment.payment_date).toLocaleDateString()}</td>
-                                        <td style={{ padding: '16px', fontWeight: '500', whiteSpace: 'nowrap' }}>{payment.customer?.name}</td>
-                                        <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{payment.branch?.name}</td>
-                                        <td style={{ padding: '16px', color: '#4CAF50', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
-                                            +₵{parseFloat(payment.payment_amount).toFixed(2)}
-                                        </td>
-                                        <td style={{ padding: '16px' }}>{payment.boxes_filled}</td>
-                                        <td style={{ padding: '16px', fontSize: '13px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                                            {payment.worker?.name}
+                                payments
+                                    .filter(payment =>
+                                        !filters.searchTerm ||
+                                        payment.customer?.name?.toLowerCase().includes(filters.searchTerm.toLowerCase())
+                                    )
+                                    .map(payment => (
+                                        <tr key={payment.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{new Date(payment.payment_date).toLocaleDateString()}</td>
+                                            <td style={{ padding: '16px', fontWeight: '500', whiteSpace: 'nowrap' }}>{payment.customer?.name}</td>
+                                            <td style={{ padding: '16px', whiteSpace: 'nowrap' }}>{payment.branch?.name}</td>
+                                            <td style={{ padding: '16px', color: '#4CAF50', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                                                +₵{parseFloat(payment.payment_amount).toFixed(2)}
+                                            </td>
+                                            <td style={{ padding: '16px' }}>{payment.boxes_filled}</td>
+                                            <td style={{ padding: '16px', fontSize: '13px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                                {payment.worker?.name}
+                                            </td>
+                                        </tr>
+                                    ))
+                            )}
+                            {!loading && payments.length > 0 && payments.filter(payment =>
+                                !filters.searchTerm ||
+                                payment.customer?.name?.toLowerCase().includes(filters.searchTerm.toLowerCase())
+                            ).length === 0 && (
+                                    <tr>
+                                        <td colSpan="6" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                            No results matching "{filters.searchTerm}"
                                         </td>
                                     </tr>
-                                ))
-                            )}
+                                )}
                         </tbody>
                     </table>
                 </div>

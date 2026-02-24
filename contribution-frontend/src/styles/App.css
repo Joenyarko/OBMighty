@@ -210,9 +210,12 @@ body {
 }
 
 /* Global Responsive Table Styles */
-.table-container {
+.table-container,
+.scrollable-table-view {
   width: 100%;
   overflow-x: auto;
+  overflow-y: auto;
+  max-height: 500px;
   -webkit-overflow-scrolling: touch;
   background: var(--card-bg);
   border-radius: 12px;
