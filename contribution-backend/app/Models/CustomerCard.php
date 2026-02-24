@@ -173,14 +173,24 @@ class CustomerCard extends Model
         $lastPayment = $this->boxPayments()->latest('payment_date')->first();
         $lastPaymentDate = $lastPayment ? $lastPayment->payment_date : $customer->last_payment_date;
 
-        // Don't overwrite with an earlier date from another card's sync
-        if ($customer->last_payment_date && $lastPaymentDate < $customer->last_payment_date) {
+        // Use Carbon for safe comparison to prevent mixed-type issues
+        if ($customer->last_payment_date && 
+            \Carbon\Carbon::parse($lastPaymentDate)->lt(\Carbon\Carbon::parse($customer->last_payment_date))) {
             $lastPaymentDate = $customer->last_payment_date;
         }
 
+        // AGGREGATE TOTALS ACROSS ALL CARDS (Atomic update to prevent overwrites)
+        $totals = $customer->customerCards()
+            ->selectRaw('SUM(boxes_checked) as total_boxes_filled, SUM(amount_paid) as total_amount_paid')
+            ->first();
+
+        // GLOBAL STATUS: If any card is still in progress, the customer is in progress
+        $hasInProgress = $customer->customerCards()->where('status', '!=', 'completed')->exists();
+        $newStatus = $hasInProgress ? 'in_progress' : 'completed';
+
         $customer->update([
-            'boxes_filled' => $this->boxes_checked,
-            'amount_paid' => $this->amount_paid,
+            'boxes_filled' => $totals->total_boxes_filled ?? $this->boxes_checked,
+            'amount_paid' => $totals->total_amount_paid ?? $this->amount_paid,
             'last_payment_date' => $lastPaymentDate,
             'status' => $newStatus
         ]);

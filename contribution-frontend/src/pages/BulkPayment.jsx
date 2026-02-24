@@ -12,6 +12,7 @@ function BulkPayment() {
     const [submitting, setSubmitting] = useState(false);
     const [page, setPage] = useState(1);
     const [pagination, setPagination] = useState({ total: 0, last_page: 1 });
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const timer = setTimeout(() => {
