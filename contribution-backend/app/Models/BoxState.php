@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class BoxState extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\BelongsToCompany;
 
     protected $fillable = [
+        'company_id',
         'customer_card_id',
         'box_number',
         'is_checked',

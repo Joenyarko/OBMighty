@@ -92,6 +92,12 @@ class IdentifyTenant
         config(['app.company_logo' => $company->logo_url]);
         config(['app.company_color' => $company->primary_color]);
 
+        \Illuminate\Support\Facades\Log::info('Tenant Identified Successfully', [
+            'company_id' => $company->id,
+            'company_name' => $company->name,
+            'user_id' => auth()->id() ?? 'not authed yet'
+        ]);
+
         return $next($request);
     }
 }

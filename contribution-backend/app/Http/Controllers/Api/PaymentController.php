@@ -103,6 +103,14 @@ class PaymentController extends Controller
             // Reload customer to get updated values
             $customer->refresh();
 
+            Log::info('Payment Recorded Successfully', [
+                'payment_id' => $payment->id,
+                'customer_id' => $customer->id,
+                'amount' => $payment->payment_amount,
+                'user_id' => $user->id,
+                'company_id' => config('app.company_id')
+            ]);
+
             return response()->json([
                 'message' => 'Payment recorded successfully',
                 'payment' => $payment->load(['customer', 'worker', 'branch']),
@@ -119,6 +127,13 @@ class PaymentController extends Controller
             ], 201);
 
         } catch (Exception $e) {
+            Log::error('Payment Recording Failed', [
+                'error' => $e->getMessage(),
+                'user_id' => $request->user()->id,
+                'customer_id' => $validated['customer_id'] ?? null,
+                'payment_data' => $validated,
+                'company_id' => config('app.company_id')
+            ]);
             return response()->json([
                 'message' => 'Payment recording failed',
                 'error' => $e->getMessage(),
@@ -163,6 +178,15 @@ class PaymentController extends Controller
                 // Call service
                 $payment = $this->paymentService->recordPayment($customer, $paymentData);
 
+                Log::info('Bulk Payment Item Success', [
+                    'payment_id' => $payment->id,
+                    'customer_id' => $customer->id,
+                    'amount' => $payment->payment_amount,
+                    'user_id' => $user->id,
+                    'index' => $index,
+                    'company_id' => config('app.company_id')
+                ]);
+
                 $results['successful'][] = [
                     'customer_id' => $customer->id,
                     'customer_name' => $customer->name,
@@ -171,6 +195,14 @@ class PaymentController extends Controller
                 ];
 
             } catch (Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Bulk Payment Item Failure', [
+                    'index' => $index,
+                    'customer_id' => $paymentData['customer_id'] ?? null,
+                    'error' => $e->getMessage(),
+                    'user_id' => $user->id,
+                    'company_id' => config('app.company_id')
+                ]);
+
                 $results['failed'][] = [
                     'customer_id' => $paymentData['customer_id'] ?? null,
                     'error' => $e->getMessage(),
