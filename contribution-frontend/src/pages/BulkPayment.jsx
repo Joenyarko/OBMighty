@@ -78,15 +78,21 @@ function BulkPayment() {
         try {
             const response = await paymentAPI.bulkCreate({ payments: entriesToSave });
 
-            const { successful, failed } = response.data.results;
+            const { successful = [], failed = [] } = response.data?.results ?? {};
 
             if (failed.length > 0) {
-                let firstError = failed[0].error || 'Unknown error';
+                const rawError = failed[0].error || '';
+                const errorLower = rawError.toLowerCase();
+                let firstError;
+
                 // Normalize error message to hide raw SQL details from the user
-                if (firstError.includes('Integrity constraint violation')) {
+                if (errorLower.includes('integrity constraint violation')) {
                     firstError = 'A duplicate record exists or data is missing for this entry.';
-                } else if (firstError.includes('SQLSTATE')) {
+                } else if (errorLower.includes('sqlstate')) {
                     firstError = 'A database error occurred while processing this payment.';
+                } else {
+                    // Hide any unrecognised DB/internal error from the user
+                    firstError = rawError || 'An unexpected error occurred. Please try again.';
                 }
 
                 showError(`Saved ${successful.length} payments. ${failed.length} failed. First reason: ${firstError}`);

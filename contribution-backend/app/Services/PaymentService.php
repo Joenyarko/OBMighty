@@ -167,6 +167,10 @@ class PaymentService
     protected function updateWorkerDailyTotal($workerId, $branchId, $date, $amount)
     {
         $companyId = config('app.company_id');
+        
+        if (!$companyId) {
+            throw new Exception('Company context is not set. Cannot update daily totals.');
+        }
 
         $workerTotal = WorkerDailyTotal::firstOrNew([
             'worker_id'  => $workerId,
@@ -187,6 +191,10 @@ class PaymentService
     protected function updateBranchDailyTotal($branchId, $date, $amount)
     {
         $companyId = config('app.company_id');
+        
+        if (!$companyId) {
+            throw new Exception('Company context is not set. Cannot update daily totals.');
+        }
 
         $branchTotal = BranchDailyTotal::firstOrNew([
             'branch_id'  => $branchId,
@@ -198,8 +206,9 @@ class PaymentService
         $branchTotal->total_collections += $amount;
         $branchTotal->total_payments += 1;
         
-        // Count active workers for this branch on this date (scoped to company via global scope)
+        // Count active workers for this branch on this date (scoped to company)
         $activeWorkers = WorkerDailyTotal::where('branch_id', $branchId)
+            ->where('company_id', $companyId)
             ->where('date', $date)
             ->distinct('worker_id')
             ->count('worker_id');
@@ -214,6 +223,10 @@ class PaymentService
     protected function updateCompanyDailyTotal($date, $amount)
     {
         $companyId = config('app.company_id');
+        
+        if (!$companyId) {
+            throw new Exception('Company context is not set. Cannot update daily totals.');
+        }
 
         $companyTotal = CompanyDailyTotal::firstOrNew([
             'company_id' => $companyId,
@@ -224,8 +237,9 @@ class PaymentService
         $companyTotal->total_collections += $amount;
         $companyTotal->total_payments += 1;
         
-        // Count active branches for this company on this date (scoped via global scope)
-        $activeBranches = BranchDailyTotal::where('date', $date)
+        // Count active branches for this company on this date (scoped via explicitly to company)
+        $activeBranches = BranchDailyTotal::where('company_id', $companyId)
+            ->where('date', $date)
             ->distinct('branch_id')
             ->count('branch_id');
         
