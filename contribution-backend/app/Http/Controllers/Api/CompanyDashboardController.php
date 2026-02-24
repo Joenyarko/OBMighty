@@ -95,16 +95,11 @@ class CompanyDashboardController extends Controller
      */
     private function getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth)
     {
-        $daily = $company->payments()
-            ->whereDate('payment_date', $today)
-            ->count();
+        $daily = \App\Models\Payment::whereDate('payment_date', $today)->count();
 
-        $monthly = $company->payments()
-            ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
-            ->count();
+        $monthly = \App\Models\Payment::whereBetween('payment_date', [$startOfMonth, $endOfMonth])->count();
 
-        $byMethod = $company->payments()
-            ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
+        $byMethod = \App\Models\Payment::whereBetween('payment_date', [$startOfMonth, $endOfMonth])
             ->selectRaw('payment_method, COUNT(*) as count, SUM(payment_amount) as total')
             ->groupBy('payment_method')
             ->get();
@@ -130,25 +125,25 @@ class CompanyDashboardController extends Controller
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
 
-        $branches = $company->branches()
-            ->withCount(['customers', 'payments'])
-            ->get()
+        $branches = \App\Models\Branch::all()
             ->map(function ($branch) use ($startOfMonth, $endOfMonth, $today, $startOfWeek) {
-                $monthRevenue = $branch->payments()
+                $monthRevenue = \App\Models\Payment::where('branch_id', $branch->id)
                     ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
                     ->sum('payment_amount');
 
-                $todayRevenue = $branch->payments()
+                $todayRevenue = \App\Models\Payment::where('branch_id', $branch->id)
                     ->whereDate('payment_date', $today)
                     ->sum('payment_amount');
 
-                $weekRevenue = $branch->payments()
+                $weekRevenue = \App\Models\Payment::where('branch_id', $branch->id)
                     ->whereBetween('payment_date', [$startOfWeek, $today])
                     ->sum('payment_amount');
 
-                $todayPayments = $branch->payments()
+                $todayPayments = \App\Models\Payment::where('branch_id', $branch->id)
                     ->whereDate('payment_date', $today)
                     ->count();
+
+                $totalCustomers = \App\Models\Customer::where('branch_id', $branch->id)->count();
 
                 // Active workers in this branch
                 $activeWorkers = \App\Models\User::where('branch_id', $branch->id)
@@ -159,19 +154,21 @@ class CompanyDashboardController extends Controller
                     ->count();
 
                 // Active customers (in_progress status)
-                $activeCustomers = $branch->customers()
+                $activeCustomers = \App\Models\Customer::where('branch_id', $branch->id)
                     ->where('status', 'in_progress')
                     ->count();
+
+                $totalPayments = \App\Models\Payment::where('branch_id', $branch->id)->count();
 
                 return [
                     'id' => $branch->id,
                     'name' => $branch->name,
-                    'customers' => $branch->customers_count,
+                    'customers' => $totalCustomers,
                     'active_customers' => $activeCustomers,
                     'month_revenue' => round($monthRevenue, 2),
                     'today_revenue' => round($todayRevenue, 2),
                     'week_revenue' => round($weekRevenue, 2),
-                    'payment_count' => $branch->payments_count,
+                    'payment_count' => $totalPayments,
                     'today_payments' => $todayPayments,
                     'active_workers' => $activeWorkers,
                 ];
@@ -188,26 +185,24 @@ class CompanyDashboardController extends Controller
      */
     private function getTopWorkers($company, $startOfMonth, $endOfMonth)
     {
-        return $company->users()
-            ->whereHas('roles', function ($q) {
+        return \App\Models\User::whereHas('roles', function ($q) {
                 $q->where('name', 'worker');
             })
-            ->withCount(['customers', 'payments'])
-            ->with(['payments' => function ($q) use ($startOfMonth, $endOfMonth) {
-                $q->whereBetween('payment_date', [$startOfMonth, $endOfMonth]);
-            }])
             ->get()
             ->map(function ($worker) use ($startOfMonth, $endOfMonth) {
-                $monthRevenue = $worker->payments()
+                $monthRevenue = \App\Models\Payment::where('worker_id', $worker->id)
                     ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
                     ->sum('payment_amount');
+
+                $customersCount = \App\Models\Customer::where('worker_id', $worker->id)->count();
+                $paymentsCount = \App\Models\Payment::where('worker_id', $worker->id)->count();
 
                 return [
                     'id' => $worker->id,
                     'name' => $worker->name,
-                    'customers' => $worker->customers_count,
+                    'customers' => $customersCount,
                     'month_revenue' => $monthRevenue,
-                    'payment_count' => $worker->payments_count,
+                    'payment_count' => $paymentsCount,
                 ];
             })
             ->sortByDesc('month_revenue')
@@ -220,8 +215,7 @@ class CompanyDashboardController extends Controller
      */
     private function getRecentPayments($company, $limit = 10)
     {
-        return $company->payments()
-            ->with(['customer', 'worker'])
+        return \App\Models\Payment::with(['customer', 'worker'])
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get()
@@ -244,32 +238,33 @@ class CompanyDashboardController extends Controller
     {
         $alerts = [];
 
-        // Check for defaulting customers
-        $defaulters = $company->customers()
-            ->where('status', 'defaulting')
-            ->count();
+        try {
+            // Check for defaulting customers
+            $defaulters = \App\Models\Customer::where('status', 'defaulting')->count();
 
-        if ($defaulters > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'message' => "$defaulters customers are currently defaulting",
-                'action' => 'view_defaulters',
-            ];
-        }
+            if ($defaulters > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'message' => "$defaulters customers are currently defaulting",
+                    'action' => 'view_defaulters',
+                ];
+            }
 
-        // Check for low inventory
-        $lowStock = $company->stockItems()
-            ->whereRaw('quantity <= reorder_level')
-            ->count();
+            // Check for low inventory
+            $lowStock = \App\Models\StockItem::whereRaw('quantity <= reorder_level')->count();
 
-        if ($lowStock > 0) {
-            $alerts[] = [
-                'type' => 'warning',
-                'message' => "$lowStock inventory items are below reorder level",
-                'action' => 'view_inventory',
-            ];
+            if ($lowStock > 0) {
+                $alerts[] = [
+                    'type' => 'warning',
+                    'message' => "$lowStock inventory items are below reorder level",
+                    'action' => 'view_inventory',
+                ];
+            }
+        } catch (\Exception $e) {
+            // Don't let alerts crash the dashboard
         }
 
         return $alerts;
     }
 }
+
