@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, User, Shield, Building } from 'lucide-react';
+import { Search, MoreHorizontal, User, Shield, Building, Eye, EyeOff } from 'lucide-react';
 import api from '../../services/api';
 import AdminLayout from '../../components/admin/AdminLayout';
 import '../../styles/admin/SuperAdmin.css';
@@ -25,6 +25,7 @@ function AdminUsers() {
         role: 'worker', // Default
         phone: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         fetchCompanies();
@@ -111,6 +112,7 @@ function AdminUsers() {
 
             setShowAddUserModal(false);
             setNewUserData({ name: '', email: '', password: '', company_id: '', role: 'worker', phone: '' });
+            setShowPassword(false);
             fetchUsers();
 
         } catch (error) {
@@ -312,14 +314,35 @@ function AdminUsers() {
 
                             <div className="form-group" style={{ marginBottom: '16px' }}>
                                 <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Password</label>
-                                <input
-                                    type="password"
-                                    value={newUserData.password}
-                                    onChange={e => setNewUserData({ ...newUserData, password: e.target.value })}
-                                    required
-                                    minLength={8}
-                                    style={{ width: '100%', padding: '10px', backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white', borderRadius: '6px' }}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={newUserData.password}
+                                        onChange={e => setNewUserData({ ...newUserData, password: e.target.value })}
+                                        required
+                                        minLength={8}
+                                        style={{ width: '100%', padding: '10px 40px 10px 10px', backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white', borderRadius: '6px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '10px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#9ca3af',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0'
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="form-row" style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>

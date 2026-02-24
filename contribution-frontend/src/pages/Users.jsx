@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import '../styles/App.css';
 
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 function Users({ roleFilter, title }) {
     const { user, isCEO, isSecretary, isSuperAdmin } = useAuth(); // Added user to destructuring
@@ -28,6 +29,8 @@ function Users({ roleFilter, title }) {
     const [transferToWorkerId, setTransferToWorkerId] = useState('');
     const [activeWorkers, setActiveWorkers] = useState([]);
     const [customerCount, setCustomerCount] = useState(0);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -384,11 +387,65 @@ function Users({ roleFilter, title }) {
                             </div>
                             <div className="form-group">
                                 <label>Password (Min 8 characters, Mixed Case, Number & Symbol)</label>
-                                <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={formData.password}
+                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                        required
+                                        style={{ paddingRight: '40px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '10px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0'
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
                             <div className="form-group">
                                 <label>Confirm Password</label>
-                                <input type="password" value={formData.password_confirmation} onChange={e => setFormData({ ...formData, password_confirmation: e.target.value })} required />
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        value={formData.password_confirmation}
+                                        onChange={e => setFormData({ ...formData, password_confirmation: e.target.value })}
+                                        required
+                                        style={{ paddingRight: '40px' }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '10px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0'
+                                        }}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>

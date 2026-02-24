@@ -355,15 +355,18 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
 
     useEffect(() => {
         if (worker?.worker_id) {
-            fetchCustomers(worker.worker_id);
+            const timer = setTimeout(() => {
+                fetchCustomers(worker.worker_id, searchTerm);
+            }, 500); // Debounce search
+            return () => clearTimeout(timer);
         }
-    }, [worker]);
+    }, [worker, searchTerm]);
 
-    const fetchCustomers = async (workerId) => {
+    const fetchCustomers = async (workerId, search = '') => {
         setLoadingCustomers(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}&status=in_progress`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/customers?worker_id=${workerId}&status=in_progress&search=${search}&per_page=100`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -375,10 +378,7 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
         }
     };
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.phone?.includes(searchTerm)
-    );
+    // Server-side filtering now
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -423,11 +423,11 @@ function AllocateSurplusModal({ onClose, onSubmit, worker }) {
 
                         <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '5px' }}>
                             {loadingCustomers ? (
-                                <p style={{ padding: '10px' }}>Loading workers customers...</p>
-                            ) : filteredCustomers.length === 0 ? (
+                                <p style={{ padding: '10px' }}>Searching customers...</p>
+                            ) : customers.length === 0 ? (
                                 <p style={{ padding: '10px' }}>No customers found for this worker.</p>
                             ) : (
-                                filteredCustomers.map(c => (
+                                customers.map(c => (
                                     <div
                                         key={c.id}
                                         onClick={() => {

@@ -169,10 +169,14 @@ class CustomerCard extends Model
             $newStatus = 'completed';
         }
 
+        // Get the actual last payment date from payment records
+        $lastPayment = $this->boxPayments()->latest('payment_date')->first();
+        $lastPaymentDate = $lastPayment ? $lastPayment->payment_date : $customer->last_payment_date;
+
         $customer->update([
             'boxes_filled' => $this->boxes_checked,
             'amount_paid' => $this->amount_paid,
-            'last_payment_date' => now()->toDateString(),
+            'last_payment_date' => $lastPaymentDate,
             'status' => $newStatus
         ]);
     }

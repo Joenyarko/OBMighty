@@ -3,7 +3,7 @@ import { roleAPI, companyAPI } from '../services/api';
 import api from '../services/api'; // Add general api import for profile update
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext'; // Import useAuth
-import { User, Lock, Mail, Save, AlertCircle, Shield, Sliders, Building } from 'lucide-react'; // Import Building icon
+import { User, Lock, Mail, Save, AlertCircle, Shield, Sliders, Building, Eye, EyeOff } from 'lucide-react'; // Import Building icon
 import Swal from 'sweetalert2'; // Import Swal for profile alerts
 import '../styles/App.css';
 
@@ -84,6 +84,8 @@ function Settings() {
         password: '',
         password_confirmation: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [colors, setColors] = useState({
         primary: '#D4AF37',
@@ -535,19 +537,38 @@ function Settings() {
                                 <div className="input-with-icon" style={{ position: 'relative' }}>
                                     <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         value={profileData.password}
                                         onChange={e => setProfileData({ ...profileData, password: e.target.value })}
                                         placeholder="Min. 8 characters"
                                         style={{
                                             width: '100%',
-                                            padding: '10px 10px 10px 40px',
+                                            padding: '10px 40px 10px 40px',
                                             backgroundColor: 'var(--bg-color)',
                                             border: '1px solid var(--border-color)',
                                             borderRadius: '8px',
                                             color: 'var(--text-primary)'
                                         }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0'
+                                        }}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
@@ -556,19 +577,38 @@ function Settings() {
                                 <div className="input-with-icon" style={{ position: 'relative' }}>
                                     <Lock size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                                     <input
-                                        type="password"
+                                        type={showConfirmPassword ? "text" : "password"}
                                         value={profileData.password_confirmation}
                                         onChange={e => setProfileData({ ...profileData, password_confirmation: e.target.value })}
                                         placeholder="Confirm new password"
                                         style={{
                                             width: '100%',
-                                            padding: '10px 10px 10px 40px',
+                                            padding: '10px 40px 10px 40px',
                                             backgroundColor: 'var(--bg-color)',
                                             border: '1px solid var(--border-color)',
                                             borderRadius: '8px',
                                             color: 'var(--text-primary)'
                                         }}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'var(--text-secondary)',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            padding: '0'
+                                        }}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 

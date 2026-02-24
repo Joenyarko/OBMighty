@@ -10,18 +10,32 @@ function BulkPayment() {
     const [loading, setLoading] = useState(true);
     const [payments, setPayments] = useState({}); // { customerId: amount }
     const [submitting, setSubmitting] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ total: 0, last_page: 1 });
 
     useEffect(() => {
-        fetchCustomers();
-    }, []);
+        const timer = setTimeout(() => {
+            fetchCustomers(page, searchTerm);
+        }, 500); // Debounce search
 
-    const fetchCustomers = async () => {
+        return () => clearTimeout(timer);
+    }, [page, searchTerm]);
+
+    const fetchCustomers = async (currentPage, search) => {
         try {
-            // Fetch customers assigned to this worker (or branch if secretary)
-            const response = await customerAPI.getAll({ status: 'in_progress', limit: 1000 }); // Get all active
+            setLoading(true);
+            const response = await customerAPI.getAll({
+                status: 'in_progress',
+                page: currentPage,
+                search: search,
+                per_page: 50 // Show more per page for bulk
+            });
             const data = response.data.data || response.data;
             setCustomers(Array.isArray(data) ? data : []);
+            setPagination({
+                total: response.data.total,
+                last_page: response.data.last_page
+            });
         } catch (error) {
             console.error('Failed to fetch customers', error);
             showError('Failed to load customers');
@@ -74,7 +88,7 @@ function BulkPayment() {
 
             // Reset form and refresh
             setPayments({});
-            fetchCustomers();
+            fetchCustomers(page, searchTerm);
 
         } catch (error) {
             console.error('Bulk save failed', error);
@@ -84,10 +98,10 @@ function BulkPayment() {
         }
     };
 
-    const filteredCustomers = customers.filter(c =>
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.location && c.location.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+        setPage(1); // Reset to first page on search
+    };
 
     if (loading) return <div className="loading">Loading customers...</div>;
 
@@ -101,7 +115,7 @@ function BulkPayment() {
                         type="text"
                         placeholder="Search customers..."
                         value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
+                        onChange={handleSearchChange}
                         style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
                     />
                     <button
@@ -126,7 +140,7 @@ function BulkPayment() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredCustomers.map(customer => (
+                        {customers.map(customer => (
                             <tr key={customer.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ fontWeight: '600' }}>{customer.name}</div>
@@ -175,7 +189,7 @@ function BulkPayment() {
                                 </td>
                             </tr>
                         ))}
-                        {filteredCustomers.length === 0 && (
+                        {customers.length === 0 && (
                             <tr>
                                 <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                                     No customers found.
@@ -185,6 +199,30 @@ function BulkPayment() {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.last_page > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px', marginTop: '24px', padding: '10px' }}>
+                    <button
+                        className="btn-secondary"
+                        disabled={page === 1}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                    >
+                        Previous
+                    </button>
+                    <span style={{ color: 'var(--text-secondary)' }}>
+                        Page <strong>{page}</strong> of {pagination.last_page}
+                        <span style={{ marginLeft: '10px' }}>({pagination.total} total customers)</span>
+                    </span>
+                    <button
+                        className="btn-secondary"
+                        disabled={page >= pagination.last_page}
+                        onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
