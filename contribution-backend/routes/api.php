@@ -41,7 +41,12 @@ Route::middleware(['cors.storage'])->group(function () {
 });
 
 // Public routes
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
+Route::post('/login', [AuthController::class, 'apiLogin'])->middleware('throttle:5,1'); // 5 attempts per minute
+Route::post('/debug-customer', function() {
+    $c = \App\Models\Customer::with('customerCard')->first();
+    \Illuminate\Support\Facades\Log::info('DEBUG_CUSTOMER_JSON', $c->toArray());
+    return $c;
+});
 Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);
 Route::get('/manifest.json', [ManifestController::class, 'getPublicManifest']); // Public PWA manifest (fallback)
 Route::get('/pwa-manifest/{id}', [ManifestController::class, 'getCompanyManifest']); // Public branded manifest

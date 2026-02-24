@@ -80,7 +80,9 @@ function BulkPayment() {
 
             const results = response.data?.results ?? {};
             const successful = Array.isArray(results.successful) ? results.successful : [];
-            const failed = Array.isArray(results.failed) ? results.failed : []; if (failed.length > 0) {
+            const failed = Array.isArray(results.failed) ? results.failed : [];
+
+            if (failed.length > 0) {
                 const rawError = failed[0].error || '';
                 const errorLower = rawError.toLowerCase();
                 let firstError;
