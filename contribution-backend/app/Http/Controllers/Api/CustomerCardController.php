@@ -57,6 +57,7 @@ class CustomerCardController extends Controller
 
             // Generate box states (all unchecked)
             $boxStates = [];
+            $companyId = config('app.company_id');
             for ($i = 1; $i <= $card->number_of_boxes; $i++) {
                 $boxStates[] = [
                     'customer_card_id' => $customerCard->id,
@@ -64,6 +65,7 @@ class CustomerCardController extends Controller
                     'is_checked' => false,
                     'checked_date' => null,
                     'payment_id' => null,
+                    'company_id' => $companyId,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
