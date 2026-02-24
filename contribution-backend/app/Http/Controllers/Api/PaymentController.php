@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class PaymentController extends Controller
