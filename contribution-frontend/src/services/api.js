@@ -88,6 +88,12 @@ export const cardAPI = {
     delete: (id) => api.delete(`/cards/${id}`),
 };
 
+// Card Summary API
+export const cardSummaryAPI = {
+    getAll: () => api.get('/card-summary'),
+    getOne: (id, params) => api.get(`/card-summary/${id}`, { params }),
+};
+
 // Branch API
 export const branchAPI = {
     getAll: () => api.get('/branches'),

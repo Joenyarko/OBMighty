@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\PayrollController;
 use App\Http\Controllers\Api\CustomerCardController;
 use App\Http\Controllers\Api\ImageController;
 use App\Http\Controllers\Api\ManifestController;
+use App\Http\Controllers\Api\CardSummaryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -177,6 +178,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unpaid/{month}', [PayrollController::class, 'unpaidEmployees']);
     });
     
+    // Card Summary (All roles, scoped by controller)
+    Route::get('/card-summary', [CardSummaryController::class, 'index']);
+    Route::get('/card-summary/{id}', [CardSummaryController::class, 'show']);
+
     // Customer Cards & Box Tracking (All roles, scoped by policy)
     Route::prefix('customer-cards')->group(function () {
         Route::post('/assign', [CustomerCardController::class, 'assign']);

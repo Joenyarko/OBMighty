@@ -273,24 +273,57 @@ function CEODashboard({ data }) {
                 </div>
             </div>
 
+            {/* Branch Activity - Enhanced */}
             <div className="branch-performance">
-                <h2>Branch Performance</h2>
-                {data?.branch_totals?.length > 0 ? (
-                    <div className="branch-list">
-                        {data.branch_totals.map((bt) => (
-                            <div key={bt.id} className="branch-item">
-                                <div>
-                                    <strong>{bt.branch?.name}</strong>
-                                    <p>{bt.total_payments} payments | {bt.total_workers_active} workers</p>
+                <h2>Branch Activity</h2>
+                {data?.performance?.by_branch?.length > 0 ? (
+                    <div className="branch-activity-grid">
+                        {data.performance.by_branch.map((branch) => (
+                            <div key={branch.id} className="branch-activity-card">
+                                <div className="bac-header">
+                                    <h3>{branch.name}</h3>
+                                    <span className="bac-workers">{branch.active_workers} workers</span>
                                 </div>
-                                <span className="branch-total">
-                                    GHS{bt.total_collections}
-                                </span>
+                                <div className="bac-stats">
+                                    <div className="bac-stat">
+                                        <span className="bac-stat-label">Today</span>
+                                        <span className="bac-stat-value today">GHS{parseFloat(branch.today_revenue || 0).toLocaleString()}</span>
+                                        <span className="bac-stat-sub">{branch.today_payments || 0} payments</span>
+                                    </div>
+                                    <div className="bac-stat">
+                                        <span className="bac-stat-label">This Week</span>
+                                        <span className="bac-stat-value week">GHS{parseFloat(branch.week_revenue || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="bac-stat">
+                                        <span className="bac-stat-label">This Month</span>
+                                        <span className="bac-stat-value month">GHS{parseFloat(branch.month_revenue || 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                <div className="bac-footer">
+                                    <span>{branch.customers} total customers</span>
+                                    <span className="bac-active">{branch.active_customers} active</span>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <p className="no-data">No branch activity today</p>
+                    data?.branch_totals?.length > 0 ? (
+                        <div className="branch-list">
+                            {data.branch_totals.map((bt) => (
+                                <div key={bt.id} className="branch-item">
+                                    <div>
+                                        <strong>{bt.branch?.name}</strong>
+                                        <p>{bt.total_payments} payments | {bt.total_workers_active} workers</p>
+                                    </div>
+                                    <span className="branch-total">
+                                        GHS{bt.total_collections}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="no-data">No branch activity today</p>
+                    )
                 )}
             </div>
         </div>

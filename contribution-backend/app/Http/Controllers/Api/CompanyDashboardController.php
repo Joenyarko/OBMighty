@@ -132,20 +132,53 @@ class CompanyDashboardController extends Controller
      */
     private function getPerformanceMetrics($company, $startOfMonth, $endOfMonth)
     {
+        $today = Carbon::today();
+        $startOfWeek = Carbon::now()->startOfWeek();
+
         $branches = $company->branches()
             ->withCount(['customers', 'payments'])
             ->get()
-            ->map(function ($branch) use ($startOfMonth, $endOfMonth) {
+            ->map(function ($branch) use ($startOfMonth, $endOfMonth, $today, $startOfWeek) {
                 $monthRevenue = $branch->payments()
                     ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
                     ->sum('payment_amount');
+
+                $todayRevenue = $branch->payments()
+                    ->whereDate('payment_date', $today)
+                    ->sum('payment_amount');
+
+                $weekRevenue = $branch->payments()
+                    ->whereBetween('payment_date', [$startOfWeek, $today])
+                    ->sum('payment_amount');
+
+                $todayPayments = $branch->payments()
+                    ->whereDate('payment_date', $today)
+                    ->count();
+
+                // Active workers in this branch
+                $activeWorkers = \App\Models\User::where('branch_id', $branch->id)
+                    ->whereHas('roles', function ($q) {
+                        $q->where('name', 'worker');
+                    })
+                    ->where('is_active', true)
+                    ->count();
+
+                // Active customers (in_progress status)
+                $activeCustomers = $branch->customers()
+                    ->where('status', 'in_progress')
+                    ->count();
 
                 return [
                     'id' => $branch->id,
                     'name' => $branch->name,
                     'customers' => $branch->customers_count,
-                    'month_revenue' => $monthRevenue,
+                    'active_customers' => $activeCustomers,
+                    'month_revenue' => round($monthRevenue, 2),
+                    'today_revenue' => round($todayRevenue, 2),
+                    'week_revenue' => round($weekRevenue, 2),
                     'payment_count' => $branch->payments_count,
+                    'today_payments' => $todayPayments,
+                    'active_workers' => $activeWorkers,
                 ];
             });
 

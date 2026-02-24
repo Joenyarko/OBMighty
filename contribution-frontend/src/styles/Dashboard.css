@@ -178,3 +178,118 @@
         margin-bottom: 8px;
     }
 }
+
+/* Branch Activity Grid */
+.branch-activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.branch-activity-card {
+    background: var(--bg-color);
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.branch-activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.bac-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.bac-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.bac-workers {
+    font-size: 12px;
+    padding: 4px 10px;
+    background: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.bac-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.bac-stat {
+    text-align: center;
+}
+
+.bac-stat-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.bac-stat-value {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.bac-stat-value.today {
+    color: #2ecc71;
+}
+
+.bac-stat-value.week {
+    color: #3498db;
+}
+
+.bac-stat-value.month {
+    color: var(--primary-color);
+}
+
+.bac-stat-sub {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.bac-footer {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.bac-active {
+    color: #2ecc71;
+    font-weight: 600;
+}
+
+@media (max-width: 767px) {
+    .branch-activity-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bac-stats {
+        gap: 8px;
+    }
+
+    .bac-stat-value {
+        font-size: 13px;
+    }
+}
