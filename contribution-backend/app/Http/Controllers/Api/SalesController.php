@@ -226,7 +226,10 @@ class SalesController extends Controller
         }
         
         // Get all-time stats (based on who RECORDED the payment)
+        $companyId = config('app.company_id');
+
         $allTimeStats = DB::table('payments')
+            ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
             ->select(
                 DB::raw('SUM(payments.payment_amount) as total_sales'),
@@ -238,6 +241,7 @@ class SalesController extends Controller
         
         // Get this month stats (based on who RECORDED the payment)
         $thisMonthStats = DB::table('payments')
+            ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
             ->whereMonth('payments.payment_date', Carbon::now()->month)
             ->whereYear('payments.payment_date', Carbon::now()->year)
@@ -250,6 +254,7 @@ class SalesController extends Controller
         
         // Get this week stats (based on who RECORDED the payment)
         $thisWeekStats = DB::table('payments')
+            ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
             ->whereBetween('payments.payment_date', [
                 Carbon::now()->startOfWeek(),
@@ -264,6 +269,7 @@ class SalesController extends Controller
         // Get customer metrics
         $customerMetrics = DB::table('customers')
             ->leftJoin('customer_cards', 'customers.id', '=', 'customer_cards.customer_id')
+            ->where('customers.company_id', $companyId)
             ->where('customers.worker_id', $workerId)
             ->select(
                 DB::raw('COUNT(DISTINCT customers.id) as total_customers'),
@@ -277,6 +283,7 @@ class SalesController extends Controller
         // 1. Sales Score (40 points max)
         // Compare against branch average total sales per worker
         $branchTotalSales = DB::table('payments')
+            ->where('payments.company_id', $companyId)
             ->where('payments.branch_id', $worker->branch_id)
             ->whereMonth('payments.payment_date', Carbon::now()->month)
             ->whereYear('payments.payment_date', Carbon::now()->year)
@@ -309,6 +316,7 @@ class SalesController extends Controller
         // Get recent activity (last 10 payments recorded by this user)
         $recentActivity = DB::table('payments')
             ->join('customers', 'payments.customer_id', '=', 'customers.id')
+            ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
             ->orderBy('payments.payment_date', 'desc')
             ->orderBy('payments.created_at', 'desc')

@@ -159,6 +159,7 @@ class CustomerCardController extends Controller
                         // Generate box states
                         $boxStates = [];
                         $boxesFilled = $customer->boxes_filled ?? 0;
+                        $companyId = config('app.company_id');
                         
                         for ($i = 1; $i <= $customerCard->total_boxes; $i++) {
                             $isChecked = $i <= $boxesFilled;
@@ -167,6 +168,7 @@ class CustomerCardController extends Controller
                                 'box_number' => $i,
                                 'is_checked' => $isChecked,
                                 'checked_date' => $isChecked ? $customer->created_at : null,
+                                'company_id' => $companyId,
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ];
