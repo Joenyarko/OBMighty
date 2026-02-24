@@ -74,6 +74,14 @@ class Customer extends Model
     }
 
     /**
+     * Get all card history for this customer
+     */
+    public function customerCards()
+    {
+        return $this->hasMany(\App\Models\CustomerCard::class);
+    }
+
+    /**
      * Get the customer's active card assignment
      */
     public function customerCard()

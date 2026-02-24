@@ -174,7 +174,7 @@ class CustomerCard extends Model
         $lastPaymentDate = $lastPayment ? $lastPayment->payment_date : $customer->last_payment_date;
 
         // Use Carbon for safe comparison to prevent mixed-type issues
-        if ($customer->last_payment_date && 
+        if ($customer->last_payment_date && $lastPaymentDate &&
             \Carbon\Carbon::parse($lastPaymentDate)->lt(\Carbon\Carbon::parse($customer->last_payment_date))) {
             $lastPaymentDate = $customer->last_payment_date;
         }
