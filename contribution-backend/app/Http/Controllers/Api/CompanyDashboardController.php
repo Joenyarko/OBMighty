@@ -13,32 +13,40 @@ class CompanyDashboardController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user();
-        $company = $user->company;
+        try {
+            $user = $request->user();
+            $company = $user->company;
 
-        if (!$company) {
-            return response()->json(['message' => 'Company not found'], 404);
+            if (!$company) {
+                return response()->json(['message' => 'Company not found'], 404);
+            }
+
+            // Ensure the global scope has the correct company_id
+            // This is critical when middleware fallback paths skip setting it
+            config(['app.company_id' => $company->id]);
+
+            $today = Carbon::today();
+            $startOfMonth = Carbon::now()->startOfMonth();
+            $endOfMonth = Carbon::now()->endOfMonth();
+
+            $companyTotal = \App\Models\CompanyDailyTotal::where('date', $today)->first();
+
+            return response()->json([
+                'overview' => $this->getOverview($company, $today, $startOfMonth, $endOfMonth),
+                'company_total' => $companyTotal,
+                'revenue' => $this->getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth),
+                'performance' => $this->getPerformanceMetrics($company, $startOfMonth, $endOfMonth),
+                'topWorkers' => $this->getTopWorkers($company, $startOfMonth, $endOfMonth),
+                'recentPayments' => $this->getRecentPayments($company),
+                'alerts' => $this->getAlerts($company),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Dashboard error: ' . $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
         }
-
-        // Ensure the global scope has the correct company_id
-        // This is critical when middleware fallback paths skip setting it
-        config(['app.company_id' => $company->id]);
-
-        $today = Carbon::today();
-        $startOfMonth = Carbon::now()->startOfMonth();
-        $endOfMonth = Carbon::now()->endOfMonth();
-
-        $companyTotal = \App\Models\CompanyDailyTotal::where('date', $today)->first();
-
-        return response()->json([
-            'overview' => $this->getOverview($company, $today, $startOfMonth, $endOfMonth),
-            'company_total' => $companyTotal, // Added this to populate cards
-            'revenue' => $this->getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth),
-            'performance' => $this->getPerformanceMetrics($company, $startOfMonth, $endOfMonth),
-            'topWorkers' => $this->getTopWorkers($company, $startOfMonth, $endOfMonth),
-            'recentPayments' => $this->getRecentPayments($company),
-            'alerts' => $this->getAlerts($company),
-        ]);
     }
 
     /**
