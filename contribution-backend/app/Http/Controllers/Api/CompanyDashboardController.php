@@ -46,32 +46,30 @@ class CompanyDashboardController extends Controller
      */
     private function getOverview($company, $today, $startOfMonth, $endOfMonth)
     {
-        $todayPayments = $company->payments()
-            ->whereDate('payment_date', $today)
+        // Use direct model queries — the BelongsToCompany global scope
+        // already filters by company_id (set at the top of index()).
+        // This avoids the hasMany + global scope double-filter that can
+        // conflict and return zero results.
+        $todayPayments = \App\Models\Payment::whereDate('payment_date', $today)
             ->sum('payment_amount');
 
-        $monthPayments = $company->payments()
-            ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
+        $monthPayments = \App\Models\Payment::whereBetween('payment_date', [$startOfMonth, $endOfMonth])
             ->sum('payment_amount');
 
-        $totalCustomers = $company->customers()->count();
-        $activeCustomers = $company->customers()
-            ->where('status', 'in_progress')
-            ->count();
+        $totalCustomers = \App\Models\Customer::count();
+        $activeCustomers = \App\Models\Customer::where('status', 'in_progress')->count();
 
-        $totalBranches = $company->branches()->count();
-        $totalCardTemplates = $company->cards()->count();
+        $totalBranches = \App\Models\Branch::count();
+        $totalCardTemplates = \App\Models\Card::count();
 
-        // Overall stats for CEO
-        $overallRevenue = $company->payments()->sum('payment_amount');
-        $overallExpense = $company->expenses()->sum('amount');
-        $totalCardsIssued = $company->customerCards()->count();
+        $overallRevenue = \App\Models\Payment::sum('payment_amount');
+        $overallExpense = \App\Models\Expense::sum('amount');
+        $totalCardsIssued = \App\Models\CustomerCard::count();
         
         // Total staff includes workers, managers, and secretaries
-        $totalStaff = $company->users()
-            ->whereHas('roles', function($q) {
-                $q->whereIn('name', ['worker', 'manager', 'secretary']);
-            })->count();
+        $totalStaff = \App\Models\User::whereHas('roles', function($q) {
+            $q->whereIn('name', ['worker', 'manager', 'secretary']);
+        })->count();
 
         return [
             'today_revenue' => $todayPayments,
@@ -82,7 +80,7 @@ class CompanyDashboardController extends Controller
                 ? round((($totalCustomers - $activeCustomers) / $totalCustomers) * 100, 2)
                 : 0,
             'total_branches' => $totalBranches,
-            'total_users' => $company->users()->count(),
+            'total_users' => \App\Models\User::count(),
             'total_staff' => $totalStaff,
             'total_cards_issued' => $totalCardsIssued,
             'total_card_templates' => $totalCardTemplates,
