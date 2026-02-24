@@ -315,10 +315,15 @@ class CustomerCardController extends Controller
             // Get branch from worker or customer? CustomerCard -> Customer -> Branch
             $customer = $customerCard->customer;
             $branchId = $customer->branch_id;
+            $companyId = config('app.company_id');
+
+            if (!$companyId) {
+                throw new \RuntimeException('Company context is not set. Cannot update daily totals.');
+            }
 
             // --- Sync to general Payment history (Required for History & Sales views) ---
             Payment::create([
-                'company_id' => $customerCard->company_id,
+                'company_id' => $companyId,
                 'customer_id' => $customer->id,
                 'worker_id' => $workerId,
                 'branch_id' => $branchId,
@@ -352,9 +357,11 @@ class CustomerCardController extends Controller
                 // 1. Worker Daily Total
                 $workerTotal = \App\Models\WorkerDailyTotal::firstOrNew([
                     'worker_id' => $workerId,
+                    'company_id' => $companyId,
                     'date' => $date,
                 ]);
                 $workerTotal->branch_id = $branchId;
+                $workerTotal->company_id = $companyId;
                 $workerTotal->total_collections += $amount;
                 $workerTotal->total_customers_paid += 1;
                 $workerTotal->save();
@@ -363,12 +370,15 @@ class CustomerCardController extends Controller
             // 2. Branch Daily Total
             $branchTotal = \App\Models\BranchDailyTotal::firstOrNew([
                 'branch_id' => $branchId,
+                'company_id' => $companyId,
                 'date' => $date,
             ]);
+            $branchTotal->company_id = $companyId;
             $branchTotal->total_collections += $amount;
             $branchTotal->total_payments += 1;
-            // Recalculate active workers
+            // Recalculate active workers (scoped to company)
             $activeWorkers = \App\Models\WorkerDailyTotal::where('branch_id', $branchId)
+                ->where('company_id', $companyId)
                 ->where('date', $date)
                 ->distinct('worker_id')
                 ->count('worker_id');
@@ -378,12 +388,15 @@ class CustomerCardController extends Controller
 
             // 3. Company Daily Total
             $companyTotal = \App\Models\CompanyDailyTotal::firstOrNew([
+                'company_id' => $companyId,
                 'date' => $date,
             ]);
+            $companyTotal->company_id = $companyId;
             $companyTotal->total_collections += $amount;
             $companyTotal->total_payments += 1;
-            // Recalculate active branches
-            $activeBranches = \App\Models\BranchDailyTotal::where('date', $date)
+            // Recalculate active branches (scoped to company)
+            $activeBranches = \App\Models\BranchDailyTotal::where('company_id', $companyId)
+                ->where('date', $date)
                 ->distinct('branch_id')
                 ->count('branch_id');
             $companyTotal->total_branches_active = $activeBranches;
