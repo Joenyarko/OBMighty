@@ -39,8 +39,9 @@ class CloseOfDayController extends Controller
         }
 
         $results = $workers->map(function ($worker) use ($date) {
-            $dailyTotal = WorkerDailyTotal::where('worker_id', $worker->id)
-                ->where('date', $date)
+            $dailyTotal = WorkerDailyTotal::withoutGlobalScopes()
+                ->where('worker_id', $worker->id)
+                ->whereDate('date', $date)
                 ->first();
 
             $actualSales = Payment::where('worker_id', $worker->id)
@@ -99,26 +100,34 @@ class CloseOfDayController extends Controller
         }
 
         $worker = User::findOrFail($workerId);
+        $companyId = config('app.company_id');
 
-        $dailyTotal = WorkerDailyTotal::firstOrCreate(
-            ['worker_id' => $worker->id, 'date' => $date],
-            [
+        // Use updateOrCreate with whereDate for reliable date matching
+        $dailyTotal = WorkerDailyTotal::withoutGlobalScopes()
+            ->where('worker_id', $worker->id)
+            ->where('company_id', $companyId)
+            ->whereDate('date', $date)
+            ->first();
+
+        if (!$dailyTotal) {
+            $dailyTotal = WorkerDailyTotal::create([
+                'worker_id' => $worker->id,
                 'branch_id' => $worker->branch_id,
+                'date' => $date,
                 'total_collections' => 0,
                 'total_customers_paid' => 0,
-                'company_id' => config('app.company_id'),
-            ]
-        );
+                'company_id' => $companyId,
+            ]);
+        }
 
         if ($dailyTotal->is_closed) {
             return response()->json(['message' => 'Worker is already closed for this date'], 422);
         }
 
-        $dailyTotal->update([
-            'is_closed' => true,
-            'closed_at' => now(),
-            'closed_by' => $user->id,
-        ]);
+        $dailyTotal->is_closed = true;
+        $dailyTotal->closed_at = now();
+        $dailyTotal->closed_by = $user->id;
+        $dailyTotal->save();
 
         return response()->json([
             'message' => $worker->name . '\'s day has been closed',
@@ -140,19 +149,24 @@ class CloseOfDayController extends Controller
         $date = $request->input('date', Carbon::today()->toDateString());
         $worker = User::findOrFail($workerId);
 
-        $dailyTotal = WorkerDailyTotal::where('worker_id', $worker->id)
-            ->where('date', $date)
+        // Use withoutGlobalScopes + whereDate for reliable lookup
+        $dailyTotal = WorkerDailyTotal::withoutGlobalScopes()
+            ->where('worker_id', $worker->id)
+            ->whereDate('date', $date)
             ->first();
 
-        if (!$dailyTotal || !$dailyTotal->is_closed) {
-            return response()->json(['message' => 'Worker is not closed for this date'], 422);
+        if (!$dailyTotal) {
+            return response()->json(['message' => 'No record found for this worker on this date'], 422);
         }
 
-        $dailyTotal->update([
-            'is_closed' => false,
-            'closed_at' => null,
-            'closed_by' => null,
-        ]);
+        if (!$dailyTotal->is_closed) {
+            return response()->json(['message' => 'Worker is already open for this date'], 422);
+        }
+
+        $dailyTotal->is_closed = false;
+        $dailyTotal->closed_at = null;
+        $dailyTotal->closed_by = null;
+        $dailyTotal->save();
 
         return response()->json([
             'message' => $worker->name . '\'s day has been reopened',

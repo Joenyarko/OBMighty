@@ -30,8 +30,9 @@ class PaymentService
 
             // --- CLOSE OF DAY ENFORCEMENT ---
             $workerId = $customer->worker_id;
-            $closedRecord = WorkerDailyTotal::where('worker_id', $workerId)
-                ->where('date', Carbon::parse($paymentDate)->toDateString())
+            $closedRecord = WorkerDailyTotal::withoutGlobalScopes()
+                ->where('worker_id', $workerId)
+                ->whereDate('date', Carbon::parse($paymentDate)->toDateString())
                 ->where('is_closed', true)
                 ->first();
 
