@@ -64,12 +64,24 @@ class ReportController extends Controller
                 ->where('date', $date)
                 ->first();
                 
-            // Inject total customers count
+            // Inject total customers count and fix customers_paid to distinct count
             if ($workerTotal) {
                 $workerTotal = $workerTotal->toArray();
                 $workerTotal['total_customers'] = Customer::where('worker_id', $user->id)->count();
+                // Override with distinct customer count (total_customers_paid counts per-payment, not unique)
+                $workerTotal['total_customers_paid'] = Payment::where('worker_id', $user->id)
+                    ->whereDate('payment_date', $date)
+                    ->distinct('customer_id')
+                    ->count('customer_id');
             } else {
-                $workerTotal = ['total_customers' => Customer::where('worker_id', $user->id)->count()];
+                $workerTotal = [
+                    'total_customers' => Customer::where('worker_id', $user->id)->count(),
+                    'total_customers_paid' => Payment::where('worker_id', $user->id)
+                        ->whereDate('payment_date', $date)
+                        ->distinct('customer_id')
+                        ->count('customer_id'),
+                    'total_collections' => 0,
+                ];
             }
             
             // Use BoxPayment for recent history (and map to expected format)
