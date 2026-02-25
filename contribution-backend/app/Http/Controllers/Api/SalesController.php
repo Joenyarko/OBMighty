@@ -117,7 +117,12 @@ class SalesController extends Controller
         // Calculate summary
         $summary = [
             'total_sales' => $payments->sum('amount'),
-            'customers_paid' => $payments->unique('customer_name')->count(),
+            'customers_paid' => $payments->unique('id')->pluck('customer_name')->unique()->count() > 0
+                ? Payment::forWorker($workerId)
+                    ->dateRange($dateRange['start'], $dateRange['end'])
+                    ->distinct('customer_id')
+                    ->count('customer_id')
+                : 0,
             'total_transactions' => $payments->count(),
             'average_transaction' => $payments->count() > 0 ? $payments->avg('amount') : 0,
         ];

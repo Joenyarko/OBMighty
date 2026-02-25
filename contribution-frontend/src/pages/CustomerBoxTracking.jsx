@@ -397,7 +397,7 @@ function CustomerBoxTracking() {
                         let colorClass = 'unchecked';
                         if (box.is_checked) {
                             if (box.payment_id) {
-                                // specific logic to alternate colors based on sorted unique payment IDs
+                                // Alternate colors based on unique payment IDs
                                 const paymentIds = [...new Set(boxStates
                                     .filter(b => b.payment_id)
                                     .map(b => b.payment_id)
@@ -405,8 +405,17 @@ function CustomerBoxTracking() {
 
                                 const index = paymentIds.indexOf(box.payment_id);
                                 colorClass = index % 2 === 0 ? 'red' : 'blue';
+                            } else if (box.checked_date) {
+                                // Fallback: alternate colors by checked_date groups
+                                const checkedDates = [...new Set(boxStates
+                                    .filter(b => b.is_checked && !b.payment_id && b.checked_date)
+                                    .map(b => b.checked_date)
+                                )].sort();
+
+                                const dateIndex = checkedDates.indexOf(box.checked_date);
+                                colorClass = dateIndex % 2 === 0 ? 'red' : 'blue';
                             } else {
-                                colorClass = 'checked'; // Fallback for legacy/manual checks without payment ID
+                                colorClass = 'checked'; // Absolute fallback
                             }
                         }
 
