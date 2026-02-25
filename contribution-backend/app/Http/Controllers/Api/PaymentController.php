@@ -61,7 +61,7 @@ class PaymentController extends Controller
 
         $payments = $query->orderBy('payment_date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(20);
 
         return response()->json($payments);
     }
