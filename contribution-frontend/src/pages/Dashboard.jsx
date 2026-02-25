@@ -274,12 +274,7 @@ function CEODashboard({ data }) {
                         {overview.total_staff || 0}
                     </p>
                 </div>
-                <div className="stat-card">
-                    <h3>Cards Issued</h3>
-                    <p className="stat-value">
-                        {overview.total_cards_issued || 0}
-                    </p>
-                </div>
+
                 <div className="stat-card">
                     <h3>Card Types</h3>
                     <p className="stat-value">
