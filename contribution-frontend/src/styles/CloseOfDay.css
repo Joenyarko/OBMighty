@@ -101,8 +101,8 @@
     background: rgba(255, 255, 255, 0.03);
 }
 
-.cod-table tbody tr.adjusted-row {
-    background: rgba(255, 193, 7, 0.05);
+.cod-table tbody tr.closed-row {
+    background: rgba(255, 59, 48, 0.06);
 }
 
 .worker-name-cell {
@@ -131,11 +131,6 @@
     font-weight: 500;
 }
 
-.final-amount {
-    color: var(--primary-color);
-    font-weight: 700;
-}
-
 .adjusted-badge {
     color: #ffc107;
     font-weight: 600;
@@ -153,6 +148,32 @@
     color: var(--text-secondary);
 }
 
+/* Status badges */
+.status-closed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-open {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Edit inline */
 .edit-inline {
     display: flex;
     flex-direction: column;
@@ -179,22 +200,46 @@
     width: 150px;
 }
 
+/* Action buttons */
 .action-btns {
     display: flex;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 .btn-edit,
 .btn-save,
-.btn-cancel {
-    padding: 6px 10px;
+.btn-cancel,
+.btn-close-day,
+.btn-open {
+    padding: 6px 12px;
     border-radius: 6px;
     border: none;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-close-day {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+}
+
+.btn-close-day:hover {
+    background: rgba(255, 59, 48, 0.3);
+}
+
+.btn-open {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+}
+
+.btn-open:hover {
+    background: rgba(52, 199, 89, 0.3);
 }
 
 .btn-edit {
@@ -224,6 +269,12 @@
     background: rgba(255, 59, 48, 0.25);
 }
 
+.btn-close-day:disabled,
+.btn-open:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
     .close-of-day-page {
         padding: 16px;
@@ -239,6 +290,6 @@
     }
 
     .cod-table {
-        min-width: 700px;
+        min-width: 600px;
     }
 }

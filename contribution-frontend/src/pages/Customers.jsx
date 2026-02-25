@@ -337,7 +337,27 @@ function Customers() {
                             customers.map((customer) => (
                                 <tr key={customer.id}>
                                     <td data-label="Name" style={{ fontWeight: '500' }}>{customer.name}</td>
-                                    <td data-label="Phone">{customer.phone}</td>
+                                    <td data-label="Phone">
+                                        {customer.phone ? (
+                                            <a
+                                                href={`tel:${customer.phone}`}
+                                                onClick={(e) => {
+                                                    if (!/Mobi|Android|iPhone/i.test(navigator.userAgent)) {
+                                                        e.preventDefault();
+                                                        navigator.clipboard.writeText(customer.phone);
+                                                        const el = e.target;
+                                                        const original = el.textContent;
+                                                        el.textContent = 'Copied!';
+                                                        setTimeout(() => el.textContent = original, 1500);
+                                                    }
+                                                }}
+                                                style={{ color: 'var(--primary-color)', textDecoration: 'none', cursor: 'pointer', fontWeight: '500' }}
+                                                title="Tap to call / Click to copy"
+                                            >
+                                                📞 {customer.phone}
+                                            </a>
+                                        ) : '-'}
+                                    </td>
                                     <td data-label="Location">{customer.location}</td>
                                     <td data-label="Branch">{customer.branch?.name || 'N/A'}</td>
                                     <td data-label="Worker">{customer.worker?.name || 'N/A'}</td>

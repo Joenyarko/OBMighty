@@ -99,6 +99,8 @@ export const cardSummaryAPI = {
 export const closeOfDayAPI = {
     getAll: (params) => api.get('/close-of-day', { params }),
     update: (workerId, data) => api.put(`/close-of-day/${workerId}`, data),
+    close: (workerId, data) => api.post(`/close-of-day/${workerId}/close`, data),
+    open: (workerId, data) => api.post(`/close-of-day/${workerId}/open`, data),
 };
 
 // Branch API

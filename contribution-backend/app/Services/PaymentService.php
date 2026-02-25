@@ -27,6 +27,17 @@ class PaymentService
         return DB::transaction(function () use ($customer, $data) {
             $paymentAmount = $data['payment_amount'];
             $paymentDate = $data['payment_date'] ?? Carbon::today();
+
+            // --- CLOSE OF DAY ENFORCEMENT ---
+            $workerId = $customer->worker_id;
+            $closedRecord = WorkerDailyTotal::where('worker_id', $workerId)
+                ->where('date', Carbon::parse($paymentDate)->toDateString())
+                ->where('is_closed', true)
+                ->first();
+
+            if ($closedRecord) {
+                throw new Exception('This worker\'s day has been closed. No more payments can be recorded for ' . Carbon::parse($paymentDate)->format('M d, Y') . '. Contact your CEO to reopen.');
+            }
             
             
             // Find Active Card
@@ -113,6 +124,7 @@ class PaymentService
                 'customer_id' => $customer->id,
                 'worker_id' => $customer->worker_id,
                 'branch_id' => $customer->branch_id,
+                'company_id' => config('app.company_id'),
                 'payment_amount' => $paymentAmount,
                 'boxes_filled' => $boxesToMark,
                 'payment_date' => $paymentDate,

@@ -72,7 +72,7 @@ function Layout({ children }) {
         { path: '/branch-managers', label: 'Managers', icon: <UserPlus size={20} />, permission: 'manage_branches', section: 'OVERVIEW' },
         { path: '/cards', label: 'Cards', icon: <CreditCard size={20} />, permission: 'view_cards', section: 'OVERVIEW' },
         { path: '/card-summary', label: 'Card Summary', icon: <Layers size={20} />, permission: 'view_cards', section: 'OVERVIEW' },
-        { path: '/close-of-day', label: 'Close of Day', icon: <Clock size={20} />, permission: 'manage_branches', section: 'OVERVIEW' },
+        { path: '/close-of-day', label: 'Close of Day', icon: <Clock size={20} />, permission: 'view_payments', section: 'OVERVIEW' },
         { path: '/branches', label: 'Branches', icon: <Building size={20} />, permission: 'view_branches', section: 'OVERVIEW' },
         { path: '/users', label: 'Users', icon: <Users size={20} />, permission: 'view_users', section: 'OVERVIEW' },
         { path: '/accounting', label: 'Accounting', icon: <FileBarChart size={20} />, permission: 'view_accounting', section: 'OVERVIEW' },

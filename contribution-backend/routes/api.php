@@ -246,6 +246,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Close of Day (CEO & Managers)
     Route::get('/close-of-day', [\App\Http\Controllers\Api\CloseOfDayController::class, 'index']);
     Route::put('/close-of-day/{workerId}', [\App\Http\Controllers\Api\CloseOfDayController::class, 'update']);
+    Route::post('/close-of-day/{workerId}/close', [\App\Http\Controllers\Api\CloseOfDayController::class, 'close']);
+    Route::post('/close-of-day/{workerId}/open', [\App\Http\Controllers\Api\CloseOfDayController::class, 'open']);
 
     // Permission Management (CEO & Super Admin)
     Route::middleware('role:ceo|super_admin')->group(function () {

@@ -12,8 +12,10 @@ use Carbon\Carbon;
 class CloseOfDayController extends Controller
 {
     /**
-     * Get close of day data for all workers on a given date.
-     * CEO sees all workers; Manager sees own branch workers only.
+     * Get close of day data.
+     * - Worker: sees own data only
+     * - Manager/Secretary: sees branch workers
+     * - CEO: sees all workers
      */
     public function index(Request $request)
     {
@@ -21,23 +23,26 @@ class CloseOfDayController extends Controller
         $date = $request->input('date', Carbon::today()->toDateString());
 
         // Get workers based on role
-        $workersQuery = User::whereHas('roles', function ($q) {
-            $q->where('name', 'worker');
-        })->with('branch');
+        if ($user->hasRole('worker')) {
+            // Worker only sees themselves
+            $workers = collect([$user->load('branch')]);
+        } else {
+            $workersQuery = User::whereHas('roles', function ($q) {
+                $q->where('name', 'worker');
+            })->with('branch');
 
-        if ($user->hasRole('manager') || $user->hasRole('secretary')) {
-            $workersQuery->where('branch_id', $user->branch_id);
+            if ($user->hasRole('manager') || $user->hasRole('secretary')) {
+                $workersQuery->where('branch_id', $user->branch_id);
+            }
+
+            $workers = $workersQuery->get();
         }
 
-        $workers = $workersQuery->get();
-
         $results = $workers->map(function ($worker) use ($date) {
-            // Get the worker daily total for this date
             $dailyTotal = WorkerDailyTotal::where('worker_id', $worker->id)
                 ->where('date', $date)
                 ->first();
 
-            // Calculate actual sales from payments for this day
             $actualSales = Payment::where('worker_id', $worker->id)
                 ->whereDate('payment_date', $date)
                 ->sum('payment_amount');
@@ -59,6 +64,9 @@ class CloseOfDayController extends Controller
                 'adjustment_note' => $dailyTotal?->adjustment_note,
                 'final_amount' => round($dailyTotal?->adjusted_amount ?? $actualSales, 2),
                 'payments_count' => $paymentsCount,
+                'is_closed' => (bool) ($dailyTotal?->is_closed ?? false),
+                'closed_at' => $dailyTotal?->closed_at,
+                'closed_by' => $dailyTotal?->closed_by,
             ];
         });
 
@@ -71,14 +79,96 @@ class CloseOfDayController extends Controller
     }
 
     /**
-     * CEO adjusts a worker's close of day amount for a specific date.
+     * Close a worker's day.
+     * - Worker can close ONLY themselves (one-way, can't undo)
+     * - CEO can close any worker
+     */
+    public function close(Request $request, $workerId)
+    {
+        $user = $request->user();
+        $date = $request->input('date', Carbon::today()->toDateString());
+
+        // Authorization: worker can only close self
+        if ($user->hasRole('worker') && (int) $workerId !== $user->id) {
+            return response()->json(['message' => 'You can only close your own day'], 403);
+        }
+
+        // Only CEO and workers can close
+        if (!$user->hasRole('ceo') && !$user->hasRole('worker')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $worker = User::findOrFail($workerId);
+
+        $dailyTotal = WorkerDailyTotal::firstOrCreate(
+            ['worker_id' => $worker->id, 'date' => $date],
+            [
+                'branch_id' => $worker->branch_id,
+                'total_collections' => 0,
+                'total_customers_paid' => 0,
+                'company_id' => config('app.company_id'),
+            ]
+        );
+
+        if ($dailyTotal->is_closed) {
+            return response()->json(['message' => 'Worker is already closed for this date'], 422);
+        }
+
+        $dailyTotal->update([
+            'is_closed' => true,
+            'closed_at' => now(),
+            'closed_by' => $user->id,
+        ]);
+
+        return response()->json([
+            'message' => $worker->name . '\'s day has been closed',
+            'data' => $dailyTotal->fresh(),
+        ]);
+    }
+
+    /**
+     * Open (re-open) a worker's day. CEO only.
+     */
+    public function open(Request $request, $workerId)
+    {
+        $user = $request->user();
+
+        if (!$user->hasRole('ceo')) {
+            return response()->json(['message' => 'Only CEO can reopen a worker\'s day'], 403);
+        }
+
+        $date = $request->input('date', Carbon::today()->toDateString());
+        $worker = User::findOrFail($workerId);
+
+        $dailyTotal = WorkerDailyTotal::where('worker_id', $worker->id)
+            ->where('date', $date)
+            ->first();
+
+        if (!$dailyTotal || !$dailyTotal->is_closed) {
+            return response()->json(['message' => 'Worker is not closed for this date'], 422);
+        }
+
+        $dailyTotal->update([
+            'is_closed' => false,
+            'closed_at' => null,
+            'closed_by' => null,
+        ]);
+
+        return response()->json([
+            'message' => $worker->name . '\'s day has been reopened',
+            'data' => $dailyTotal->fresh(),
+        ]);
+    }
+
+    /**
+     * CEO adjusts a worker's close of day amount.
      */
     public function update(Request $request, $workerId)
     {
         $user = $request->user();
 
         if (!$user->hasRole('ceo')) {
-            return response()->json(['message' => 'Only CEO can adjust close of day amounts'], 403);
+            return response()->json(['message' => 'Only CEO can adjust amounts'], 403);
         }
 
         $validated = $request->validate([
@@ -89,12 +179,8 @@ class CloseOfDayController extends Controller
 
         $worker = User::findOrFail($workerId);
 
-        // Find or create the daily total record
         $dailyTotal = WorkerDailyTotal::firstOrCreate(
-            [
-                'worker_id' => $worker->id,
-                'date' => $validated['date'],
-            ],
+            ['worker_id' => $worker->id, 'date' => $validated['date']],
             [
                 'branch_id' => $worker->branch_id,
                 'total_collections' => 0,
@@ -109,7 +195,7 @@ class CloseOfDayController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Close of day amount adjusted successfully',
+            'message' => 'Amount adjusted successfully',
             'data' => $dailyTotal->fresh(),
         ]);
     }
