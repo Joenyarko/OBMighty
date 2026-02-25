@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { userAPI, paymentAPI, customerAPI } from '../services/api';
+import { userAPI, paymentAPI, customerAPI, closeOfDayAPI } from '../services/api';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext';
 import '../styles/App.css'; // Ensure global styles are available
@@ -17,6 +17,7 @@ function BulkPayment() {
     const [selectedWorker, setSelectedWorker] = useState('');
     const isCEO = hasRole('ceo');
     const isManager = hasRole('secretary') || hasRole('manager');
+    const [workerClosed, setWorkerClosed] = useState(false);
 
     useEffect(() => {
         if (isCEO || isManager) {
@@ -26,6 +27,22 @@ function BulkPayment() {
             }).catch(err => console.error('Failed to load workers', err));
         }
     }, []);
+
+    useEffect(() => {
+        checkWorkerClosed();
+    }, []);
+
+    const checkWorkerClosed = async () => {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const res = await closeOfDayAPI.getAll({ date: today });
+            const workers = res.data?.workers || [];
+            const me = workers.find(w => w.worker_id === user?.id);
+            setWorkerClosed(me?.is_closed || false);
+        } catch (err) {
+            console.error('Failed to check close of day status', err);
+        }
+    };
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -164,12 +181,18 @@ function BulkPayment() {
                     <button
                         className="btn-primary"
                         onClick={handleSaveAll}
-                        disabled={submitting || Object.keys(payments).length === 0}
+                        disabled={submitting || Object.keys(payments).length === 0 || workerClosed}
                     >
-                        {submitting ? 'Saving...' : 'Save All Payments'}
+                        {workerClosed ? '🔒 Day Closed' : submitting ? 'Saving...' : 'Save All Payments'}
                     </button>
                 </div>
             </div>
+
+            {workerClosed && (
+                <div style={{ padding: '14px 20px', background: 'rgba(255, 59, 48, 0.1)', border: '1px solid #ff3b30', borderRadius: '8px', color: '#ff3b30', textAlign: 'center', fontWeight: '600', marginBottom: '16px' }}>
+                    🔒 Your day is closed. Payments are locked. Contact your CEO to reopen.
+                </div>
+            )}
 
             <div className="table-container">
                 <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-primary)' }}>

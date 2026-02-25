@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
-import api from '../services/api';
+import api, { closeOfDayAPI } from '../services/api';
 import '../styles/CustomerBoxTracking.css';
 
 const customerCardAPI = {
@@ -26,6 +26,7 @@ function CustomerBoxTracking() {
     const [boxStates, setBoxStates] = useState([]);
     const [paymentHistory, setPaymentHistory] = useState([]);
     const [dailySales, setDailySales] = useState(0);
+    const [workerClosed, setWorkerClosed] = useState(false);
 
     // Payment form state
     const [paymentForm, setPaymentForm] = useState({
@@ -45,7 +46,21 @@ function CustomerBoxTracking() {
 
     useEffect(() => {
         fetchData();
+        checkWorkerClosed();
     }, [customerId]);
+
+    const checkWorkerClosed = async () => {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const res = await closeOfDayAPI.getAll({ date: today });
+            const workers = res.data?.workers || [];
+            // Check if current user's worker is closed
+            const me = workers.find(w => w.worker_id === user?.id);
+            setWorkerClosed(me?.is_closed || false);
+        } catch (err) {
+            console.error('Failed to check close of day status', err);
+        }
+    };
 
     const fetchData = async () => {
         try {
@@ -297,6 +312,18 @@ function CustomerBoxTracking() {
                         fontWeight: '500'
                     }}>
                         ℹ️ This card is <strong>{customerCard.status}</strong>. No further payments can be recorded.
+                    </div>
+                ) : workerClosed ? (
+                    <div style={{
+                        padding: '20px',
+                        background: 'rgba(255, 59, 48, 0.1)',
+                        border: '1px solid #ff3b30',
+                        borderRadius: '8px',
+                        color: '#ff3b30',
+                        textAlign: 'center',
+                        fontWeight: '600'
+                    }}>
+                        🔒 Day is closed. Payments are locked. Contact your CEO to reopen.
                     </div>
                 ) : (
                     <form onSubmit={handlePaymentSubmit}>
