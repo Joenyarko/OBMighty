@@ -155,22 +155,24 @@ function BulkPayment() {
 
     return (
         <div className="bulk-payment-page">
-            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h1 style={{ color: 'var(--primary-color)' }}>Bulk Payment Entry</h1>
+            <div className="page-header" style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+                    <h1 style={{ color: 'var(--primary-color)', margin: 0 }}>Bulk Payment Entry</h1>
+                </div>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                     <input
                         type="text"
                         placeholder="Search customers..."
                         value={searchTerm}
                         onChange={handleSearchChange}
-                        style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
+                        style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 180px', minWidth: '0' }}
                     />
                     {(isCEO || isManager) && (
                         <select
                             value={selectedWorker}
                             onChange={(e) => { setSelectedWorker(e.target.value); setPage(1); }}
-                            style={{ padding: '8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)' }}
+                            style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 150px', minWidth: '0' }}
                         >
                             <option value="">All Workers</option>
                             {workers.map(w => (
@@ -182,8 +184,9 @@ function BulkPayment() {
                         className="btn-primary"
                         onClick={handleSaveAll}
                         disabled={submitting || Object.keys(payments).length === 0 || workerClosed}
+                        style={{ padding: '10px 20px', borderRadius: '6px', fontWeight: '600', fontSize: '14px', whiteSpace: 'nowrap', flex: '1 1 100%', maxWidth: '100%' }}
                     >
-                        {workerClosed ? '🔒 Day Closed' : submitting ? 'Saving...' : 'Save All Payments'}
+                        {workerClosed ? '🔒 Day Closed' : submitting ? 'Saving...' : '💾 Save All Payments'}
                     </button>
                 </div>
             </div>
