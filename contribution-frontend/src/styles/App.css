@@ -312,12 +312,14 @@ tr:hover {
   .page-header div {
     width: 100%;
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
   }
 
 
   .page-header button {
-    flex: 1;
+    flex: 1 1 100%;
+    min-width: 0;
   }
 
   /* Responsive Modals */
