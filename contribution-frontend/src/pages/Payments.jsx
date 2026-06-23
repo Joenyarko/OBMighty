@@ -10,6 +10,8 @@ function Payments() {
     const [loading, setLoading] = useState(true);
     const [workers, setWorkers] = useState([]);
     const [branches, setBranches] = useState([]);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState({ total: 0, last_page: 1, current_page: 1 });
 
     // Filters State
     const [filters, setFilters] = useState({
@@ -27,7 +29,7 @@ function Payments() {
     // Re-fetch when filters change (debouncing could be added, but manual refresh or effect is fine for now)
     useEffect(() => {
         fetchPayments();
-    }, [filters]);
+    }, [filters, page]);
 
     const fetchInitialData = async () => {
         try {
@@ -70,13 +72,20 @@ function Payments() {
     const fetchPayments = async () => {
         setLoading(true);
         try {
-            // Remove empty filters
-            const params = Object.fromEntries(
-                Object.entries(filters).filter(([_, v]) => v !== '')
-            );
+            const params = {
+                ...Object.fromEntries(
+                    Object.entries(filters).filter(([_, v]) => v !== '')
+                ),
+                page
+            };
 
             const response = await paymentAPI.getAll(params);
             setPayments(response.data.data || []);
+            setPagination({
+                total: response.data.total || 0,
+                last_page: response.data.last_page || 1,
+                current_page: response.data.current_page || 1,
+            });
         } catch (error) {
             console.error('Failed to fetch payments', error);
         } finally {
@@ -90,6 +99,7 @@ function Payments() {
             ...prev,
             [name]: value
         }));
+        setPage(1);
     };
 
     const clearFilters = () => {
@@ -236,6 +246,29 @@ function Payments() {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination.last_page > 1 && (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '12px', padding: '20px 0' }}>
+                    <button
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                        disabled={page <= 1}
+                        style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border-color)', background: page <= 1 ? 'rgba(255,255,255,0.05)' : 'var(--primary-color)', color: page <= 1 ? 'var(--text-secondary)' : '#000', cursor: page <= 1 ? 'not-allowed' : 'pointer', fontWeight: '600' }}
+                    >
+                        ← Previous
+                    </button>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                        Page {pagination.current_page} of {pagination.last_page} ({pagination.total} total)
+                    </span>
+                    <button
+                        onClick={() => setPage(p => Math.min(pagination.last_page, p + 1))}
+                        disabled={page >= pagination.last_page}
+                        style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid var(--border-color)', background: page >= pagination.last_page ? 'rgba(255,255,255,0.05)' : 'var(--primary-color)', color: page >= pagination.last_page ? 'var(--text-secondary)' : '#000', cursor: page >= pagination.last_page ? 'not-allowed' : 'pointer', fontWeight: '600' }}
+                    >
+                        Next →
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
