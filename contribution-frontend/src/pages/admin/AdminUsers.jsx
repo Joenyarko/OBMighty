@@ -233,7 +233,7 @@ function AdminUsers() {
                                         {user.company ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                 {user.company.logo_url && (
-                                                    <img src={user.company.logo_url} alt="" style={{ width: 16, height: 16, borderRadius: 2 }} />
+                                                    <img src={user.company.logo_url} alt="" style={{ width: 16, height: 16, borderRadius: 2 }} onError={(e) => { e.currentTarget.src = "/favicon.ico"; }} />
                                                 )}
                                                 <span>{user.company.name}</span>
                                             </div>

@@ -273,7 +273,7 @@ function CompanyManagement() {
                                     <div className="nex-org-cell">
                                         <div className="nex-org-logo" style={{ backgroundColor: company.primary_color }}>
                                             {company.logo_url ? (
-                                                <img src={company.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
+                                                <img src={company?.logo_url || '/favicon.ico'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} onError={(e) => { e.currentTarget.src = "/favicon.ico"; }} />
                                             ) : (
                                                 <span style={{ color: 'white' }}>{company.name.charAt(0)}</span>
                                             )}
@@ -482,7 +482,7 @@ function CompanyManagement() {
                                 </div>
                                 {logoPreview && (
                                     <div style={{ marginTop: 10, textAlign: 'center' }}>
-                                        <img src={logoPreview} alt="Preview" style={{ maxHeight: 60, borderRadius: 4 }} />
+                                        <img src={logoPreview} alt="Preview" style={{ maxHeight: 60, borderRadius: 4 }} onError={(e) => { e.currentTarget.src = "/favicon.ico"; }} />
                                     </div>
                                 )}
                             </div>
@@ -534,7 +534,7 @@ function CompanyManagement() {
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
                                 }}>
                                     {viewingCompany.logo_url ? (
-                                        <img src={viewingCompany.logo_url} alt={viewingCompany.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={viewingCompany.logo_url} alt={viewingCompany.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = "/favicon.ico"; }} />
                                     ) : (
                                         <span style={{ fontSize: '32px', fontWeight: 'bold', color: 'white' }}>{viewingCompany.name.charAt(0)}</span>
                                     )}

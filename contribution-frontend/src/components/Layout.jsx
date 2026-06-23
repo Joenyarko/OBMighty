@@ -195,6 +195,7 @@ function Layout({ children }) {
                             src={company?.logo_url || tenant?.logo_url || ''}
                             alt="Logo"
                             className="logo"
+                            onError={(e) => { e.currentTarget.src = "/favicon.ico"; }}
                         />
                         {!collapsed && (
                             <div className="brand-text">

@@ -41,6 +41,7 @@ function Login() {
                             src={tenant.logo_url}
                             alt={`${tenant.app_name || 'Contribution Manager'} Logo`}
                             className="login-logo"
+                            onError={(e) => { e.currentTarget.src = "/favicon.ico"; }}
                         />
                     ) : null}
                     <h1>{tenant?.app_name || 'Daily Contribution Manager'}</h1>
