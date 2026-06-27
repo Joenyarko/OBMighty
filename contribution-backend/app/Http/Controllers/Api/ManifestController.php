@@ -80,7 +80,7 @@ class ManifestController extends Controller
                 'display'          => 'standalone',
                 'orientation'      => 'any',
                 'theme_color'      => $company->primary_color ?? '#4F46E5',
-                'background_color' => '#ffffff', // White is safest for all logo types
+                'background_color' => '#000000', // Black background makes logos pop
                 // IMPORTANT: Only use purpose "any" — NOT "maskable".
                 // Maskable forces a circular crop on Android which distorts company logos
                 // that are not designed with the required 20% safe-area padding.
@@ -112,7 +112,7 @@ class ManifestController extends Controller
                 'display'          => 'standalone',
                 'orientation'      => 'any',
                 'theme_color'      => '#4F46E5',
-                'background_color' => '#ffffff',
+                'background_color' => '#000000',
                 'icons'            => [
                     [
                         'src'     => '/Neziz-logo2.png',
