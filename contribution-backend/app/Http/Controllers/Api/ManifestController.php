@@ -59,92 +59,72 @@ class ManifestController extends Controller
         if ($company) {
             // Use the full absolute URL from the Company model
             $logoUrl = $company->logo_url ?: config('app.url') . '/logo.jpeg';
-            $isPng = str_contains($logoUrl, '.png');
+            
+            // Detect image MIME type from file extension
+            $ext = strtolower(pathinfo(parse_url($logoUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+            $iconType = match($ext) {
+                'png'  => 'image/png',
+                'webp' => 'image/webp',
+                'gif'  => 'image/gif',
+                'svg'  => 'image/svg+xml',
+                default => 'image/jpeg', // covers jpg, jpeg, and unknowns
+            };
 
             $manifest = [
-                'id' => 'company_' . $company->id,
-                'name' => $company->name,
-                'short_name' => substr($company->name, 0, 25), // Increased for identity
-                'description' => $company->name . ' management system',
-                'start_url' => '/',
-                'scope' => '/',
-                'display' => 'standalone',
-                'orientation' => 'any',
-                'theme_color' => $company->primary_color ?? '#4F46E5',
-                'background_color' => '#000000', // Black background for transparent logos
+                'id'               => 'company_' . $company->id,
+                'name'             => $company->name,
+                'short_name'       => substr($company->name, 0, 25),
+                'description'      => $company->name . ' – Contribution Manager',
+                'start_url'        => '/',
+                'scope'            => '/',
+                'display'          => 'standalone',
+                'orientation'      => 'any',
+                'theme_color'      => $company->primary_color ?? '#4F46E5',
+                'background_color' => '#ffffff', // White is safest for all logo types
+                // IMPORTANT: Only use purpose "any" — NOT "maskable".
+                // Maskable forces a circular crop on Android which distorts company logos
+                // that are not designed with the required 20% safe-area padding.
                 'icons' => [
                     [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => $isPng ? 'image/png' : 'image/jpeg',
+                        'src'     => $logoUrl,
+                        'sizes'   => '512x512',
+                        'type'    => $iconType,
                         'purpose' => 'any'
                     ],
                     [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => $isPng ? 'image/png' : 'image/jpeg',
-                        'purpose' => 'maskable'
-                    ]
-                ],
-                'screenshots' => [
-                    [
-                        'src' => $logoUrl, 
-                        'sizes' => '192x192',
-                        'type' => $isPng ? 'image/png' : 'image/jpeg',
-                        'form_factor' => 'narrow',
-                        'label' => 'Mobile Dashboard'
-                    ],
-                    [
-                        'src' => $logoUrl, 
-                        'sizes' => '192x192',
-                        'type' => $isPng ? 'image/png' : 'image/jpeg',
-                        'form_factor' => 'wide',
-                        'label' => 'Desktop Dashboard'
+                        'src'     => $logoUrl,
+                        'sizes'   => '192x192',
+                        'type'    => $iconType,
+                        'purpose' => 'any'
                     ]
                 ],
                 'categories' => ['productivity', 'finance']
             ];
         } else {
-            $logoUrl = '/Neziz-logo2.png';
+            // Generic fallback when no tenant is identified
             $manifest = [
-                'id' => 'default_system',
-                'name' => 'Management System',
-                'short_name' => 'Management',
-                'description' => 'Business management and finance system',
-                'start_url' => '/',
-                'scope' => '/',
-                'display' => 'standalone',
-                'orientation' => 'any',
-                'theme_color' => '#4F46E5',
-                'background_color' => '#000000',
-                'icons' => [
+                'id'               => 'default_system',
+                'name'             => 'Contribution Manager',
+                'short_name'       => 'Contrib',
+                'description'      => 'Business management and finance system',
+                'start_url'        => '/',
+                'scope'            => '/',
+                'display'          => 'standalone',
+                'orientation'      => 'any',
+                'theme_color'      => '#4F46E5',
+                'background_color' => '#ffffff',
+                'icons'            => [
                     [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => 'image/png',
+                        'src'     => '/Neziz-logo2.png',
+                        'sizes'   => '512x512',
+                        'type'    => 'image/png',
                         'purpose' => 'any'
                     ],
                     [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => 'image/png',
-                        'purpose' => 'maskable'
-                    ]
-                ],
-                'screenshots' => [
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => 'image/png',
-                        'form_factor' => 'narrow',
-                        'label' => 'System Mobile'
-                    ],
-                    [
-                        'src' => $logoUrl,
-                        'sizes' => '192x192',
-                        'type' => 'image/png',
-                        'form_factor' => 'wide',
-                        'label' => 'System Desktop'
+                        'src'     => '/Neziz-logo2.png',
+                        'sizes'   => '192x192',
+                        'type'    => 'image/png',
+                        'purpose' => 'any'
                     ]
                 ],
                 'categories' => ['productivity', 'finance']
