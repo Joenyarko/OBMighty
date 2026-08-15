@@ -72,6 +72,8 @@ class CloseOfDayController extends Controller
                 'closed_at' => $dailyTotal?->closed_at,
                 'closed_by' => $dailyTotal?->closed_by,
             ];
+        })->filter(function ($worker) {
+            return $worker['payments_count'] > 0 || $worker['is_closed'];
         });
 
         return response()->json([
@@ -300,6 +302,8 @@ class CloseOfDayController extends Controller
                 'days_closed' => $daysClosed,
                 'total_days_worked' => $totals->count(),
             ];
+        })->filter(function ($worker) {
+            return $worker['payments_count'] > 0 || $worker['days_closed'] > 0;
         });
 
         return response()->json([

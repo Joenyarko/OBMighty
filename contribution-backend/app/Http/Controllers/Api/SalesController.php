@@ -63,7 +63,9 @@ class SalesController extends Controller
                 'customers_paid' => $salesData->customers_paid ?? 0,
                 'total_transactions' => $salesData->total_transactions ?? 0,
             ];
-        });
+        })->filter(function ($worker) {
+            return $worker['total_transactions'] > 0;
+        })->values();
         
         return response()->json([
             'period' => $period,

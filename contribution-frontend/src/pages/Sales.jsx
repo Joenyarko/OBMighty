@@ -36,6 +36,8 @@ function Sales() {
     const [searchTerm, setSearchTerm] = useState('');
     const [period, setPeriod] = useState('today');
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
     const { user } = useAuth();
 
     useEffect(() => {
@@ -82,6 +84,23 @@ function Sales() {
     if (loading) {
         return <div className="loading">Loading sales data...</div>;
     }
+
+    // Pagination Logic
+    let filteredPayments = [];
+    let currentPayments = [];
+    let totalPages = 1;
+
+    if (workerDetails && workerDetails.payments) {
+        filteredPayments = workerDetails.payments.filter(payment =>
+            payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        currentPayments = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
+    }
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     return (
         <div className="sales-page">
@@ -201,7 +220,10 @@ function Sales() {
                                         type="text"
                                         placeholder="Search by customer name..."
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setCurrentPage(1); // Reset to first page on search
+                                        }}
                                         className="search-input"
                                     />
                                 </div>
@@ -224,36 +246,53 @@ function Sales() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {workerDetails.payments
-                                                .filter(payment =>
-                                                    payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
-                                                )
-                                                .map((payment) => (
-                                                    <tr key={payment.id}>
-                                                        <td data-label="Customer">{payment.customer_name}</td>
-                                                        <td data-label="Phone">{payment.customer_phone}</td>
-                                                        <td data-label="Amount" className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
-                                                        <td data-label="Boxes">{payment.boxes_filled}</td>
-                                                        <td data-label="Method">
-                                                            <span className={`payment-method ${payment.payment_method}`}>
-                                                                {payment.payment_method.replace('_', ' ')}
-                                                            </span>
-                                                        </td>
-                                                        <td data-label="Date">{payment.payment_date}</td>
-                                                        <td data-label="Time">{payment.payment_time}</td>
-                                                    </tr>
-                                                ))}
-                                            {workerDetails.payments.filter(payment =>
-                                                payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
-                                            ).length === 0 && (
-                                                    <tr>
-                                                        <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
-                                                            No results matching "{searchTerm}"
-                                                        </td>
-                                                    </tr>
-                                                )}
+                                            {currentPayments.map((payment) => (
+                                                <tr key={payment.id}>
+                                                    <td data-label="Customer">{payment.customer_name}</td>
+                                                    <td data-label="Phone">{payment.customer_phone}</td>
+                                                    <td data-label="Amount" className="amount">GHS{parseFloat(payment.amount).toFixed(2)}</td>
+                                                    <td data-label="Boxes">{payment.boxes_filled}</td>
+                                                    <td data-label="Method">
+                                                        <span className={`payment-method ${payment.payment_method}`}>
+                                                            {payment.payment_method.replace('_', ' ')}
+                                                        </span>
+                                                    </td>
+                                                    <td data-label="Date">{payment.payment_date}</td>
+                                                    <td data-label="Time">{payment.payment_time}</td>
+                                                </tr>
+                                            ))}
+                                            {filteredPayments.length === 0 && (
+                                                <tr>
+                                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+                                                        No results matching "{searchTerm}"
+                                                    </td>
+                                                </tr>
+                                            )}
                                         </tbody>
                                     </table>
+                                    
+                                    {/* Pagination Controls */}
+                                    {totalPages > 1 && (
+                                        <div className="pagination" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                                            <button 
+                                                onClick={() => paginate(currentPage - 1)} 
+                                                disabled={currentPage === 1}
+                                                style={{ padding: '5px 10px', background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                            >
+                                                Prev
+                                            </button>
+                                            <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-primary)' }}>
+                                                Page {currentPage} of {totalPages}
+                                            </span>
+                                            <button 
+                                                onClick={() => paginate(currentPage + 1)} 
+                                                disabled={currentPage === totalPages}
+                                                style={{ padding: '5px 10px', background: 'var(--card-bg)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
