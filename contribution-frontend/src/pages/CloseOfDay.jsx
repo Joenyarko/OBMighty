@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { closeOfDayAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
-import { Clock, Lock, Unlock, Edit3, Save, X, CheckCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Clock, Lock, Unlock, Edit3, Save, X, CheckCircle, Download } from 'lucide-react';
 import '../styles/CloseOfDay.css';
 
 function CloseOfDay() {
@@ -37,16 +40,52 @@ function CloseOfDay() {
 
     const handleClose = async (workerId, workerName) => {
         const selfClose = isWorker && workerId === user?.id;
-        const msg = selfClose
-            ? 'Are you sure you want to close your day? You will NOT be able to record any more payments today. This action cannot be undone.'
-            : `Close ${workerName}'s day? They will not be able to record payments for this date.`;
+        
+        const workerData = data?.workers?.find(w => w.worker_id === workerId);
+        const expected = workerData?.final_amount || 0;
 
-        const confirmed = await showConfirm(msg);
-        if (!confirmed) return;
+        const { value: formValues } = await Swal.fire({
+            title: selfClose ? 'Close Your Day' : `Close ${workerName}'s Day`,
+            html: `
+                <p style="text-align: left; margin-bottom: 15px; font-size: 14px; color: #ccc;">
+                    ${selfClose ? 'You will NOT be able to record any more payments today.' : 'They will not be able to record payments for this date.'}
+                </p>
+                <div style="text-align: left; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 13px; margin-bottom: 5px;">Expected System Cash (GHS ${expected.toLocaleString(undefined, { minimumFractionDigits: 2 })})</label>
+                    <input id="swal-input-cash" type="number" step="0.01" class="swal2-input" style="width: 100%; margin: 0; box-sizing: border-box;" placeholder="Enter Physical Cash Counted">
+                </div>
+                <div style="text-align: left;">
+                    <label style="display: block; font-size: 13px; margin-bottom: 5px;">Notes (Optional)</label>
+                    <textarea id="swal-input-notes" class="swal2-textarea" style="width: 100%; margin: 0; box-sizing: border-box;" placeholder="Explain any discrepancies here..."></textarea>
+                </div>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonColor: '#D4AF37',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Confirm Close',
+            background: '#1a1a1a',
+            color: '#fff',
+            preConfirm: () => {
+                const cash = document.getElementById('swal-input-cash').value;
+                const notes = document.getElementById('swal-input-notes').value;
+                if (!cash) {
+                    Swal.showValidationMessage('Please enter the physical cash counted');
+                    return false;
+                }
+                return { actual_cash_counted: cash, closing_notes: notes };
+            }
+        });
+
+        if (!formValues) return;
 
         try {
             setActionLoading(workerId);
-            await closeOfDayAPI.close(workerId, { date: selectedDate });
+            await closeOfDayAPI.close(workerId, { 
+                date: selectedDate,
+                actual_cash_counted: formValues.actual_cash_counted,
+                closing_notes: formValues.closing_notes
+            });
             showSuccess(selfClose ? 'Your day has been closed' : `${workerName}'s day has been closed`);
             fetchData();
         } catch (error) {
@@ -55,6 +94,7 @@ function CloseOfDay() {
             setActionLoading(null);
         }
     };
+
 
     const handleOpen = async (workerId, workerName) => {
         const confirmed = await showConfirm(`Reopen ${workerName}'s day? They will be able to record payments again.`);
@@ -102,6 +142,48 @@ function CloseOfDay() {
         }
     };
 
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+        
+        // Add Title
+        doc.setFontSize(18);
+        doc.text('Close of Day Report', 14, 22);
+        
+        doc.setFontSize(11);
+        doc.text(`Date: ${selectedDate}`, 14, 30);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 36);
+
+        // Define table columns and rows
+        const tableColumn = ["Worker", "Branch", "Payments", "Expected Cash", "Actual Cash", "Discrepancy", "Status"];
+        const tableRows = [];
+
+        data?.workers?.forEach(worker => {
+            const workerData = [
+                worker.worker_name,
+                worker.branch_name || '-',
+                worker.payments_count,
+                `GHS ${Number(worker.final_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                worker.actual_cash_counted ? `GHS ${Number(worker.actual_cash_counted).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-',
+                worker.discrepancy_amount !== undefined && worker.discrepancy_amount !== null 
+                    ? `GHS ${Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
+                    : '-',
+                worker.is_closed ? 'Closed' : 'Open'
+            ];
+            tableRows.push(workerData);
+        });
+
+        // Add table
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            styles: { fontSize: 9 },
+            headStyles: { fillColor: [212, 175, 55] }, // Gold color matching theme #D4AF37
+        });
+
+        doc.save(`Close_Of_Day_${selectedDate}.pdf`);
+    };
+
     if (loading) return <div className="loading">Loading close of day...</div>;
 
     return (
@@ -113,13 +195,21 @@ function CloseOfDay() {
                         {isWorker ? 'Your daily sales summary' : 'Daily worker sales summary'}
                     </p>
                 </div>
-                <div className="cod-controls">
+                <div className="cod-controls" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="cod-date-picker"
                     />
+                    <button 
+                        onClick={exportToPDF} 
+                        className="btn-export-pdf" 
+                        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 16px', backgroundColor: '#D4AF37', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                        title="Download as PDF"
+                    >
+                        <Download size={16} /> PDF
+                    </button>
                 </div>
             </div>
 
@@ -153,6 +243,7 @@ function CloseOfDay() {
                             <th>Payments</th>
                             <th>Sales</th>
                             {isCEO && <th>Adjusted</th>}
+                            <th>Discrepancy</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -201,6 +292,19 @@ function CloseOfDay() {
                                             )}
                                         </td>
                                     )}
+                                    <td>
+                                        {worker.is_closed && worker.discrepancy_amount !== undefined ? (
+                                            Number(worker.discrepancy_amount) < 0 ? (
+                                                <span style={{color: '#ff4d4d', fontWeight: 'bold'}}>GHS {Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                            ) : Number(worker.discrepancy_amount) > 0 ? (
+                                                <span style={{color: '#4caf50', fontWeight: 'bold'}}>+GHS {Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                            ) : (
+                                                <span style={{color: '#4caf50'}}><CheckCircle size={12} style={{display: 'inline', marginBottom: '-2px'}}/> Matched</span>
+                                            )
+                                        ) : (
+                                            <span style={{color: 'var(--text-secondary)'}}>—</span>
+                                        )}
+                                    </td>
                                     <td>
                                         {worker.is_closed ? (
                                             <span className="status-closed"><Lock size={14} /> Closed</span>

@@ -16,6 +16,9 @@ class WorkerDailyTotal extends Model
         'total_customers_paid',
         'adjusted_amount',
         'adjustment_note',
+        'actual_cash_counted',
+        'discrepancy_amount',
+        'closing_notes',
         'is_closed',
         'closed_at',
         'closed_by',
@@ -26,6 +29,8 @@ class WorkerDailyTotal extends Model
         'total_collections' => 'decimal:2',
         'total_customers_paid' => 'integer',
         'adjusted_amount' => 'decimal:2',
+        'actual_cash_counted' => 'decimal:2',
+        'discrepancy_amount' => 'decimal:2',
         'is_closed' => 'boolean',
         'closed_at' => 'datetime',
     ];

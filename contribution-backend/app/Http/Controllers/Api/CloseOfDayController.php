@@ -63,6 +63,9 @@ class CloseOfDayController extends Controller
                 'total_customers_paid' => $dailyTotal?->total_customers_paid ?? 0,
                 'adjusted_amount' => $dailyTotal?->adjusted_amount,
                 'adjustment_note' => $dailyTotal?->adjustment_note,
+                'actual_cash_counted' => $dailyTotal?->actual_cash_counted,
+                'discrepancy_amount' => $dailyTotal?->discrepancy_amount,
+                'closing_notes' => $dailyTotal?->closing_notes,
                 'final_amount' => round($dailyTotal?->adjusted_amount ?? $actualSales, 2),
                 'payments_count' => $paymentsCount,
                 'is_closed' => (bool) ($dailyTotal?->is_closed ?? false),
@@ -124,6 +127,22 @@ class CloseOfDayController extends Controller
             return response()->json(['message' => 'Worker is already closed for this date'], 422);
         }
 
+        $actualCashCounted = $request->input('actual_cash_counted');
+        $closingNotes = $request->input('closing_notes');
+        
+        $discrepancyAmount = null;
+        if ($actualCashCounted !== null && $actualCashCounted !== '') {
+             $actualCashCounted = (float) $actualCashCounted;
+             // System expected is total_collections (or adjusted_amount if set, but usually total_collections)
+             $expectedAmount = (float) ($dailyTotal->adjusted_amount ?? $dailyTotal->total_collections);
+             $discrepancyAmount = $actualCashCounted - $expectedAmount;
+        } else {
+             $actualCashCounted = null;
+        }
+
+        $dailyTotal->actual_cash_counted = $actualCashCounted;
+        $dailyTotal->discrepancy_amount = $discrepancyAmount;
+        $dailyTotal->closing_notes = $closingNotes;
         $dailyTotal->is_closed = true;
         $dailyTotal->closed_at = now();
         $dailyTotal->closed_by = $user->id;
