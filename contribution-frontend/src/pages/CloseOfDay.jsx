@@ -169,9 +169,9 @@ function CloseOfDay() {
                     worker.worker_name,
                     worker.branch_name || '-',
                     worker.total_days_worked,
-                    `GHS ${Number(worker.expected_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-                    `GHS ${Number(worker.actual_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-                    `GHS ${Number(worker.net_discrepancy).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                    `GHS ${Number(worker.expected_cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    `GHS ${Number(worker.actual_cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    `GHS ${Number(worker.net_discrepancy || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                 ]);
             });
         } else {
@@ -181,10 +181,10 @@ function CloseOfDay() {
                     worker.worker_name,
                     worker.branch_name || '-',
                     worker.payments_count,
-                    `GHS ${Number(worker.final_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-                    worker.actual_cash_counted ? `GHS ${Number(worker.actual_cash_counted).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-',
+                    `GHS ${Number(worker.final_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    worker.actual_cash_counted ? `GHS ${Number(worker.actual_cash_counted || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-',
                     worker.discrepancy_amount !== undefined && worker.discrepancy_amount !== null 
-                        ? `GHS ${Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
+                        ? `GHS ${Number(worker.discrepancy_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
                         : '-',
                     worker.is_closed ? 'Closed' : 'Open'
                 ]);
@@ -322,8 +322,8 @@ function CloseOfDay() {
                                     {viewMode === 'monthly' ? (
                                         <>
                                             <td>{worker.total_days_worked}</td>
-                                            <td className="amount-cell">GHS {Number(worker.expected_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                            <td className="amount-cell">GHS {Number(worker.actual_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="amount-cell">GHS {Number(worker.expected_cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="amount-cell">GHS {Number(worker.actual_cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                             <td>
                                                 {Number(worker.net_discrepancy) < 0 ? (
                                                     <span style={{color: '#ff4d4d', fontWeight: 'bold'}}>-GHS {Math.abs(Number(worker.net_discrepancy)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
@@ -337,7 +337,7 @@ function CloseOfDay() {
                                     ) : (
                                         <>
                                             <td>{worker.payments_count}</td>
-                                            <td className="amount-cell">GHS {worker.actual_sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="amount-cell">GHS {Number(worker.actual_sales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                             {isCEO && (
                                                 <td className="amount-cell">
                                                     {editingWorker === worker.worker_id ? (

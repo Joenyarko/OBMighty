@@ -28,6 +28,13 @@
     font-size: 14px;
 }
 
+.cod-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
 .cod-date-picker {
     padding: 8px 14px;
     border-radius: 8px;

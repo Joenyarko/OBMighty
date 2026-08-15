@@ -6,7 +6,7 @@ import {
     LayoutDashboard, Users, UserPlus, ShoppingBag, Truck,
     ClipboardList, Banknote, CreditCard, Building, UserCircle,
     FileBarChart, Settings, LogOut, ChevronLeft, ChevronRight,
-    Menu, X, ChevronDown, ChevronUp, Package, Layers, Shield, Clock
+    Menu, X, ChevronDown, ChevronUp, Package, Layers, Shield, Clock, Sun, Moon
 } from 'lucide-react';
 import '../styles/Layout.css';
 
@@ -14,11 +14,22 @@ function Layout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
     const [collapsed, setCollapsed] = useState(false); // Desktop toggle
     const [openSubmenu, setOpenSubmenu] = useState('');
+    const [theme, setTheme] = useState(localStorage.getItem('app-theme') || 'dark');
     const { user, company, logout, isCEO, isSecretary, hasRole } = useAuth();
     const { tenant } = useTenant(); // Get tenant config
     const navigate = useNavigate();
     const location = useLocation();
     const mainContentRef = useRef(null);
+
+    // Apply theme to body
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('app-theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
 
     // Persist collapsed state
     useEffect(() => {
@@ -184,7 +195,12 @@ function Layout({ children }) {
                         <Menu size={24} />
                     </button>
                 </div>
-                <div className="user-badge">{user?.name?.charAt(0)}</div>
+                <div className="flex items-center gap-3" style={{ display: 'flex', gap: '15px' }}>
+                    <button className="theme-toggle-btn" onClick={toggleTheme} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <div className="user-badge">{user?.name?.charAt(0)}</div>
+                </div>
             </header>
 
             {/* Sidebar */}
@@ -242,6 +258,9 @@ function Layout({ children }) {
                                 <span className="name">{user?.name}</span>
                                 <span className="email">{user?.email}</span>
                             </div>
+                            <button className="theme-toggle-btn" onClick={toggleTheme} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', marginLeft: 'auto', padding: '5px' }} title="Toggle Theme">
+                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                            </button>
                         </div>
                     </div>
                 )}
@@ -260,8 +279,28 @@ function Layout({ children }) {
                     </div>
                 </header>
 
-                <main className="main-content" ref={mainContentRef}>
-                    {children}
+                <main className="main-content" ref={mainContentRef} style={{ position: 'relative' }}>
+                    <div 
+                        className="background-watermark" 
+                        style={{ 
+                            backgroundImage: `url(${company?.logo_url || tenant?.logo_url || ''})`,
+                            position: 'fixed',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: '60vmin',
+                            height: '60vmin',
+                            backgroundSize: 'contain',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'center',
+                            opacity: 0.03,
+                            pointerEvents: 'none',
+                            zIndex: 0
+                        }} 
+                    />
+                    <div style={{ position: 'relative', zIndex: 1, minHeight: '100%' }}>
+                        {children}
+                    </div>
                 </main>
 
                 <ScrollToTop scrollContainerRef={mainContentRef} />
