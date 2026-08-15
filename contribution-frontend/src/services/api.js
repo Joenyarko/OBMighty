@@ -98,6 +98,7 @@ export const cardSummaryAPI = {
 // Close of Day API
 export const closeOfDayAPI = {
     getAll: (params) => api.get('/close-of-day', { params }),
+    getMonthly: (params) => api.get('/close-of-day/monthly', { params }),
     update: (workerId, data) => api.put(`/close-of-day/${workerId}`, data),
     close: (workerId, data) => api.post(`/close-of-day/${workerId}/close`, data),
     open: (workerId, data) => api.post(`/close-of-day/${workerId}/open`, data),

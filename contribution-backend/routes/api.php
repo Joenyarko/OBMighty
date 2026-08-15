@@ -244,6 +244,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Close of Day (CEO & Managers)
+    Route::get('/close-of-day/monthly', [\App\Http\Controllers\Api\CloseOfDayController::class, 'monthlySummary']);
     Route::get('/close-of-day', [\App\Http\Controllers\Api\CloseOfDayController::class, 'index']);
     Route::put('/close-of-day/{workerId}', [\App\Http\Controllers\Api\CloseOfDayController::class, 'update']);
     Route::post('/close-of-day/{workerId}/close', [\App\Http\Controllers\Api\CloseOfDayController::class, 'close']);

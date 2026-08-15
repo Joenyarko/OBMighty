@@ -14,6 +14,8 @@ function CloseOfDay() {
     const isWorker = hasRole('worker');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState('daily');
+    const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [editingWorker, setEditingWorker] = useState(null);
     const [editAmount, setEditAmount] = useState('');
@@ -23,13 +25,18 @@ function CloseOfDay() {
 
     useEffect(() => {
         fetchData();
-    }, [selectedDate]);
+    }, [selectedDate, selectedMonth, viewMode]);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await closeOfDayAPI.getAll({ date: selectedDate });
-            setData(response.data);
+            if (viewMode === 'monthly') {
+                const response = await closeOfDayAPI.getMonthly({ month: selectedMonth });
+                setData(response.data);
+            } else {
+                const response = await closeOfDayAPI.getAll({ date: selectedDate });
+                setData(response.data);
+            }
         } catch (error) {
             console.error('Failed to fetch close of day:', error);
             showError('Failed to load close of day data');
@@ -145,43 +152,54 @@ function CloseOfDay() {
     const exportToPDF = () => {
         const doc = new jsPDF();
         
-        // Add Title
         doc.setFontSize(18);
-        doc.text('Close of Day Report', 14, 22);
+        doc.text(viewMode === 'monthly' ? 'Monthly Reconciliation Summary' : 'Close of Day Report', 14, 22);
         
         doc.setFontSize(11);
-        doc.text(`Date: ${selectedDate}`, 14, 30);
+        doc.text(viewMode === 'monthly' ? `Month: ${selectedMonth}` : `Date: ${selectedDate}`, 14, 30);
         doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 36);
 
-        // Define table columns and rows
-        const tableColumn = ["Worker", "Branch", "Payments", "Expected Cash", "Actual Cash", "Discrepancy", "Status"];
-        const tableRows = [];
+        let tableColumn = [];
+        let tableRows = [];
 
-        data?.workers?.forEach(worker => {
-            const workerData = [
-                worker.worker_name,
-                worker.branch_name || '-',
-                worker.payments_count,
-                `GHS ${Number(worker.final_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-                worker.actual_cash_counted ? `GHS ${Number(worker.actual_cash_counted).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-',
-                worker.discrepancy_amount !== undefined && worker.discrepancy_amount !== null 
-                    ? `GHS ${Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
-                    : '-',
-                worker.is_closed ? 'Closed' : 'Open'
-            ];
-            tableRows.push(workerData);
-        });
+        if (viewMode === 'monthly') {
+            tableColumn = ["Worker", "Branch", "Days Worked", "Expected Cash", "Actual Cash", "Discrepancy"];
+            data?.workers?.forEach(worker => {
+                tableRows.push([
+                    worker.worker_name,
+                    worker.branch_name || '-',
+                    worker.total_days_worked,
+                    `GHS ${Number(worker.expected_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    `GHS ${Number(worker.actual_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    `GHS ${Number(worker.net_discrepancy).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                ]);
+            });
+        } else {
+            tableColumn = ["Worker", "Branch", "Payments", "Expected Cash", "Actual Cash", "Discrepancy", "Status"];
+            data?.workers?.forEach(worker => {
+                tableRows.push([
+                    worker.worker_name,
+                    worker.branch_name || '-',
+                    worker.payments_count,
+                    `GHS ${Number(worker.final_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+                    worker.actual_cash_counted ? `GHS ${Number(worker.actual_cash_counted).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-',
+                    worker.discrepancy_amount !== undefined && worker.discrepancy_amount !== null 
+                        ? `GHS ${Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` 
+                        : '-',
+                    worker.is_closed ? 'Closed' : 'Open'
+                ]);
+            });
+        }
 
-        // Add table
         autoTable(doc, {
             head: [tableColumn],
             body: tableRows,
             startY: 45,
             styles: { fontSize: 9 },
-            headStyles: { fillColor: [212, 175, 55] }, // Gold color matching theme #D4AF37
+            headStyles: { fillColor: [212, 175, 55] },
         });
 
-        doc.save(`Close_Of_Day_${selectedDate}.pdf`);
+        doc.save(viewMode === 'monthly' ? `Monthly_Summary_${selectedMonth}.pdf` : `Close_Of_Day_${selectedDate}.pdf`);
     };
 
     if (loading) return <div className="loading">Loading close of day...</div>;
@@ -196,12 +214,31 @@ function CloseOfDay() {
                     </p>
                 </div>
                 <div className="cod-controls" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                    <select
+                        value={viewMode}
+                        onChange={(e) => setViewMode(e.target.value)}
                         className="cod-date-picker"
-                    />
+                        style={{ width: 'auto' }}
+                    >
+                        <option value="daily">Daily View</option>
+                        <option value="monthly">Monthly Summary</option>
+                    </select>
+
+                    {viewMode === 'daily' ? (
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="cod-date-picker"
+                        />
+                    ) : (
+                        <input
+                            type="month"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="cod-date-picker"
+                        />
+                    )}
                     <button 
                         onClick={exportToPDF} 
                         className="btn-export-pdf" 
@@ -216,37 +253,58 @@ function CloseOfDay() {
             {/* Summary Cards */}
             <div className="cod-summary">
                 <div className="cod-summary-card">
-                    <span className="cod-label">{isWorker ? 'Payments' : 'Total Workers'}</span>
+                    <span className="cod-label">{viewMode === 'monthly' ? 'Total Workers' : (isWorker ? 'Payments' : 'Total Workers')}</span>
                     <span className="cod-value">
-                        {isWorker ? (data?.workers?.[0]?.payments_count || 0) : (data?.workers?.length || 0)}
+                        {viewMode === 'monthly' ? (data?.workers?.length || 0) : (isWorker ? (data?.workers?.[0]?.payments_count || 0) : (data?.workers?.length || 0))}
                     </span>
                 </div>
                 <div className="cod-summary-card">
-                    <span className="cod-label">Total Sales</span>
-                    <span className="cod-value">GHS {(data?.total_sales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="cod-label">Expected Cash</span>
+                    <span className="cod-value">GHS {viewMode === 'monthly' ? (data?.total_expected || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }) : (data?.total_sales || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
-                {!isWorker && (
-                    <div className="cod-summary-card">
-                        <span className="cod-label">Closed Workers</span>
-                        <span className="cod-value">{data?.workers?.filter(w => w.is_closed).length || 0} / {data?.workers?.length || 0}</span>
-                    </div>
-                )}
+                <div className="cod-summary-card">
+                    <span className="cod-label">Net Discrepancy</span>
+                    <span className="cod-value">
+                        {viewMode === 'monthly' ? (
+                            data?.net_discrepancy < 0 ? (
+                                <span style={{color: '#ff4d4d'}}>-GHS {Math.abs(data?.net_discrepancy || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            ) : data?.net_discrepancy > 0 ? (
+                                <span style={{color: '#4caf50'}}>+GHS {(data?.net_discrepancy || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            ) : (
+                                <span style={{color: '#4caf50'}}>GHS 0.00</span>
+                            )
+                        ) : (
+                            !isWorker && (data?.workers?.filter(w => w.is_closed).length || 0) + ' / ' + (data?.workers?.length || 0) + ' Closed'
+                        )}
+                    </span>
+                </div>
             </div>
 
             {/* Workers Table */}
             <div className="cod-table-container">
                 <table className="cod-table">
                     <thead>
-                        <tr>
-                            <th>Worker</th>
-                            {!isWorker && <th>Branch</th>}
-                            <th>Payments</th>
-                            <th>Sales</th>
-                            {isCEO && <th>Adjusted</th>}
-                            <th>Discrepancy</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
+                        {viewMode === 'monthly' ? (
+                            <tr>
+                                <th>Worker</th>
+                                {!isWorker && <th>Branch</th>}
+                                <th>Days Worked</th>
+                                <th>Expected Cash</th>
+                                <th>Actual Cash</th>
+                                <th>Discrepancy</th>
+                            </tr>
+                        ) : (
+                            <tr>
+                                <th>Worker</th>
+                                {!isWorker && <th>Branch</th>}
+                                <th>Payments</th>
+                                <th>Sales</th>
+                                {isCEO && <th>Adjusted</th>}
+                                <th>Discrepancy</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        )}
                     </thead>
                     <tbody>
                         {data?.workers?.length > 0 ? (
@@ -260,109 +318,127 @@ function CloseOfDay() {
                                         </div>
                                     </td>
                                     {!isWorker && <td>{worker.branch_name}</td>}
-                                    <td>{worker.payments_count}</td>
-                                    <td className="amount-cell">GHS {worker.actual_sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                    {isCEO && (
-                                        <td className="amount-cell">
-                                            {editingWorker === worker.worker_id ? (
-                                                <div className="edit-inline">
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={editAmount}
-                                                        onChange={(e) => setEditAmount(e.target.value)}
-                                                        className="edit-amount-input"
-                                                        autoFocus
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Note..."
-                                                        value={editNote}
-                                                        onChange={(e) => setEditNote(e.target.value)}
-                                                        className="edit-note-input"
-                                                    />
-                                                </div>
-                                            ) : worker.adjusted_amount !== null ? (
-                                                <div>
-                                                    <span className="adjusted-badge">GHS {Number(worker.adjusted_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                                    {worker.adjustment_note && <small className="adj-note">{worker.adjustment_note}</small>}
-                                                </div>
-                                            ) : (
-                                                <span className="no-adjustment">—</span>
-                                            )}
-                                        </td>
-                                    )}
-                                    <td>
-                                        {worker.is_closed && worker.discrepancy_amount !== undefined ? (
-                                            Number(worker.discrepancy_amount) < 0 ? (
-                                                <span style={{color: '#ff4d4d', fontWeight: 'bold'}}>GHS {Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            ) : Number(worker.discrepancy_amount) > 0 ? (
-                                                <span style={{color: '#4caf50', fontWeight: 'bold'}}>+GHS {Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            ) : (
-                                                <span style={{color: '#4caf50'}}><CheckCircle size={12} style={{display: 'inline', marginBottom: '-2px'}}/> Matched</span>
-                                            )
-                                        ) : (
-                                            <span style={{color: 'var(--text-secondary)'}}>—</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {worker.is_closed ? (
-                                            <span className="status-closed"><Lock size={14} /> Closed</span>
-                                        ) : (
-                                            <span className="status-open"><Unlock size={14} /> Open</span>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <div className="action-btns">
-                                            {/* Close/Open buttons */}
-                                            {worker.is_closed ? (
-                                                isCEO && (
-                                                    <button
-                                                        className="btn-open"
-                                                        onClick={() => handleOpen(worker.worker_id, worker.worker_name)}
-                                                        disabled={actionLoading === worker.worker_id}
-                                                        title="Reopen this worker's day"
-                                                    >
-                                                        <Unlock size={14} /> Open
-                                                    </button>
-                                                )
-                                            ) : (
-                                                (isCEO || (isWorker && worker.worker_id === user?.id)) && (
-                                                    <button
-                                                        className="btn-close-day"
-                                                        onClick={() => handleClose(worker.worker_id, worker.worker_name)}
-                                                        disabled={actionLoading === worker.worker_id}
-                                                        title={isWorker ? "Close your day" : "Close this worker's day"}
-                                                    >
-                                                        <Lock size={14} /> Close
-                                                    </button>
-                                                )
-                                            )}
-
-                                            {/* CEO adjust button */}
-                                            {isCEO && (
-                                                editingWorker === worker.worker_id ? (
-                                                    <>
-                                                        <button className="btn-save" onClick={() => handleSave(worker.worker_id)} disabled={saving}>
-                                                            <Save size={14} />
-                                                        </button>
-                                                        <button className="btn-cancel" onClick={handleCancel}>
-                                                            <X size={14} />
-                                                        </button>
-                                                    </>
+                                    
+                                    {viewMode === 'monthly' ? (
+                                        <>
+                                            <td>{worker.total_days_worked}</td>
+                                            <td className="amount-cell">GHS {Number(worker.expected_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="amount-cell">GHS {Number(worker.actual_cash).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td>
+                                                {Number(worker.net_discrepancy) < 0 ? (
+                                                    <span style={{color: '#ff4d4d', fontWeight: 'bold'}}>-GHS {Math.abs(Number(worker.net_discrepancy)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                ) : Number(worker.net_discrepancy) > 0 ? (
+                                                    <span style={{color: '#4caf50', fontWeight: 'bold'}}>+GHS {Number(worker.net_discrepancy).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                                 ) : (
-                                                    <button className="btn-edit" onClick={() => handleEdit(worker)} title="Adjust amount">
-                                                        <Edit3 size={14} />
-                                                    </button>
-                                                )
+                                                    <span style={{color: '#4caf50'}}><CheckCircle size={12} style={{display: 'inline', marginBottom: '-2px'}}/> Matched</span>
+                                                )}
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <td>{worker.payments_count}</td>
+                                            <td className="amount-cell">GHS {worker.actual_sales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            {isCEO && (
+                                                <td className="amount-cell">
+                                                    {editingWorker === worker.worker_id ? (
+                                                        <div className="edit-inline">
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={editAmount}
+                                                                onChange={(e) => setEditAmount(e.target.value)}
+                                                                className="edit-amount-input"
+                                                                autoFocus
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Note..."
+                                                                value={editNote}
+                                                                onChange={(e) => setEditNote(e.target.value)}
+                                                                className="edit-note-input"
+                                                            />
+                                                        </div>
+                                                    ) : worker.adjusted_amount !== null ? (
+                                                        <div>
+                                                            <span className="adjusted-badge">GHS {Number(worker.adjusted_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                            {worker.adjustment_note && <small className="adj-note">{worker.adjustment_note}</small>}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="no-adjustment">—</span>
+                                                    )}
+                                                </td>
                                             )}
-                                        </div>
-                                    </td>
+                                            <td>
+                                                {worker.is_closed && worker.discrepancy_amount !== undefined ? (
+                                                    Number(worker.discrepancy_amount) < 0 ? (
+                                                        <span style={{color: '#ff4d4d', fontWeight: 'bold'}}>-GHS {Math.abs(Number(worker.discrepancy_amount)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                    ) : Number(worker.discrepancy_amount) > 0 ? (
+                                                        <span style={{color: '#4caf50', fontWeight: 'bold'}}>+GHS {Number(worker.discrepancy_amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                    ) : (
+                                                        <span style={{color: '#4caf50'}}><CheckCircle size={12} style={{display: 'inline', marginBottom: '-2px'}}/> Matched</span>
+                                                    )
+                                                ) : (
+                                                    <span style={{color: 'var(--text-secondary)'}}>—</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                {worker.is_closed ? (
+                                                    <span className="status-closed"><Lock size={14} /> Closed</span>
+                                                ) : (
+                                                    <span className="status-open"><Unlock size={14} /> Open</span>
+                                                )}
+                                            </td>
+                                            <td>
+                                                <div className="action-btns">
+                                                    {worker.is_closed ? (
+                                                        isCEO && (
+                                                            <button
+                                                                className="btn-open"
+                                                                onClick={() => handleOpen(worker.worker_id, worker.worker_name)}
+                                                                disabled={actionLoading === worker.worker_id}
+                                                                title="Reopen this worker's day"
+                                                            >
+                                                                <Unlock size={14} /> Open
+                                                            </button>
+                                                        )
+                                                    ) : (
+                                                        (isCEO || (isWorker && worker.worker_id === user?.id)) && (
+                                                            <button
+                                                                className="btn-close-day"
+                                                                onClick={() => handleClose(worker.worker_id, worker.worker_name)}
+                                                                disabled={actionLoading === worker.worker_id}
+                                                                title={isWorker ? "Close your day" : "Close this worker's day"}
+                                                            >
+                                                                <Lock size={14} /> Close
+                                                            </button>
+                                                        )
+                                                    )}
+        
+                                                    {isCEO && (
+                                                        editingWorker === worker.worker_id ? (
+                                                            <>
+                                                                <button className="btn-save" onClick={() => handleSave(worker.worker_id)} disabled={saving}>
+                                                                    <Save size={14} />
+                                                                </button>
+                                                                <button className="btn-cancel" onClick={handleCancel}>
+                                                                    <X size={14} />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <button className="btn-edit" onClick={() => handleEdit(worker)} title="Adjust amount">
+                                                                <Edit3 size={14} />
+                                                            </button>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </>
+                                    )}
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={isCEO ? 7 : isWorker ? 5 : 6} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                                <td colSpan={viewMode === 'monthly' ? 6 : (isCEO ? 8 : (isWorker ? 5 : 7))} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                                     No data for this date
                                 </td>
                             </tr>

@@ -232,4 +232,82 @@ class CloseOfDayController extends Controller
             'data' => $dailyTotal->fresh(),
         ]);
     }
+
+    /**
+     * Get monthly summary of close of day data grouped by worker.
+     */
+    public function monthlySummary(Request $request)
+    {
+        $user = $request->user();
+        // default to current month YYYY-MM
+        $monthStr = $request->input('month', Carbon::today()->format('Y-m'));
+        
+        try {
+            $startDate = Carbon::createFromFormat('Y-m', $monthStr)->startOfMonth();
+            $endDate = Carbon::createFromFormat('Y-m', $monthStr)->endOfMonth();
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Invalid month format. Use YYYY-MM'], 400);
+        }
+
+        // Get workers based on role
+        if ($user->hasRole('worker')) {
+            $workers = collect([$user->load('branch')]);
+        } else {
+            $workersQuery = User::whereHas('roles', function ($q) {
+                $q->where('name', 'worker');
+            })->with('branch');
+
+            if ($user->hasRole('manager') || $user->hasRole('secretary')) {
+                $workersQuery->where('branch_id', $user->branch_id);
+            }
+            $workers = $workersQuery->get();
+        }
+
+        $results = $workers->map(function ($worker) use ($startDate, $endDate) {
+            $totals = WorkerDailyTotal::withoutGlobalScopes()
+                ->where('worker_id', $worker->id)
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->get();
+
+            $paymentsCount = Payment::where('worker_id', $worker->id)
+                ->whereBetween('payment_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->count();
+                
+            $expectedSum = 0;
+            $actualSum = 0;
+            $discrepancySum = 0;
+            $daysClosed = 0;
+            
+            foreach ($totals as $day) {
+                $expected = (float) ($day->adjusted_amount ?? $day->total_collections);
+                $expectedSum += $expected;
+                
+                if ($day->is_closed && $day->actual_cash_counted !== null) {
+                    $actualSum += (float) $day->actual_cash_counted;
+                    $discrepancySum += (float) $day->discrepancy_amount;
+                    $daysClosed++;
+                }
+            }
+
+            return [
+                'worker_id' => $worker->id,
+                'worker_name' => $worker->name,
+                'branch_name' => $worker->branch?->name ?? '-',
+                'payments_count' => $paymentsCount,
+                'expected_cash' => round($expectedSum, 2),
+                'actual_cash' => round($actualSum, 2),
+                'net_discrepancy' => round($discrepancySum, 2),
+                'days_closed' => $daysClosed,
+                'total_days_worked' => $totals->count(),
+            ];
+        });
+
+        return response()->json([
+            'month' => $monthStr,
+            'workers' => $results->values(),
+            'total_expected' => $results->sum('expected_cash'),
+            'total_actual' => $results->sum('actual_cash'),
+            'net_discrepancy' => $results->sum('net_discrepancy'),
+        ]);
+    }
 }
