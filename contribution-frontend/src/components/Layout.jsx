@@ -196,9 +196,6 @@ function Layout({ children }) {
                     </button>
                 </div>
                 <div className="flex items-center gap-3" style={{ display: 'flex', gap: '15px' }}>
-                    <button className="theme-toggle-btn" onClick={toggleTheme} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer' }}>
-                        {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                    </button>
                     <div className="user-badge">{user?.name?.charAt(0)}</div>
                 </div>
             </header>
@@ -241,6 +238,11 @@ function Layout({ children }) {
                     <div className="nav-section">
                         {!collapsed && <div className="section-title">ACCOUNT</div>}
                         {accountItems.map(renderMenuItem)}
+                        
+                        <button className="nav-item" onClick={toggleTheme} title={collapsed ? 'Toggle Theme' : ''} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', color: 'var(--text-primary)' }}>
+                            <span className="nav-icon">{theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}</span>
+                            {!collapsed && <span className="nav-label">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+                        </button>
 
                         <button className="nav-item logout-btn" onClick={handleLogout} title={collapsed ? 'Logout' : ''}>
                             <span className="nav-icon"><LogOut size={20} /></span>
@@ -258,9 +260,6 @@ function Layout({ children }) {
                                 <span className="name">{user?.name}</span>
                                 <span className="email">{user?.email}</span>
                             </div>
-                            <button className="theme-toggle-btn" onClick={toggleTheme} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', marginLeft: 'auto', padding: '5px' }} title="Toggle Theme">
-                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </button>
                         </div>
                     </div>
                 )}
@@ -293,7 +292,7 @@ function Layout({ children }) {
                             backgroundSize: 'contain',
                             backgroundRepeat: 'no-repeat',
                             backgroundPosition: 'center',
-                            opacity: 0.03,
+                            opacity: 0.12,
                             pointerEvents: 'none',
                             zIndex: 0
                         }} 
