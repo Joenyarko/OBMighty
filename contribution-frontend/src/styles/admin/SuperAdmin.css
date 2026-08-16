@@ -447,3 +447,77 @@
         overflow-x: auto;
     }
 }
+
+/* ── Modal ── */
+.nex-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.nex-modal {
+    background: var(--nex-bg-card);
+    border: 1px solid var(--nex-border);
+    border-radius: 12px;
+    padding: 28px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.nex-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.nex-modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--nex-text-primary);
+    margin: 0;
+}
+
+.nex-modal-close {
+    background: none;
+    border: none;
+    color: var(--nex-text-secondary);
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 4px;
+    transition: color 0.15s;
+}
+
+.nex-modal-close:hover {
+    color: var(--nex-text-primary);
+}
+
+.nex-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.nex-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--nex-border);
+}
