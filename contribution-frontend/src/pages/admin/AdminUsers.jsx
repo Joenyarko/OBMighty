@@ -15,8 +15,10 @@ function AdminUsers() {
     const [selectedCompany, setSelectedCompany] = useState('');
     const [activeDropdown, setActiveDropdown] = useState(null);
 
-    // Add User State
+    // Add/Edit User State
     const [showAddUserModal, setShowAddUserModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingUserId, setEditingUserId] = useState(null);
     const [addUserLoading, setAddUserLoading] = useState(false);
     const [newUserData, setNewUserData] = useState({
         name: '',
@@ -64,7 +66,7 @@ function AdminUsers() {
         }
     };
 
-    const handleAddUser = async (e) => {
+    const handleCreateUser = async (e) => {
         e.preventDefault();
 
         const Swal = (await import('sweetalert2')).default;
@@ -83,28 +85,33 @@ function AdminUsers() {
         }
 
         // Password Validation
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-        if (!passwordRegex.test(newUserData.password)) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Weak Password',
-                text: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
-                background: '#161920',
-                color: '#fff'
-            });
-            return;
+        if (!isEditing) {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+            if (!passwordRegex.test(newUserData.password)) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Weak Password',
+                    text: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+                    background: '#161920',
+                    color: '#fff'
+                });
+                return;
+            }
         }
 
         setAddUserLoading(true);
         try {
-            await api.post('/admin/users', newUserData);
+            if (isEditing) {
+                await api.put(`/admin/users/${editingUserId}`, newUserData);
+            } else {
+                await api.post('/admin/users', newUserData);
+            }
 
             // Success
-            const Swal = (await import('sweetalert2')).default;
             Swal.fire({
                 icon: 'success',
-                title: 'User Created',
-                text: 'User has been added successfully.',
+                title: isEditing ? 'User Updated' : 'User Created',
+                text: isEditing ? 'User details have been updated successfully.' : 'User has been added successfully.',
                 timer: 1500,
                 showConfirmButton: false,
                 background: '#161920',
@@ -112,23 +119,39 @@ function AdminUsers() {
             });
 
             setShowAddUserModal(false);
+            setIsEditing(false);
+            setEditingUserId(null);
             setNewUserData({ name: '', email: '', password: '', company_id: '', role: 'worker', phone: '' });
             setShowPassword(false);
             fetchUsers();
 
         } catch (error) {
-            console.error('Error creating user:', error);
-            const Swal = (await import('sweetalert2')).default;
+            console.error(isEditing ? 'Error updating user:' : 'Error creating user:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.response?.data?.message || 'Failed to create user.',
+                text: error.response?.data?.message || (isEditing ? 'Failed to update user.' : 'Failed to create user.'),
                 background: '#161920',
                 color: '#fff'
             });
         } finally {
             setAddUserLoading(false);
         }
+    };
+
+    const handleEditClick = (user) => {
+        setActiveDropdown(null);
+        setIsEditing(true);
+        setEditingUserId(user.id);
+        setNewUserData({
+            name: user.name,
+            email: user.email,
+            password: '', // Leave blank, only update if provided
+            company_id: user.company_id || '',
+            role: user.roles && user.roles.length > 0 ? user.roles[0].name : 'worker',
+            phone: user.phone || ''
+        });
+        setShowAddUserModal(true);
     };
 
     const handleDeleteUser = async (userId) => {
@@ -174,7 +197,6 @@ function AdminUsers() {
 
     const handleSuspendUser = async (userId) => {
         setActiveDropdown(null);
-        // Assuming there is a suspend endpoint or a status update endpoint
         const Swal = (await import('sweetalert2')).default;
         Swal.fire({
             title: 'Suspend User?',
@@ -221,10 +243,15 @@ function AdminUsers() {
                             <option key={company.id} value={company.id}>{company.name}</option>
                         ))}
                     </select>
-                    <button className="nex-btn-purple" onClick={fetchUsers}>
-                        Refresh
+                    <button className="nex-btn-purple">
+                        Apply filters
                     </button>
-                    <button className="nex-btn-primary" onClick={() => setShowAddUserModal(true)}>
+                    <button className="nex-btn-primary" onClick={() => {
+                        setIsEditing(false);
+                        setEditingUserId(null);
+                        setNewUserData({ name: '', email: '', password: '', company_id: '', role: 'worker', phone: '' });
+                        setShowAddUserModal(true);
+                    }}>
                         <User size={18} /> Add User
                     </button>
                 </div>
@@ -343,6 +370,14 @@ function AdminUsers() {
                                                 boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
                                             }}>
                                                 <button 
+                                                    onClick={() => handleEditClick(user)}
+                                                    style={{ background: 'transparent', border: 'none', color: '#fff', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '13px' }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#2a2a2a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    Edit User
+                                                </button>
+                                                <button 
                                                     onClick={() => handleSuspendUser(user.id)}
                                                     style={{ background: 'transparent', border: 'none', color: '#fff', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '13px' }}
                                                     onMouseOver={e => e.currentTarget.style.background = '#2a2a2a'}
@@ -389,12 +424,14 @@ function AdminUsers() {
                 </div>
             </div>
 
-            {/* Add User Modal */}
+            {/* Add/Edit User Modal */}
             {showAddUserModal && (
-                <div className="modal-overlay" style={{ backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000 }}>
-                    <div className="modal-content" style={{ backgroundColor: '#161920', color: '#fff', border: '1px solid #242830', borderRadius: '12px', padding: '24px', maxWidth: '500px', width: '90%' }}>
-                        <h2 style={{ marginBottom: '20px', fontSize: '20px' }}>Add New User</h2>
-                        <form onSubmit={handleAddUser}>
+                <div className="nex-modal-overlay" onClick={() => setShowAddUserModal(false)}>
+                    <div className="nex-modal" onClick={e => e.stopPropagation()} style={{ backgroundColor: '#161920', color: '#fff', border: '1px solid #242830', borderRadius: '12px', padding: '24px', maxWidth: '500px', width: '90%' }}>
+                        <div className="nex-modal-header" style={{ marginBottom: '20px' }}>
+                            <h2 style={{ fontSize: '20px' }}>{isEditing ? 'Edit User' : 'Add New User'}</h2>
+                        </div>
+                        <form onSubmit={handleCreateUser} className="nex-modal-body">
 
                             <div className="form-group" style={{ marginBottom: '16px' }}>
                                 <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Name</label>
@@ -419,21 +456,19 @@ function AdminUsers() {
                             </div>
 
                             <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Password</label>
+                                <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Password {isEditing && <span style={{fontSize: '12px'}}>(Leave blank to keep unchanged)</span>}</label>
                                 <div style={{ position: 'relative' }}>
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         value={newUserData.password}
                                         onChange={e => setNewUserData({ ...newUserData, password: e.target.value })}
-                                        required
-                                        minLength={8}
+                                        {...(!isEditing && {required: true, minLength: 8})}
                                         style={{ width: '100%', padding: '10px 40px 10px 10px', backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white', borderRadius: '6px' }}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        aria-pressed={showPassword}
                                         style={{
                                             position: 'absolute',
                                             right: '10px',
@@ -483,20 +518,12 @@ function AdminUsers() {
                                 </div>
                             </div>
 
-                            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowAddUserModal(false)}
-                                    style={{ backgroundColor: '#242830', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer' }}
-                                >
+                            <div className="nex-modal-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                                <button type="button" onClick={() => setShowAddUserModal(false)} style={{ backgroundColor: '#242830', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer' }}>
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="nex-btn-purple"
-                                    disabled={addUserLoading}
-                                >
-                                    {addUserLoading ? 'Creating...' : 'Create User'}
+                                <button type="submit" className="nex-btn-purple" disabled={addUserLoading} style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
+                                    {addUserLoading ? 'Saving...' : isEditing ? 'Update User' : 'Create User'}
                                 </button>
                             </div>
                         </form>

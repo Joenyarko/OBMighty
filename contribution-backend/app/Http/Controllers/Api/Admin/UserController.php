@@ -92,6 +92,42 @@ class UserController extends Controller
     }
 
     /**
+     * Update the specified user.
+     */
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => 'sometimes|email|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+            'role' => 'sometimes|string|exists:roles,name',
+            'company_id' => 'nullable|exists:companies,id',
+        ]);
+
+        $updateData = [];
+        if (isset($validated['name'])) $updateData['name'] = $validated['name'];
+        if (isset($validated['email'])) $updateData['email'] = $validated['email'];
+        if (!empty($validated['password'])) $updateData['password'] = Hash::make($validated['password']);
+        
+        // Only super admin can change company_id globally
+        if (array_key_exists('company_id', $validated)) {
+            $updateData['company_id'] = $validated['company_id'];
+        }
+
+        $user->update($updateData);
+
+        if (isset($validated['role'])) {
+            $user->syncRoles([$validated['role']]);
+        }
+
+        $user->load(['company', 'roles']);
+
+        return response()->json($user);
+    }
+
+    /**
      * Remove the specified user.
      */
     public function destroy($id)
