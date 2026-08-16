@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Trash2, Shield, Building, Eye, EyeOff } from 'lucide-react';
+import { Search, User, Trash2, Shield, Building, Eye, EyeOff, MoreHorizontal } from 'lucide-react';
 import api from '../../services/api';
 import AdminLayout from '../../components/admin/AdminLayout';
 import '../../styles/admin/SuperAdmin.css';
@@ -13,6 +13,7 @@ function AdminUsers() {
     const [totalPages, setTotalPages] = useState(1);
     const [companies, setCompanies] = useState([]);
     const [selectedCompany, setSelectedCompany] = useState('');
+    const [activeDropdown, setActiveDropdown] = useState(null);
 
     // Add User State
     const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -157,6 +158,7 @@ function AdminUsers() {
                     showConfirmButton: false
                 });
                 fetchUsers();
+                setActiveDropdown(null);
             } catch (error) {
                 console.error('Error deleting user:', error);
                 Swal.fire({
@@ -168,6 +170,31 @@ function AdminUsers() {
                 });
             }
         }
+    };
+
+    const handleSuspendUser = async (userId) => {
+        setActiveDropdown(null);
+        // Assuming there is a suspend endpoint or a status update endpoint
+        const Swal = (await import('sweetalert2')).default;
+        Swal.fire({
+            title: 'Suspend User?',
+            text: 'Are you sure you want to suspend this user?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, suspend',
+            background: '#161920',
+            color: '#ffffff'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await api.post(`/admin/users/${userId}/suspend`);
+                    fetchUsers();
+                    Swal.fire({ icon: 'success', title: 'Suspended!', timer: 1500, showConfirmButton: false, background: '#161920', color: '#fff' });
+                } catch (error) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'Failed to suspend user', background: '#161920', color: '#fff' });
+                }
+            }
+        });
     };
 
     return (
@@ -290,15 +317,49 @@ function AdminUsers() {
                                     <td style={{ color: 'var(--nex-text-secondary)' }}>
                                         {new Date(user.created_at).toLocaleDateString()}
                                     </td>
-                                    <td>
+                                    <td style={{ position: 'relative' }}>
                                         <button 
                                             className="nex-btn-icon" 
-                                            onClick={() => handleDeleteUser(user.id)}
-                                            title="Delete User"
-                                            style={{ color: '#ff4444' }}
+                                            onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
                                         >
-                                            <Trash2 size={16} />
+                                            <MoreHorizontal size={16} />
                                         </button>
+                                        
+                                        {activeDropdown === user.id && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                right: '100%',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: '#1a1a1a',
+                                                border: '1px solid #333',
+                                                borderRadius: '6px',
+                                                padding: '4px',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '4px',
+                                                zIndex: 10,
+                                                minWidth: '120px',
+                                                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                                            }}>
+                                                <button 
+                                                    onClick={() => handleSuspendUser(user.id)}
+                                                    style={{ background: 'transparent', border: 'none', color: '#fff', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '13px' }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#2a2a2a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    Suspend User
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    style={{ background: 'transparent', border: 'none', color: '#ff4444', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '13px' }}
+                                                    onMouseOver={e => e.currentTarget.style.background = '#2a2a2a'}
+                                                    onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    Delete User
+                                                </button>
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))
