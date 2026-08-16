@@ -17,8 +17,18 @@ class CardController extends Controller
         $perPage = $request->query('per_page', 12);
         // Limit per_page to a reasonable max to prevent DoS
         $perPage = min((int)$perPage, 500);
-        
-        $cards = Card::active()->orderBy('card_name')->paginate($perPage);
+
+        $query = Card::active()->orderBy('card_name');
+
+        // Server-side search — searches all pages, not just the current one
+        if ($search = $request->query('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('card_name', 'like', '%' . $search . '%')
+                  ->orWhere('card_code', 'like', '%' . $search . '%');
+            });
+        }
+
+        $cards = $query->paginate($perPage);
         return response()->json($cards);
     }
 

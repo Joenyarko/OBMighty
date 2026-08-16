@@ -40,14 +40,12 @@ function Cards() {
         to: 0
     });
 
-    useEffect(() => {
-        fetchCards(1);
-    }, []);
-
-    const fetchCards = async (page = 1) => {
+    const fetchCards = async (page = 1, search = '') => {
         try {
-            setLoading(true); // Ensure loading state is set
-            const response = await api.get(`/cards?page=${page}`); // Use direct API call to include params
+            setLoading(true);
+            const params = new URLSearchParams({ page });
+            if (search) params.append('search', search);
+            const response = await api.get(`/cards?${params.toString()}`);
             const data = response.data;
 
             setCards(data.data || []);
@@ -66,9 +64,17 @@ function Cards() {
         }
     };
 
+    // Reset to page 1 and search server-side when searchTerm changes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchCards(1, searchTerm);
+        }, 400);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= pagination.last_page) {
-            fetchCards(newPage);
+            fetchCards(newPage, searchTerm);
         }
     };
 
@@ -231,17 +237,12 @@ function Cards() {
 
             {/* Cards Grid */}
             <div className="cards-grid">
-                {(() => {
-                    const filtered = cards.filter(c =>
-                        c.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        c.card_code?.toLowerCase().includes(searchTerm.toLowerCase())
-                    );
-                    if (filtered.length === 0) return (
-                        <div className="no-data">
-                            <p>{searchTerm ? `No cards matching "${searchTerm}"` : 'No cards found. Create your first card!'}</p>
-                        </div>
-                    );
-                    return filtered.map(card => (
+                {cards.length === 0 ? (
+                    <div className="no-data">
+                        <p>{searchTerm ? `No cards matching "${searchTerm}"` : 'No cards found. Create your first card!'}</p>
+                    </div>
+                ) : (
+                    cards.map(card => (
                         <div key={card.id} className="card-item">
                             <div className="card-header">
                                 <h3>{card.card_name}</h3>
@@ -280,9 +281,8 @@ function Cards() {
                                 </button>
                             </div>
                         </div>
-                    ));
-                })()
-                }
+                    ))
+                )}
             </div>
 
             {/* Pagination Controls */}
