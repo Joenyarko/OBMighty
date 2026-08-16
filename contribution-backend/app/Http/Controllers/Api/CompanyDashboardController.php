@@ -70,7 +70,7 @@ class CompanyDashboardController extends Controller
             ->count();
 
         $totalBranches = $company->branches()->count();
-        $totalCardTemplates = $company->cards()->count();
+        $totalCardTemplates = $company->cards()->active()->count();
 
         // Overall stats for CEO
         $overallRevenue = $company->payments()->sum('payment_amount');

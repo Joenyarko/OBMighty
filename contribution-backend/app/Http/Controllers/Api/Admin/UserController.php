@@ -85,12 +85,26 @@ class UserController extends Controller
         return response()->json($user, 201);
     }
 
-    /**
-     * Display the specified user.
-     */
     public function show($id)
     {
         $user = User::with(['company', 'roles', 'branch'])->findOrFail($id);
         return response()->json($user);
+    }
+
+    /**
+     * Remove the specified user.
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        
+        // Ensure Super Admin doesn't accidentally delete themselves
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'You cannot delete your own account.'], 422);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully']);
     }
 }

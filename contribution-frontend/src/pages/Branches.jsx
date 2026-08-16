@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { branchAPI } from '../services/api';
 import { showError } from '../utils/sweetalert';
 import Layout from '../components/Layout';
+import { Trash2 } from 'lucide-react';
 import '../styles/App.css';
 
 function Branches() {
@@ -41,6 +42,46 @@ function Branches() {
         } catch (error) {
             console.error('Failed to create branch', error);
             showError('Error creating branch');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const Swal = (await import('sweetalert2')).default;
+        const result = await Swal.fire({
+            title: 'Delete Branch?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4444',
+            cancelButtonColor: '#2c2c2c',
+            confirmButtonText: 'Yes, delete it!',
+            background: '#1a1a1a',
+            color: '#ffffff'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await branchAPI.delete(id);
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'Branch has been deleted.',
+                    icon: 'success',
+                    background: '#1a1a1a',
+                    color: '#ffffff',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                fetchBranches();
+            } catch (error) {
+                console.error('Error deleting branch:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.response?.data?.message || 'Failed to delete branch.',
+                    icon: 'error',
+                    background: '#1a1a1a',
+                    color: '#ffffff'
+                });
+            }
         }
     };
 
@@ -86,9 +127,27 @@ function Branches() {
                                 <strong>Address:</strong> {branch.address || 'N/A'}
                             </div>
 
-                            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                                <span>👥 {branch.users_count || 0} Staff</span>
-                                <span>👤 {branch.customers_count || 0} Customers</span>
+                            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '14px' }}>
+                                <div>
+                                    <span style={{ marginRight: '16px' }}>👥 {branch.users_count || 0} Staff</span>
+                                    <span>👤 {branch.customers_count || 0} Customers</span>
+                                </div>
+                                <button 
+                                    onClick={() => handleDelete(branch.id)}
+                                    style={{ 
+                                        background: 'transparent', 
+                                        border: 'none', 
+                                        color: '#ff4444', 
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        padding: '4px'
+                                    }}
+                                    title="Delete Branch"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
                             </div>
                         </div>
                     ))}

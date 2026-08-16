@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MoreHorizontal, User, Shield, Building, Eye, EyeOff } from 'lucide-react';
+import { Search, User, Trash2, Shield, Building, Eye, EyeOff } from 'lucide-react';
 import api from '../../services/api';
 import AdminLayout from '../../components/admin/AdminLayout';
 import '../../styles/admin/SuperAdmin.css';
@@ -130,6 +130,46 @@ function AdminUsers() {
         }
     };
 
+    const handleDeleteUser = async (userId) => {
+        const Swal = (await import('sweetalert2')).default;
+        const result = await Swal.fire({
+            title: 'Delete User?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ff4444',
+            cancelButtonColor: '#2c2c2c',
+            confirmButtonText: 'Yes, delete it!',
+            background: '#161920',
+            color: '#ffffff'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await api.delete(`/admin/users/${userId}`);
+                Swal.fire({
+                    title: 'Deleted!',
+                    text: 'User has been deleted.',
+                    icon: 'success',
+                    background: '#161920',
+                    color: '#ffffff',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+                fetchUsers();
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: error.response?.data?.message || 'Failed to delete user.',
+                    icon: 'error',
+                    background: '#161920',
+                    color: '#ffffff'
+                });
+            }
+        }
+    };
+
     return (
         <AdminLayout>
             <div className="nex-controls">
@@ -251,8 +291,13 @@ function AdminUsers() {
                                         {new Date(user.created_at).toLocaleDateString()}
                                     </td>
                                     <td>
-                                        <button className="nex-btn-icon">
-                                            <MoreHorizontal size={16} />
+                                        <button 
+                                            className="nex-btn-icon" 
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            title="Delete User"
+                                            style={{ color: '#ff4444' }}
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </td>
                                 </tr>
