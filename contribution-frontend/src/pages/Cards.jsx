@@ -30,6 +30,7 @@ function Cards() {
     const [frontImageFile, setFrontImageFile] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [modalImage, setModalImage] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -207,14 +208,40 @@ function Cards() {
                 </button>
             </div>
 
+            {/* Search Bar */}
+            <div style={{ marginBottom: '24px' }}>
+                <input
+                    type="text"
+                    placeholder="🔍 Search cards by name or code..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        background: 'var(--card-bg)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        color: 'var(--text-primary)',
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxSizing: 'border-box'
+                    }}
+                />
+            </div>
+
             {/* Cards Grid */}
             <div className="cards-grid">
-                {cards.length === 0 ? (
-                    <div className="no-data">
-                        <p>No cards found. Create your first card!</p>
-                    </div>
-                ) : (
-                    cards.map(card => (
+                {(() => {
+                    const filtered = cards.filter(c =>
+                        c.card_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        c.card_code?.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                    if (filtered.length === 0) return (
+                        <div className="no-data">
+                            <p>{searchTerm ? `No cards matching "${searchTerm}"` : 'No cards found. Create your first card!'}</p>
+                        </div>
+                    );
+                    return filtered.map(card => (
                         <div key={card.id} className="card-item">
                             <div className="card-header">
                                 <h3>{card.card_name}</h3>
@@ -253,8 +280,9 @@ function Cards() {
                                 </button>
                             </div>
                         </div>
-                    ))
-                )}
+                    ));
+                })()
+                }
             </div>
 
             {/* Pagination Controls */}

@@ -36,6 +36,7 @@ function Customers() {
 
     const [cardPage, setCardPage] = useState(1);
     const cardsPerPage = 12;
+    const [cardSearchTerm, setCardSearchTerm] = useState('');
 
     useEffect(() => {
         // console.log('Customers.jsx: useEffect triggered', { user });
@@ -246,10 +247,14 @@ function Customers() {
         }
     };
 
+    const filteredCards = cards.filter(c =>
+        c.card_name.toLowerCase().includes(cardSearchTerm.toLowerCase()) ||
+        c.card_code?.toLowerCase().includes(cardSearchTerm.toLowerCase())
+    );
     const indexOfLastCard = cardPage * cardsPerPage;
     const indexOfFirstCard = indexOfLastCard - cardsPerPage;
-    const currentCards = cards.slice(indexOfFirstCard, indexOfLastCard);
-    const totalCardPages = Math.ceil(cards.length / cardsPerPage);
+    const currentCards = filteredCards.slice(indexOfFirstCard, indexOfLastCard);
+    const totalCardPages = Math.ceil(filteredCards.length / cardsPerPage);
 
     if (loading) {
         return <div className="loading">Loading Customers Page... Please wait.</div>;
@@ -436,7 +441,28 @@ function Customers() {
             {/* Available Cards Grid */}
             <div className="available-cards-section" style={{ marginTop: '40px' }}>
                 <h2>Available Cards</h2>
-                <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>Click on a card to add a new customer with that card pre-selected.</p>
+                <p style={{ marginBottom: '12px', color: 'var(--text-secondary)' }}>Click on a card to add a new customer with that card pre-selected.</p>
+
+                {/* Card Search */}
+                <div style={{ marginBottom: '16px' }}>
+                    <input
+                        type="text"
+                        placeholder="🔍 Search cards by name or code..."
+                        value={cardSearchTerm}
+                        onChange={e => { setCardSearchTerm(e.target.value); setCardPage(1); }}
+                        style={{
+                            width: '100%',
+                            padding: '10px 16px',
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '8px',
+                            color: 'var(--text-primary)',
+                            fontSize: '14px',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                        }}
+                    />
+                </div>
 
                 <div className="card-selection-container" style={{ padding: '10px', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
                     <div className="card-selection-grid">
