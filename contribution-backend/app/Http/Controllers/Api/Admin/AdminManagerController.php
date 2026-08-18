@@ -61,8 +61,8 @@ class AdminManagerController extends Controller
         ]);
 
         // Assign the admin_manager role
-        $role = Role::firstOrCreate(['name' => 'admin_manager', 'guard_name' => 'sanctum']);
-        $user->assignRole($role);
+        Role::firstOrCreate(['name' => 'admin_manager']);
+        $user->assignRole('admin_manager');
 
         // Assign companies
         if (!empty($validated['company_ids'])) {
