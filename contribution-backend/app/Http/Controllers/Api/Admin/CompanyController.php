@@ -192,7 +192,17 @@ class CompanyController extends Controller
      */
     public function destroy($id)
     {
+        $user = auth()->user();
         $company = Company::findOrFail($id);
+
+        // Admin managers can only deactivate companies assigned to them
+        if ($user->hasRole('admin_manager')) {
+            $assignedIds = $user->managedCompanies()->pluck('companies.id')->toArray();
+            if (!in_array((int)$id, $assignedIds)) {
+                return response()->json(['message' => 'Unauthorized. This company is not assigned to you.'], 403);
+            }
+        }
+
         $company->delete();
 
         return response()->json(['message' => 'Company deactivated successfully']);

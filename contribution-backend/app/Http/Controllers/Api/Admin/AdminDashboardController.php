@@ -17,79 +17,79 @@ class AdminDashboardController extends Controller
      */
     public function stats()
     {
+        $authUser = auth()->user();
         $today = Carbon::today();
         $startOfMonth = Carbon::now()->startOfMonth();
         $endOfMonth = Carbon::now()->endOfMonth();
 
+        // Scope to assigned companies for admin managers
+        $isManager = $authUser->hasRole('admin_manager');
+        $assignedIds = $isManager
+            ? $authUser->managedCompanies()->pluck('companies.id')->toArray()
+            : null;
+
         // Company Stats
-        $totalCompanies = Company::count();
-        $activeCompanies = Company::where('is_active', true)->count();
+        $companyQuery = Company::query();
+        if ($isManager) $companyQuery->whereIn('id', $assignedIds);
+        $totalCompanies  = $companyQuery->count();
+        $activeCompanies = (clone $companyQuery)->where('is_active', true)->count();
 
         // User Stats
-        $totalUsers = User::count();
-        $activeToday = User::whereDate('last_login_at', '>=', $today->subDays(7))->count();
+        $userQuery = User::query();
+        if ($isManager) $userQuery->whereIn('company_id', $assignedIds);
+        $totalUsers  = $userQuery->count();
+        $activeToday = (clone $userQuery)->whereDate('last_login_at', '>=', Carbon::today()->subDays(7))->count();
 
         // User breakdown by role
-        $usersByRole = User::with('roles')
+        $usersByRole = (clone $userQuery)->with('roles')
             ->get()
-            ->groupBy(function ($user) {
-                return $user->roles->first()->name ?? 'unknown';
-            })
-            ->map(function ($group) {
-                return $group->count();
-            });
+            ->groupBy(fn($u) => $u->roles->first()?->name ?? 'unknown')
+            ->map(fn($g) => $g->count());
 
         // Payment Stats
-        $todayPayments = Payment::whereDate('payment_date', $today)->sum('payment_amount') ?? 0;
-        $monthPayments = Payment::whereBetween('payment_date', [$startOfMonth, $endOfMonth])->sum('payment_amount') ?? 0;
-        $totalPayments = Payment::count();
+        $paymentQuery = Payment::query();
+        if ($isManager) $paymentQuery->whereIn('company_id', $assignedIds);
+        $todayPayments = (clone $paymentQuery)->whereDate('payment_date', $today)->sum('payment_amount') ?? 0;
+        $monthPayments = (clone $paymentQuery)->whereBetween('payment_date', [$startOfMonth, $endOfMonth])->sum('payment_amount') ?? 0;
+        $totalPayments = $paymentQuery->count();
 
-        // System Health
-        $failedLogins = AuditLog::where('action', 'like', '%failed%')
-            ->whereDate('created_at', '>=', $today->subDays(7))
-            ->count();
+        // System Health (scoped to assigned companies for manager)
+        $auditQuery = AuditLog::where('action', 'like', '%failed%')
+            ->whereDate('created_at', '>=', Carbon::today()->subDays(7));
+        if ($isManager) $auditQuery->whereIn('company_id', $assignedIds);
+        $failedLogins = $auditQuery->count();
 
         // Recent Activity
-        $recentAuditLogs = AuditLog::with(['user', 'company'])
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'user' => $log->user?->name ?? 'System',
-                    'company' => $log->company?->name ?? 'N/A',
-                    'action' => $log->action,
-                    'timestamp' => $log->created_at->diffForHumans(),
-                ];
-            });
-
-        // Company Status
-        $companiesByStatus = [
-            'active' => $activeCompanies,
-            'inactive' => $totalCompanies - $activeCompanies,
-        ];
+        $recentQuery = AuditLog::with(['user', 'company'])->orderByDesc('created_at');
+        if ($isManager) $recentQuery->whereIn('company_id', $assignedIds);
+        $recentAuditLogs = $recentQuery->limit(10)->get()->map(fn($log) => [
+            'id'        => $log->id,
+            'user'      => $log->user?->name ?? 'System',
+            'company'   => $log->company?->name ?? 'N/A',
+            'action'    => $log->action,
+            'timestamp' => $log->created_at->diffForHumans(),
+        ]);
 
         return response()->json([
             'overview' => [
-                'total_companies' => $totalCompanies,
-                'active_companies' => $activeCompanies,
-                'total_users' => $totalUsers,
-                'active_users_week' => $activeToday,
+                'total_companies'    => $totalCompanies,
+                'active_companies'   => $activeCompanies,
+                'total_users'        => $totalUsers,
+                'active_users_week'  => $activeToday,
             ],
             'users' => [
                 'by_role' => $usersByRole,
-                'total' => $totalUsers,
-                'status' => $companiesByStatus,
+                'total'   => $totalUsers,
+                'status'  => ['active' => $activeCompanies, 'inactive' => $totalCompanies - $activeCompanies],
             ],
             'payments' => [
-                'today' => $todayPayments,
-                'month' => $monthPayments,
+                'today'              => $todayPayments,
+                'month'              => $monthPayments,
                 'total_transactions' => $totalPayments,
             ],
             'system_health' => [
-                'status' => $failedLogins > 10 ? 'warning' : 'operational',
-                'failed_login_attempts_week' => $failedLogins,
+                'status'                      => $failedLogins > 10 ? 'warning' : 'operational',
+                'failed_login_attempts_week'  => $failedLogins,
             ],
             'recent_activity' => $recentAuditLogs,
         ]);
@@ -100,23 +100,29 @@ class AdminDashboardController extends Controller
      */
     public function metrics()
     {
-        $companies = Company::withCount(['users', 'branches', 'customers', 'payments'])->get();
+        $authUser = auth()->user();
+        $isManager = $authUser->hasRole('admin_manager');
+
+        $query = Company::withCount(['users', 'branches', 'customers', 'payments']);
+        if ($isManager) {
+            $assignedIds = $authUser->managedCompanies()->pluck('companies.id');
+            $query->whereIn('id', $assignedIds);
+        }
+        $companies = $query->get();
 
         $metrics = [
-            'companies' => $companies->count(),
-            'total_users' => $companies->sum('users_count'),
+            'companies'      => $companies->count(),
+            'total_users'    => $companies->sum('users_count'),
             'total_branches' => $companies->sum('branches_count'),
-            'total_customers' => $companies->sum('customers_count'),
+            'total_customers'=> $companies->sum('customers_count'),
             'total_payments' => $companies->sum('payments_count'),
-            'by_company' => $companies->map(function ($company) {
-                return [
-                    'name' => $company->name,
-                    'users' => $company->users_count,
-                    'branches' => $company->branches_count,
-                    'customers' => $company->customers_count,
-                    'payments' => $company->payments_count,
-                ];
-            }),
+            'by_company'     => $companies->map(fn($c) => [
+                'name'      => $c->name,
+                'users'     => $c->users_count,
+                'branches'  => $c->branches_count,
+                'customers' => $c->customers_count,
+                'payments'  => $c->payments_count,
+            ]),
         ];
 
         return response()->json($metrics);

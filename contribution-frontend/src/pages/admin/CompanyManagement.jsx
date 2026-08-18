@@ -300,12 +300,9 @@ function CompanyManagement() {
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        {/* Deactivate — hidden for admin managers */}
-                                        {!isAdminManager && (
-                                            <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
+                                        <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
+                                            <Trash2 size={16} />
+                                        </button>
                                         <button className="nex-btn-icon" onClick={() => openEditModal(company)} title="Edit">
                                             <Edit2 size={16} />
                                         </button>
