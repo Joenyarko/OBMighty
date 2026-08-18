@@ -16,7 +16,9 @@ class AdminManagerController extends Controller
      */
     public function index()
     {
-        $managers = User::role('admin_manager')
+        $managers = User::whereHas('roles', function ($q) {
+                $q->where('name', 'admin_manager');
+            })
             ->with(['managedCompanies'])
             ->get()
             ->map(function ($user) {
@@ -58,11 +60,19 @@ class AdminManagerController extends Controller
             'password'   => Hash::make($validated['password']),
             'phone'      => $validated['phone'] ?? null,
             'company_id' => null,
+            'status'     => 'active',
         ]);
 
-        // Assign the admin_manager role
-        Role::firstOrCreate(['name' => 'admin_manager']);
-        $user->assignRole('admin_manager');
+        // Ensure the admin_manager role exists in Spatie for all guards
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $roleWeb = Role::firstOrCreate(['name' => 'admin_manager', 'guard_name' => 'web']);
+        $roleApi = Role::firstOrCreate(['name' => 'admin_manager', 'guard_name' => 'api']);
+        
+        try {
+            $user->assignRole('admin_manager');
+        } catch (\Exception $e) {
+            $user->assignRole($roleWeb);
+        }
 
         // Assign companies
         if (!empty($validated['company_ids'])) {
@@ -82,7 +92,7 @@ class AdminManagerController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $manager = User::role('admin_manager')->findOrFail($id);
+        $manager = $this->findManager($id);
 
         $validated = $request->validate([
             'name'     => 'sometimes|string|max:255',
@@ -106,7 +116,7 @@ class AdminManagerController extends Controller
      */
     public function destroy($id)
     {
-        $manager = User::role('admin_manager')->findOrFail($id);
+        $manager = $this->findManager($id);
         $manager->managedCompanies()->detach();
         $manager->delete();
 
@@ -118,7 +128,7 @@ class AdminManagerController extends Controller
      */
     public function assignCompanies(Request $request, $id)
     {
-        $manager = User::role('admin_manager')->findOrFail($id);
+        $manager = $this->findManager($id);
 
         $validated = $request->validate([
             'company_ids'   => 'required|array',
@@ -138,9 +148,16 @@ class AdminManagerController extends Controller
      */
     public function removeCompany($managerId, $companyId)
     {
-        $manager = User::role('admin_manager')->findOrFail($managerId);
+        $manager = $this->findManager($managerId);
         $manager->managedCompanies()->detach($companyId);
 
         return response()->json(['message' => 'Company removed from manager.']);
+    }
+
+    private function findManager($id)
+    {
+        return User::whereHas('roles', function ($q) {
+            $q->where('name', 'admin_manager');
+        })->findOrFail($id);
     }
 }
