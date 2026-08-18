@@ -24,7 +24,17 @@ function Login() {
         const result = await login({ email, password });
 
         if (result.success) {
-            navigate('/dashboard');
+            const roles = result.user?.roles || [];
+            const isAdmin = roles.some(r => {
+                const name = typeof r === 'string' ? r : r.name;
+                return name === 'super_admin' || name === 'admin_manager';
+            }) || result.user?.role === 'super_admin' || result.user?.role === 'admin_manager';
+
+            if (isAdmin) {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } else {
             setError(result.error);
         }

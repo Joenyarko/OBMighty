@@ -103,10 +103,10 @@ function Layout({ children }) {
             section: 'ACCOUNT'
         }] : []),
 
-        // Super Admin Link
-        ...(hasRole('super_admin') ? [{
+        // Super Admin / Admin Manager Link
+        ...(hasRole('super_admin') || hasRole('admin_manager') ? [{
             path: '/admin/dashboard',
-            label: 'Super Admin',
+            label: hasRole('admin_manager') ? 'Admin Panel' : 'Super Admin',
             icon: <Shield size={20} />,
             permission: null,
             section: 'ACCOUNT'

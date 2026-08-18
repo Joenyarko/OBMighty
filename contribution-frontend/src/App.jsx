@@ -41,6 +41,17 @@ function ProtectedRoute({ children }) {
         return <Navigate to="/login" replace />;
     }
 
+    // Super Admin and Admin Manager should automatically land on the Super Admin panel
+    const roles = user?.roles || [];
+    const isSuperOrManager = roles.some(r => {
+        const name = typeof r === 'string' ? r : r.name;
+        return name === 'super_admin' || name === 'admin_manager';
+    }) || user?.role === 'super_admin' || user?.role === 'admin_manager';
+
+    if (isSuperOrManager) {
+        return <Navigate to="/admin/dashboard" replace />;
+    }
+
     return <Layout>{children}</Layout>;
 }
 
