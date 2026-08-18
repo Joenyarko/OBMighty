@@ -113,8 +113,7 @@ class User extends Authenticatable
      */
     public function managedCompanies()
     {
-        return $this->belongsToMany(Company::class, 'admin_manager_companies', 'user_id', 'company_id')
-                    ->withTimestamps();
+        return $this->belongsToMany(Company::class, 'admin_manager_companies', 'user_id', 'company_id');
     }
 
     /**
