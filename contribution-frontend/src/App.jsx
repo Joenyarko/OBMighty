@@ -26,6 +26,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import CompanyManagement from './pages/admin/CompanyManagement';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminManagers from './pages/admin/AdminManagers';
 import './styles/App.css';
 import './styles/TextColorFix.css';
 
@@ -127,6 +128,7 @@ function App() {
                     <Route path="/admin/companies" element={<AdminRoute><CompanyManagement /></AdminRoute>} />
                     <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
                     <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+                    <Route path="/admin/managers" element={<AdminRoute><AdminManagers /></AdminRoute>} />
 
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

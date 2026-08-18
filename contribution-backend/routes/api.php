@@ -56,9 +56,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Dynamic PWA manifest with company branding
     Route::get('/manifest', [ManifestController::class, 'getManifest']);
-    // Super Admin Routes (Global Access)
+    // Super Admin + Admin Manager Routes (both can access)
     Route::prefix('admin')
-        ->middleware(['role:super_admin', 'super_admin'])
+        ->middleware(['role:super_admin|admin_manager', 'super_admin'])
         ->name('admin.')
         ->group(function () {
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
@@ -66,7 +66,18 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/metrics', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'metrics']);
             Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
             Route::post('/users/{id}/roles', [\App\Http\Controllers\Api\Admin\UserController::class, 'assignRole']);
+
+            // Admin Manager Management (only main super_admin can manage these)
+            Route::middleware('role:super_admin')->group(function () {
+                Route::get('/managers', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'index']);
+                Route::post('/managers', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'store']);
+                Route::put('/managers/{id}', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'update']);
+                Route::delete('/managers/{id}', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'destroy']);
+                Route::post('/managers/{id}/assign-companies', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'assignCompanies']);
+                Route::delete('/managers/{managerId}/companies/{companyId}', [\App\Http\Controllers\Api\Admin\AdminManagerController::class, 'removeCompany']);
+            });
     });
+
 
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);

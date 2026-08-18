@@ -14,10 +14,16 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // Eager load company and roles. 
-        // Note: Global scope 'company' is bypassed by SetSuperAdminContext middleware for Super Admins.
+        $authUser = auth()->user();
+
         $query = User::with(['company', 'roles'])
             ->orderBy('created_at', 'desc');
+
+        // Admin managers can only see users from their assigned companies
+        if ($authUser->hasRole('admin_manager')) {
+            $assignedIds = $authUser->managedCompanies()->pluck('companies.id');
+            $query->whereIn('company_id', $assignedIds);
+        }
 
         // Search by name or email
         if ($request->has('search') && !empty($request->search)) {

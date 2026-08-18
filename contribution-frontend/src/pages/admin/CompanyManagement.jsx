@@ -3,9 +3,11 @@ import { Plus, Search, Edit2, Trash2, Globe, Filter, MoreHorizontal } from 'luci
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useAuth } from '../../context/AuthContext';
 import '../../styles/admin/SuperAdmin.css';
 
 function CompanyManagement() {
+    const { isAdminManager } = useAuth();
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -298,9 +300,12 @@ function CompanyManagement() {
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
-                                            <Trash2 size={16} />
-                                        </button>
+                                        {/* Deactivate — hidden for admin managers */}
+                                        {!isAdminManager && (
+                                            <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                         <button className="nex-btn-icon" onClick={() => openEditModal(company)} title="Edit">
                                             <Edit2 size={16} />
                                         </button>

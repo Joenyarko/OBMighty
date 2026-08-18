@@ -106,4 +106,23 @@ class User extends Authenticatable
     {
         return $query->where('status', 'active');
     }
+
+    /**
+     * Companies this admin manager is allowed to manage.
+     * Only relevant when user has the 'admin_manager' role.
+     */
+    public function managedCompanies()
+    {
+        return $this->belongsToMany(Company::class, 'admin_manager_companies', 'user_id', 'company_id')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Check if this user is a Super Admin Manager
+     */
+    public function isAdminManager()
+    {
+        return $this->hasRole('admin_manager');
+    }
 }
+

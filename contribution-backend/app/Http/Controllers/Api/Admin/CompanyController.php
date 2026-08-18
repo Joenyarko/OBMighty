@@ -16,29 +16,29 @@ class CompanyController extends Controller
      */
     public function index()
     {
-        // Return companies with detailed user counts
-        return response()->json(
-            Company::withCount(['users', 
-                'users as ceos_count' => function ($query) {
-                    $query->whereHas('roles', function ($q) {
-                        $q->where('name', 'ceo');
-                    });
-                },
-                'users as managers_count' => function ($query) {
-                    $query->whereHas('roles', function ($q) {
-                        $q->where('name', 'secretary');
-                    });
-                },
-                'users as workers_count' => function ($query) {
-                    $query->whereHas('roles', function ($q) {
-                        $q->where('name', 'worker');
-                    });
-                }
-            ])
-            ->orderBy('created_at', 'desc')
-            ->get()
-        );
+        $user = auth()->user();
+
+        $query = Company::withCount(['users',
+            'users as ceos_count' => function ($query) {
+                $query->whereHas('roles', function ($q) { $q->where('name', 'ceo'); });
+            },
+            'users as managers_count' => function ($query) {
+                $query->whereHas('roles', function ($q) { $q->where('name', 'secretary'); });
+            },
+            'users as workers_count' => function ($query) {
+                $query->whereHas('roles', function ($q) { $q->where('name', 'worker'); });
+            }
+        ])->orderBy('created_at', 'desc');
+
+        // Admin managers can only see companies assigned to them
+        if ($user->hasRole('admin_manager')) {
+            $assignedIds = $user->managedCompanies()->pluck('companies.id');
+            $query->whereIn('id', $assignedIds);
+        }
+
+        return response()->json($query->get());
     }
+
 
     /**
      * Store a newly created resource in storage.

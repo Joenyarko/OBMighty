@@ -15,7 +15,7 @@ class SetSuperAdminContext
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->hasRole('super_admin')) {
+        if ($request->user() && $request->user()->hasAnyRole(['super_admin', 'admin_manager'])) {
             // Bind a flag to the container that BelongsToCompany trait checks
             app()->instance('is_super_admin', true);
         }
@@ -23,3 +23,4 @@ class SetSuperAdminContext
         return $next($request);
     }
 }
+

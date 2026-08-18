@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Building, Users, Settings, LogOut, Shield, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Building, Users, Settings, LogOut, Shield, Menu, X, UserCog } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/admin/SuperAdmin.css';
 
 const AdminLayout = ({ children }) => {
-    const { user, logout } = useAuth(); // Assuming auth context provides this
+    const { user, logout, isSuperAdmin, isAdminManager } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -37,7 +37,9 @@ const AdminLayout = ({ children }) => {
                         />
                         <div>
                             <div style={{ lineHeight: '1.2' }}>Neziz</div>
-                            <div style={{ fontSize: '10px', color: 'var(--nex-text-secondary)', fontWeight: 'normal' }}>SUPER ADMIN</div>
+                            <div style={{ fontSize: '10px', color: 'var(--nex-text-secondary)', fontWeight: 'normal' }}>
+                                {isAdminManager ? 'ADMIN MANAGER' : 'SUPER ADMIN'}
+                            </div>
                         </div>
                     </div>
                     <button
@@ -74,6 +76,18 @@ const AdminLayout = ({ children }) => {
                         <Users size={18} />
                         Identities
                     </NavLink>
+
+                    {/* Only visible to main Super Admin */}
+                    {isSuperAdmin && (
+                        <NavLink
+                            to="/admin/managers"
+                            className={({ isActive }) => `nex-nav-item ${isActive ? 'active' : ''}`}
+                            onClick={() => setIsMobileOpen(false)}
+                        >
+                            <UserCog size={18} />
+                            Admin Managers
+                        </NavLink>
+                    )}
                 </div>
 
                 <div className="nex-menu-group">
