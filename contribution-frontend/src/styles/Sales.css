@@ -291,18 +291,47 @@
 @media (max-width: 768px) {
     .sales-page {
         padding: 1rem;
-        width: 100vw;
+        width: 100%;
+        max-width: 100%;
         box-sizing: border-box;
         overflow-x: hidden;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .period-selector {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        gap: 4px;
+        background: #2a2a2a;
+        padding: 4px;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .period-selector button {
+        flex: 1;
+        padding: 8px 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        text-align: center;
     }
 
     .sales-content {
         grid-template-columns: 1fr;
         width: 100%;
+        gap: 1.25rem;
     }
 
     .workers-list {
-        max-height: 300px;
+        max-height: 260px;
+        padding: 1rem;
     }
 
     .worker-details {
@@ -311,12 +340,32 @@
         max-width: 100%;
         box-sizing: border-box;
         overflow: hidden;
-        /* Force child contents to respect bounds */
         min-width: 0;
     }
 
     .summary-cards {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .summary-card .card-icon {
+        font-size: 1.5rem;
+    }
+
+    .summary-card .card-content h3 {
+        font-size: 0.75rem;
+        margin-bottom: 2px;
+    }
+
+    .summary-card .card-value {
+        font-size: 1.1rem;
     }
 
     .payments-table {

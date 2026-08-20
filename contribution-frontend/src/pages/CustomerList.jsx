@@ -15,6 +15,7 @@ function CustomerList() {
     const [companyLogo, setCompanyLogo] = useState(null);
 
     const [statusFilter, setStatusFilter] = useState('');
+    const [percentageFilter, setPercentageFilter] = useState('');
     const [workerFilter, setWorkerFilter] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [workers, setWorkers] = useState([]);
@@ -68,7 +69,7 @@ function CustomerList() {
         if (isCEO || isSecretary) {
             fetchFilterOptions();
         }
-    }, [statusFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
+    }, [statusFilter, percentageFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
 
     // Debounce search
     useEffect(() => {
@@ -107,6 +108,7 @@ function CustomerList() {
                 page,
                 search: searchTerm,
                 status: statusFilter,
+                percentage: percentageFilter,
                 worker_id: workerFilter,
                 branch_id: branchFilter
             };
@@ -212,9 +214,8 @@ function CustomerList() {
             </div>
 
             {/* Filter Controls */}
-            <div className="controls-section" style={{ gap: '12px', flexWrap: 'wrap' }}>
-                {/* ... (Search and other filters) */}
-                <div className="search-form" style={{ flex: 1, minWidth: '200px' }}>
+            <div className="controls-section">
+                <div className="search-form">
                     <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                     <input
                         type="text"
@@ -226,62 +227,82 @@ function CustomerList() {
                     />
                 </div>
 
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">All Statuses</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="defaulting">Defaulting</option>
-                    <option value="closed">Closed</option>
-                </select>
-
-                {/* Sub-filter for Completed status */}
-                {statusFilter === 'completed' && (
-                    <div className="served-toggle">
-                        <button
-                            className={`toggle-btn ${servedFilter === 'unserved' ? 'active' : ''}`}
-                            onClick={() => setServedFilter('unserved')}
-                        >
-                            Unserved
-                        </button>
-                        <button
-                            className={`toggle-btn ${servedFilter === 'served' ? 'active' : ''}`}
-                            onClick={() => setServedFilter('served')}
-                        >
-                            Served
-                        </button>
-                    </div>
-                )}
-
-
-                {(isCEO || isSecretary) && (
+                <div className="filters-group">
                     <select
-                        value={workerFilter}
-                        onChange={(e) => setWorkerFilter(e.target.value)}
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
                         className="filter-select"
                     >
-                        <option value="">All Workers</option>
-                        {workers.map(w => (
-                            <option key={w.id} value={w.id}>{w.name}</option>
-                        ))}
+                        <option value="">All Statuses</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="defaulting">Defaulting</option>
+                        <option value="closed">Closed</option>
                     </select>
-                )}
 
-                {isCEO && (
+                    {/* Progress Percentage Filter */}
                     <select
-                        value={branchFilter}
-                        onChange={(e) => setBranchFilter(e.target.value)}
-                        className="filter-select"
+                        value={percentageFilter}
+                        onChange={(e) => setPercentageFilter(e.target.value)}
+                        className="filter-select percentage-filter-select"
+                        title="Filter by completion percentage"
                     >
-                        <option value="">All Branches</option>
-                        {branches.map(b => (
-                            <option key={b.id} value={b.id}>{b.name}</option>
-                        ))}
+                        <option value="">All Progress (%)</option>
+                        <option value="60_plus">60%+ (About to Complete)</option>
+                        <option value="70_plus">70%+ (About to Complete)</option>
+                        <option value="80_plus">80%+ (Almost Done)</option>
+                        <option value="90_plus">90%+ (Near Completion)</option>
+                        <option value="60">60% – 69%</option>
+                        <option value="70">70% – 79%</option>
+                        <option value="80">80% – 89%</option>
+                        <option value="90">90% – 99%</option>
+                        <option value="100">100% (Completed)</option>
                     </select>
-                )}
+
+                    {/* Sub-filter for Completed status */}
+                    {statusFilter === 'completed' && (
+                        <div className="served-toggle">
+                            <button
+                                className={`toggle-btn ${servedFilter === 'unserved' ? 'active' : ''}`}
+                                onClick={() => setServedFilter('unserved')}
+                            >
+                                Unserved
+                            </button>
+                            <button
+                                className={`toggle-btn ${servedFilter === 'served' ? 'active' : ''}`}
+                                onClick={() => setServedFilter('served')}
+                            >
+                                Served
+                            </button>
+                        </div>
+                    )}
+
+                    {(isCEO || isSecretary) && (
+                        <select
+                            value={workerFilter}
+                            onChange={(e) => setWorkerFilter(e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">All Workers</option>
+                            {workers.map(w => (
+                                <option key={w.id} value={w.id}>{w.name}</option>
+                            ))}
+                        </select>
+                    )}
+
+                    {isCEO && (
+                        <select
+                            value={branchFilter}
+                            onChange={(e) => setBranchFilter(e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">All Branches</option>
+                            {branches.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
             </div>
 
             {/* Customer Stats */}

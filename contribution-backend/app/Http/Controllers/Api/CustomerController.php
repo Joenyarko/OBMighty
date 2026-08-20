@@ -80,6 +80,37 @@ class CustomerController extends Controller
             }
         }
 
+        // Apply completion percentage filter (e.g. '60_plus', '70_plus', '80_plus', '90_plus', '100', '60', '70', '80', '90')
+        if ($request->has('percentage') && $request->percentage !== '') {
+            $val = (string) $request->percentage;
+            if ($val === '100') {
+                $query->whereRaw('boxes_filled >= total_boxes AND total_boxes > 0');
+            } elseif (str_ends_with($val, '_plus')) {
+                $pct = (float) str_replace('_plus', '', $val) / 100.0;
+                $query->whereRaw('(boxes_filled / total_boxes) >= ? AND total_boxes > 0', [$pct]);
+            } elseif (is_numeric($val)) {
+                $pct = (float) $val;
+                if ($pct >= 100) {
+                    $query->whereRaw('boxes_filled >= total_boxes AND total_boxes > 0');
+                } else {
+                    $min = $pct / 100.0;
+                    $max = ($pct + 9.999) / 100.0;
+                    $query->whereRaw('(boxes_filled / total_boxes) >= ? AND (boxes_filled / total_boxes) <= ? AND total_boxes > 0', [$min, $max]);
+                }
+            }
+        }
+
+        // Direct min_percentage / max_percentage support if passed
+        if ($request->has('min_percentage') && $request->min_percentage !== '') {
+            $minPct = (float) $request->min_percentage / 100.0;
+            $query->whereRaw('(boxes_filled / total_boxes) >= ? AND total_boxes > 0', [$minPct]);
+        }
+        if ($request->has('max_percentage') && $request->max_percentage !== '') {
+            $maxPct = (float) $request->max_percentage / 100.0;
+            $query->whereRaw('(boxes_filled / total_boxes) <= ? AND total_boxes > 0', [$maxPct]);
+        }
+
+
 
         $perPage = max(1, min((int) $request->get('per_page', 12), 100));
         $customers = $query->orderBy('created_at', 'desc')->paginate($perPage);
