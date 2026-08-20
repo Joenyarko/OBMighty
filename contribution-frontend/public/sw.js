@@ -64,26 +64,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first, network fallback
-  event.respondWith(
-    caches.match(request).then(response => {
-      if (response) {
-        return response;
-      }
-      return fetch(request)
-        .then(res => {
-          if (!res || res.status !== 200) {
-            return res;
+  // Navigation and HTML requests: Network-First (always get fresh version from server, fallback to cache if offline)
+  if (request.mode === 'navigate' || request.destination === 'document' || url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const cacheCopy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, cacheCopy));
           }
-          const cacheCopy = res.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, cacheCopy);
-          });
-          return res;
+          return response;
         })
-        .catch(() => {
-          // Silent fail for offline
-        });
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Static assets (hashed JS, CSS, images): Stale-While-Revalidate
+  event.respondWith(
+    caches.match(request).then(cachedResponse => {
+      const fetchPromise = fetch(request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
+
+      // Return cached version immediately if available, otherwise wait for network
+      return cachedResponse || fetchPromise;
     })
   );
 });
+
