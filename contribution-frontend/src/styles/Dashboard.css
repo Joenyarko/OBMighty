@@ -33,17 +33,22 @@
 
 .stats-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
 }
 
 .stat-card {
     background: var(--card-bg);
-    padding: 24px;
+    padding: 20px;
     border-radius: 12px;
     box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
     transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column !important;
+    justify-content: center;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 .stat-card:hover {
@@ -58,12 +63,13 @@
 }
 
 .stat-card h3 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
-    margin-bottom: 12px;
-    opacity: 0.9;
+    margin-bottom: 6px;
+    opacity: 0.85;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: var(--text-secondary);
 }
 
 .stat-card.highlight h3 {
@@ -72,10 +78,12 @@
 }
 
 .stat-value {
-    font-size: 32px;
+    font-size: 22px;
     font-weight: 700;
     margin: 0;
     color: var(--primary-color);
+    word-break: break-word;
+    line-height: 1.2;
 }
 
 .stat-card.highlight .stat-value {
@@ -159,23 +167,38 @@
     }
 
     .stat-value {
-        font-size: 36px;
+        font-size: 26px;
     }
 }
 
 /* Mobile Adjustments */
 @media (max-width: 767px) {
-    .stat-card {
-        padding: 16px;
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
     }
 
-    .stat-value {
-        font-size: 24px;
+    .stat-card {
+        padding: 12px 10px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        text-align: left;
+        min-height: 65px;
     }
 
     .stat-card h3 {
-        font-size: 12px;
-        margin-bottom: 8px;
+        font-size: 10px;
+        margin-bottom: 4px;
+        white-space: normal;
+        line-height: 1.2;
+    }
+
+    .stat-value {
+        font-size: 14px !important;
+        font-weight: 800;
+        letter-spacing: -0.2px;
+        word-break: break-all;
     }
 }
 

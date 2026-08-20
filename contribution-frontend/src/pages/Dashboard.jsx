@@ -136,6 +136,24 @@ function Dashboard() {
     );
 }
 
+// Currency & Number Formatting Helpers
+const formatGHS = (val, decimals = 2) => {
+    if (val === undefined || val === null || val === '') return '0.00';
+    const num = Number(val);
+    if (isNaN(num)) return '0.00';
+    return num.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+};
+
+const formatNumber = (val) => {
+    if (val === undefined || val === null || val === '') return '0';
+    const num = Number(val);
+    if (isNaN(num)) return '0';
+    return num.toLocaleString('en-US');
+};
+
 function WorkerDashboard({ data }) {
     const workerTotal = data?.worker_total || {};
 
@@ -145,19 +163,19 @@ function WorkerDashboard({ data }) {
                 <div className="stat-card">
                     <h3>Today's Collections</h3>
                     <p className="stat-value">
-                        GHS{workerTotal.total_collections || 0}
+                        GHS {formatGHS(workerTotal.total_collections)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Customers Paid</h3>
                     <p className="stat-value">
-                        {workerTotal.total_customers_paid || 0}
+                        {formatNumber(workerTotal.total_customers_paid)}
                     </p>
                 </div>
                 <div className="stat-card highlight">
                     <h3>Total Customers</h3>
                     <p className="stat-value">
-                        {workerTotal.total_customers || 0}
+                        {formatNumber(workerTotal.total_customers)}
                     </p>
                 </div>
             </div>
@@ -170,7 +188,7 @@ function WorkerDashboard({ data }) {
                             <div key={payment.id} className="payment-item">
                                 <div>
                                     <strong>{payment.customer?.name}</strong>
-                                    <p>GHS{payment.payment_amount}</p>
+                                    <p>GHS {formatGHS(payment.payment_amount)}</p>
                                 </div>
                                 <span className="payment-time">
                                     {new Date(payment.created_at).toLocaleTimeString()}
@@ -195,25 +213,25 @@ function SecretaryDashboard({ data }) {
                 <div className="stat-card">
                     <h3>Branch Collections</h3>
                     <p className="stat-value">
-                        GHS{branchTotal.total_collections || 0}
+                        GHS {formatGHS(branchTotal.total_collections)}
                     </p>
                 </div>
                 <div className="stat-card highlight">
                     <h3>Total Customers</h3>
                     <p className="stat-value">
-                        {branchTotal.total_customers || 0}
+                        {formatNumber(branchTotal.total_customers)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Total Payments</h3>
                     <p className="stat-value">
-                        {branchTotal.total_payments || 0}
+                        {formatNumber(branchTotal.total_payments)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Active Workers</h3>
                     <p className="stat-value">
-                        {branchTotal.total_workers_active || 0}
+                        {formatNumber(branchTotal.total_workers_active)}
                     </p>
                 </div>
             </div>
@@ -226,10 +244,10 @@ function SecretaryDashboard({ data }) {
                             <div key={wt.id} className="worker-item">
                                 <div>
                                     <strong>{wt.worker?.name}</strong>
-                                    <p>{wt.total_customers_paid} customers</p>
+                                    <p>{formatNumber(wt.total_customers_paid)} customers</p>
                                 </div>
                                 <span className="worker-total">
-                                    GHS{wt.total_collections}
+                                    GHS {formatGHS(wt.total_collections)}
                                 </span>
                             </div>
                         ))}
@@ -253,32 +271,32 @@ function CEODashboard({ data }) {
                 <div className="stat-card">
                     <h3>Overall Revenue</h3>
                     <p className="stat-value" style={{ color: '#2ecc71' }}>
-                        GHS{overview.overall_revenue || 0}
+                        GHS {formatGHS(overview.overall_revenue)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Overall Expense</h3>
                     <p className="stat-value" style={{ color: '#e74c3c' }}>
-                        GHS{overview.overall_expense || 0}
+                        GHS {formatGHS(overview.overall_expense)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Overall Profit</h3>
-                    <p className="stat-value" style={{ color: (overview.overall_profit) >= 0 ? '#2ecc71' : '#e74c3c' }}>
-                        GHS{overview.overall_profit ? overview.overall_profit.toFixed(2) : '0.00'}
+                    <p className="stat-value" style={{ color: (overview.overall_profit || 0) >= 0 ? '#2ecc71' : '#e74c3c' }}>
+                        GHS {formatGHS(overview.overall_profit)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Total Staff</h3>
                     <p className="stat-value">
-                        {overview.total_staff || 0}
+                        {formatNumber(overview.total_staff)}
                     </p>
                 </div>
 
                 <div className="stat-card">
                     <h3>Card Types</h3>
                     <p className="stat-value">
-                        {overview.total_card_templates || 0}
+                        {formatNumber(overview.total_card_templates)}
                     </p>
                 </div>
             </div>
@@ -287,25 +305,25 @@ function CEODashboard({ data }) {
                 <div className="stat-card highlight">
                     <h3>Today Collections</h3>
                     <p className="stat-value">
-                        GHS{overview.today_revenue || 0}
+                        GHS {formatGHS(overview.today_revenue)}
                     </p>
                 </div>
                 <div className="stat-card highlight" style={{ background: '#2c3e50', color: 'white' }}>
                     <h3 style={{ color: 'white' }}>Total Customers</h3>
                     <p className="stat-value">
-                        {overview.total_customers || 0}
+                        {formatNumber(overview.total_customers)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Total Profit</h3>
-                    <p className="stat-value" style={{ color: (overview.overall_profit) >= 0 ? '#2ecc71' : '#e74c3c' }}>
-                        GHS{overview.overall_profit ? overview.overall_profit.toFixed(2) : '0.00'}
+                    <p className="stat-value" style={{ color: (overview.overall_profit || 0) >= 0 ? '#2ecc71' : '#e74c3c' }}>
+                        GHS {formatGHS(overview.overall_profit)}
                     </p>
                 </div>
                 <div className="stat-card">
                     <h3>Total Branches</h3>
                     <p className="stat-value">
-                        {overview.total_branches || 0}
+                        {formatNumber(overview.total_branches)}
                     </p>
                 </div>
             </div>
