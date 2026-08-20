@@ -87,7 +87,7 @@
     justify-content: space-between;
     padding: 20px 16px;
     height: 70px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .brand {
@@ -102,13 +102,13 @@
     height: 36px;
     border-radius: 8px;
     object-fit: cover;
-    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    border: 1.5px solid rgba(0, 0, 0, 0.25);
     background: #ffffff;
 }
 
 .brand-text h2 {
     font-size: 18px;
-    color: #ffffff !important;
+    color: #111111 !important;
     margin: 0;
     line-height: 1.2;
     white-space: nowrap;
@@ -117,7 +117,7 @@
 
 .brand-text span {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
     display: block;
     white-space: nowrap;
 }
@@ -125,7 +125,7 @@
 .collapse-btn {
     background: transparent;
     border: none;
-    color: #ffffff !important;
+    color: #111111 !important;
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -134,14 +134,14 @@
 }
 
 .collapse-btn:hover {
-    background: rgba(0, 0, 0, 0.15);
-    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.12);
+    color: #000000 !important;
 }
 
 .mobile-close {
     background: transparent;
     border: none;
-    color: #ffffff !important;
+    color: #111111 !important;
     cursor: pointer;
 }
 
@@ -165,7 +165,7 @@
 .section-title {
     font-size: 11px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
@@ -178,7 +178,7 @@
     display: flex;
     align-items: center;
     padding: 10px 12px;
-    color: #ffffff !important;
+    color: #111111 !important;
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.2s ease;
@@ -195,16 +195,16 @@
 }
 
 .nav-item:hover {
-    background: rgba(0, 0, 0, 0.18) !important;
-    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.12) !important;
+    color: #000000 !important;
 }
 
 .nav-item.active,
 .nav-item.active-parent {
-    background: rgba(0, 0, 0, 0.28) !important;
-    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.22) !important;
+    color: #000000 !important;
     font-weight: 700;
-    box-shadow: inset 3px 0 0 #ffffff;
+    box-shadow: inset 3px 0 0 #000000;
 }
 
 .nav-icon {
@@ -213,28 +213,28 @@
     justify-content: center;
     min-width: 24px;
     margin-right: 12px;
-    color: #ffffff !important;
+    color: #111111 !important;
 }
 
 .nav-label {
     flex: 1;
     font-size: 14px;
     font-weight: 500;
-    color: #ffffff !important;
+    color: #111111 !important;
 }
 
 .nav-arrow {
     display: flex;
     align-items: center;
-    color: #ffffff !important;
-    opacity: 0.85;
+    color: #111111 !important;
+    opacity: 0.8;
 }
 
 /* Submenu */
 .submenu {
     margin-left: 12px;
     padding-left: 12px;
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    border-left: 1px solid rgba(0, 0, 0, 0.2);
     margin-top: 4px;
     display: flex;
     flex-direction: column;
@@ -243,7 +243,7 @@
 
 .nav-sub-item {
     padding: 8px 12px;
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: rgba(0, 0, 0, 0.8) !important;
     text-decoration: none;
     font-size: 13px;
     border-radius: 6px;
@@ -254,13 +254,13 @@
 }
 
 .nav-sub-item:hover {
-    color: #ffffff !important;
-    background: rgba(0, 0, 0, 0.15) !important;
+    color: #000000 !important;
+    background: rgba(0, 0, 0, 0.1) !important;
 }
 
 .nav-sub-item.active {
-    color: #ffffff !important;
-    background: rgba(0, 0, 0, 0.28) !important;
+    color: #000000 !important;
+    background: rgba(0, 0, 0, 0.22) !important;
     font-weight: 700;
 }
 
@@ -268,27 +268,27 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #ffffff !important;
-    opacity: 0.85;
+    background: #000000 !important;
+    opacity: 0.8;
 }
 
 /* Logout Button Special Styling */
 .logout-btn {
     margin-top: auto;
-    color: #ffffff !important;
-    background: rgba(0, 0, 0, 0.12) !important;
+    color: #111111 !important;
+    background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .logout-btn:hover {
-    background: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.35) !important;
     color: #ffffff !important;
 }
 
 /* Sidebar Footer (User Profile) */
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(0, 0, 0, 0.2) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.08) !important;
 }
 
 .user-profile {
@@ -301,15 +301,15 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.25) !important;
-    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.15) !important;
+    color: #000000 !important;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 16px;
     flex-shrink: 0;
-    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    border: 1.5px solid rgba(0, 0, 0, 0.25);
 }
 
 .user-details {
@@ -321,12 +321,12 @@
 .user-details .name {
     font-size: 14px;
     font-weight: 600;
-    color: #ffffff !important;
+    color: #111111 !important;
 }
 
 .user-details .email {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: rgba(0, 0, 0, 0.75) !important;
     overflow: hidden;
     text-overflow: ellipsis;
 }

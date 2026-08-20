@@ -97,7 +97,7 @@ body .page-header h1 {
     color: var(--primary-color) !important;
 }
 
-/* Sidebar Text Colors - Always Crisp White on Tenant Primary Color Background in all themes */
+/* Sidebar Text Colors - Sleek Black on Tenant Primary Color Background in all themes */
 body .sidebar,
 body .sidebar h1,
 body .sidebar h2,
@@ -107,7 +107,7 @@ body .sidebar p,
 body .sidebar span,
 body .sidebar div,
 body .sidebar a,
-body .sidebar button,
+body .sidebar button:not(.btn-primary),
 body .sidebar .nav-item,
 body .sidebar .nav-label,
 body .sidebar .nav-icon,
@@ -117,5 +117,5 @@ body .sidebar .brand-text h2,
 body .sidebar .brand-text span,
 body .sidebar .user-details .name,
 body .sidebar .user-details .email {
-    color: #ffffff !important;
+    color: #111111 !important;
 }
