@@ -59,11 +59,11 @@
 /* Sidebar Styling */
 .sidebar {
     width: 260px;
-    background-color: var(--sidebar-bg);
+    background-color: var(--primary-color) !important;
     display: flex;
     flex-direction: column;
     transition: width 0.3s ease, transform 0.3s ease;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid rgba(0, 0, 0, 0.15);
     /* Mobile: Fixed positioning */
     position: fixed;
     top: 0;
@@ -73,6 +73,7 @@
     z-index: 200;
     overflow-y: hidden;
     /* Manage scroll internally */
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar.mobile-open {
@@ -86,8 +87,7 @@
     justify-content: space-between;
     padding: 20px 16px;
     height: 70px;
-    /* Fixed height */
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .brand {
@@ -102,20 +102,22 @@
     height: 36px;
     border-radius: 8px;
     object-fit: cover;
-    border: 1px solid var(--primary-color);
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    background: #ffffff;
 }
 
 .brand-text h2 {
     font-size: 18px;
-    color: var(--text-primary);
+    color: #ffffff !important;
     margin: 0;
     line-height: 1.2;
     white-space: nowrap;
+    font-weight: 700;
 }
 
 .brand-text span {
     font-size: 11px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85) !important;
     display: block;
     white-space: nowrap;
 }
@@ -123,7 +125,7 @@
 .collapse-btn {
     background: transparent;
     border: none;
-    color: var(--text-secondary);
+    color: #ffffff !important;
     cursor: pointer;
     padding: 4px;
     border-radius: 4px;
@@ -132,14 +134,14 @@
 }
 
 .collapse-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.15);
+    color: #ffffff !important;
 }
 
 .mobile-close {
     background: transparent;
     border: none;
-    color: var(--text-secondary);
+    color: #ffffff !important;
     cursor: pointer;
 }
 
@@ -163,12 +165,12 @@
 .section-title {
     font-size: 11px;
     font-weight: 700;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85) !important;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 8px;
     padding-left: 12px;
-    opacity: 0.6;
+    opacity: 1 !important;
 }
 
 /* Nav Items */
@@ -176,7 +178,7 @@
     display: flex;
     align-items: center;
     padding: 10px 12px;
-    color: var(--text-secondary);
+    color: #ffffff !important;
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.2s ease;
@@ -188,19 +190,21 @@
     width: 100%;
     text-align: left;
     font-family: inherit;
-    font-size: 16px;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.18) !important;
+    color: #ffffff !important;
 }
 
 .nav-item.active,
 .nav-item.active-parent {
-    background: rgba(212, 175, 55, 0.15);
-    /* Primary color low opacity */
-    color: var(--primary-color);
+    background: rgba(0, 0, 0, 0.28) !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    box-shadow: inset 3px 0 0 #ffffff;
 }
 
 .nav-icon {
@@ -208,27 +212,29 @@
     align-items: center;
     justify-content: center;
     min-width: 24px;
-    /* Fixed width for alignment */
     margin-right: 12px;
+    color: #ffffff !important;
 }
 
 .nav-label {
     flex: 1;
     font-size: 14px;
     font-weight: 500;
+    color: #ffffff !important;
 }
 
 .nav-arrow {
     display: flex;
     align-items: center;
-    opacity: 0.5;
+    color: #ffffff !important;
+    opacity: 0.85;
 }
 
 /* Submenu */
 .submenu {
     margin-left: 12px;
     padding-left: 12px;
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
     margin-top: 4px;
     display: flex;
     flex-direction: column;
@@ -237,7 +243,7 @@
 
 .nav-sub-item {
     padding: 8px 12px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.9) !important;
     text-decoration: none;
     font-size: 13px;
     border-radius: 6px;
@@ -248,39 +254,41 @@
 }
 
 .nav-sub-item:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.03);
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.15) !important;
 }
 
 .nav-sub-item.active {
-    color: var(--primary-color);
-    background: rgba(212, 175, 55, 0.05);
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.28) !important;
+    font-weight: 700;
 }
 
 .sub-dot {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
-    background: currentColor;
-    opacity: 0.5;
+    background: #ffffff !important;
+    opacity: 0.85;
 }
 
 /* Logout Button Special Styling */
 .logout-btn {
     margin-top: auto;
-    color: var(--danger-color);
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.12) !important;
 }
 
 .logout-btn:hover {
-    background: rgba(255, 68, 68, 0.1);
-    color: #ff6b6b;
+    background: rgba(239, 68, 68, 0.4) !important;
+    color: #ffffff !important;
 }
 
 /* Sidebar Footer (User Profile) */
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid var(--border-color);
-    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2) !important;
 }
 
 .user-profile {
@@ -293,14 +301,15 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--primary-dark);
-    color: var(--black);
+    background: rgba(0, 0, 0, 0.25) !important;
+    color: #ffffff !important;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
     font-size: 16px;
     flex-shrink: 0;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
 }
 
 .user-details {
@@ -312,12 +321,12 @@
 .user-details .name {
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #ffffff !important;
 }
 
 .user-details .email {
     font-size: 11px;
-    color: var(--text-secondary);
+    color: rgba(255, 255, 255, 0.85) !important;
     overflow: hidden;
     text-overflow: ellipsis;
 }

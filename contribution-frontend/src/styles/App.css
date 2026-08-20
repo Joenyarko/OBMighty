@@ -19,8 +19,8 @@
   /* Deep Matte Black */
   --card-bg: #1E1E1E;
   /* Dark Gray Card */
-  --sidebar-bg: #1A1A1A;
-  /* Dark Sidebar */
+  --sidebar-bg: var(--primary-color);
+  /* Dynamic Tenant Primary Color Sidebar */
   --text-primary: #FFFFFF;
   --text-secondary: #B0B0B0;
   --border-color: #333333;
@@ -38,7 +38,7 @@
   --secondary-color: #F4D03F;
   --bg-color: #F5F7FA;
   --card-bg: #FFFFFF;
-  --sidebar-bg: #FFFFFF;
+  --sidebar-bg: var(--primary-color);
   --text-primary: #000000;
   --text-secondary: #666666;
   --border-color: #E0E0E0;
