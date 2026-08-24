@@ -252,6 +252,12 @@ class CustomerController extends Controller
             $validated['amount_paid'] = 0;
             $validated['status'] = 'in_progress';
 
+            // Auto-calculate due_date if start_date is provided and due_date is not set
+            if (!empty($validated['start_date']) && empty($validated['due_date'])) {
+                $duration = $card->duration_months ?? 6;
+                $validated['due_date'] = \Carbon\Carbon::parse($validated['start_date'])->addMonths($duration)->toDateString();
+            }
+
             $customer = Customer::create($validated);
 
             // Create audit log
@@ -323,6 +329,13 @@ class CustomerController extends Controller
         ], [
             'phone.regex' => 'The phone number must be exactly 10 digits.',
         ]);
+
+        // Auto-calculate due_date if start_date is provided and due_date is empty
+        if (!empty($validated['start_date']) && empty($validated['due_date'])) {
+            $card = $customer->card;
+            $duration = $card ? ($card->duration_months ?? 6) : 6;
+            $validated['due_date'] = \Carbon\Carbon::parse($validated['start_date'])->addMonths($duration)->toDateString();
+        }
 
         $oldValues = $customer->toArray();
         $customer->update($validated);

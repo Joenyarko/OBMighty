@@ -194,6 +194,11 @@ class CustomerCard extends Model
 
         if (!$customer->start_date && $lastPaymentDate) {
             $updateData['start_date'] = $lastPaymentDate;
+            if (!$customer->due_date) {
+                $card = $this->card ?? $customer->card;
+                $duration = $card ? ($card->duration_months ?? 6) : 6;
+                $updateData['due_date'] = \Carbon\Carbon::parse($lastPaymentDate)->addMonths($duration)->toDateString();
+            }
         }
 
         $customer->update($updateData);

@@ -41,6 +41,7 @@ class CardController extends Controller
             'card_name' => 'required|string|max:255|unique:cards,card_name',
             'number_of_boxes' => 'required|integer|min:1',
             'amount' => 'required|numeric|min:0',
+            'duration_months' => 'nullable|integer|min:1',
             'front_image' => 'required|image|mimes:jpeg,jpg,png|max:5120', // 5MB max
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'nullable|in:active,inactive',
@@ -65,6 +66,7 @@ class CardController extends Controller
         }
 
         $validated['status'] = $validated['status'] ?? 'active';
+        $validated['duration_months'] = isset($validated['duration_months']) && $validated['duration_months'] > 0 ? (int)$validated['duration_months'] : 6;
 
         $card = Card::create($validated);
 
@@ -89,11 +91,13 @@ class CardController extends Controller
     public function update(Request $request, $id)
     {
         $card = Card::findOrFail($id);
+        $oldDuration = $card->duration_months;
 
         $validated = $request->validate([
             'card_name' => 'sometimes|string|max:255|unique:cards,card_name,' . $id,
             'number_of_boxes' => 'sometimes|integer|min:1',
             'amount' => 'sometimes|numeric|min:0',
+            'duration_months' => 'sometimes|integer|min:1',
             'front_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'sometimes|in:active,inactive',
@@ -128,6 +132,19 @@ class CardController extends Controller
         }
 
         $card->update($validated);
+
+        // If card duration changed, update due date for all customers on this card
+        if (isset($validated['duration_months']) && (int)$validated['duration_months'] !== (int)$oldDuration) {
+            $newDuration = (int)$validated['duration_months'];
+            $customers = \App\Models\Customer::where('card_id', $card->id)
+                ->whereNotNull('start_date')
+                ->get();
+
+            foreach ($customers as $cust) {
+                $cust->due_date = \Carbon\Carbon::parse($cust->start_date)->addMonths($newDuration)->toDateString();
+                $cust->save();
+            }
+        }
 
         return response()->json([
             'message' => 'Card updated successfully',

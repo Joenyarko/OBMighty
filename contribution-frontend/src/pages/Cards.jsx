@@ -24,6 +24,7 @@ function Cards() {
         card_name: '',
         number_of_boxes: '',
         amount: '',
+        duration_months: 6,
         status: 'active'
     });
     const [frontImagePreview, setFrontImagePreview] = useState(null);
@@ -112,6 +113,7 @@ function Cards() {
             card_name: '',
             number_of_boxes: '',
             amount: '',
+            duration_months: 6,
             status: 'active'
         });
         setFrontImagePreview(null);
@@ -138,6 +140,7 @@ function Cards() {
         data.append('card_name', formData.card_name);
         data.append('number_of_boxes', formData.number_of_boxes);
         data.append('amount', totalAmount); // Send total, not per-box price
+        data.append('duration_months', formData.duration_months || 6);
         data.append('status', formData.status);
 
         if (frontImageFile) {
@@ -172,6 +175,7 @@ function Cards() {
             card_name: card.card_name,
             number_of_boxes: card.number_of_boxes,
             amount: perBoxPrice, // Show per-box price, not total
+            duration_months: card.duration_months || 6,
             status: card.status
         });
         setFrontImagePreview(card.front_image_url);
@@ -270,6 +274,12 @@ function Cards() {
                                     <span className="label">Amount:</span>
                                     <span className="value amount">₵{parseFloat(card.amount).toFixed(2)}</span>
                                 </div>
+                                <div className="detail-row">
+                                    <span className="label">Duration:</span>
+                                    <span className="value" style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+                                        {card.duration_months || 6} Months
+                                    </span>
+                                </div>
                             </div>
 
                             <div className="card-actions">
@@ -367,6 +377,41 @@ function Cards() {
                                         required
                                     />
                                 </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Duration / Due Period *</label>
+                                <select
+                                    name="duration_months"
+                                    value={formData.duration_months}
+                                    onChange={handleInputChange}
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        background: 'var(--bg-color)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '14px'
+                                    }}
+                                >
+                                    <option value="1">1 Month</option>
+                                    <option value="2">2 Months</option>
+                                    <option value="3">3 Months</option>
+                                    <option value="4">4 Months</option>
+                                    <option value="5">5 Months</option>
+                                    <option value="6">6 Months (Default)</option>
+                                    <option value="9">9 Months</option>
+                                    <option value="12">12 Months (1 Year)</option>
+                                    <option value="18">18 Months (1.5 Years)</option>
+                                    <option value="24">24 Months (2 Years)</option>
+                                </select>
+                                {editMode && (
+                                    <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '6px', fontSize: '12px' }}>
+                                        ℹ️ Changing this duration will automatically update the due date for all customers registered on this card.
+                                    </small>
+                                )}
                             </div>
 
                             <div className="form-row">

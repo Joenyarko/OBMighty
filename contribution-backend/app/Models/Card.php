@@ -16,6 +16,7 @@ class Card extends Model
         'card_code',
         'number_of_boxes',
         'amount',
+        'duration_months',
         'front_image',
         'back_image',
         'status',
@@ -24,6 +25,7 @@ class Card extends Model
     protected $casts = [
         'number_of_boxes' => 'integer',
         'amount' => 'decimal:2',
+        'duration_months' => 'integer',
     ];
 
     protected $appends = ['front_image_url', 'back_image_url'];

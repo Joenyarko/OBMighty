@@ -110,6 +110,11 @@ class PaymentService
                 $customer->last_payment_date = $paymentDate;
                 if (!$customer->start_date) {
                     $customer->start_date = $paymentDate;
+                    if (!$customer->due_date) {
+                        $card = $customer->card;
+                        $duration = $card ? ($card->duration_months ?? 6) : 6;
+                        $customer->due_date = \Carbon\Carbon::parse($paymentDate)->addMonths($duration)->toDateString();
+                    }
                 }
                 
                 // Update customer status

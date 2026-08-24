@@ -609,8 +609,21 @@ function EditCustomerModal({ customer, onClose, onSubmit }) {
                         <input
                             type="date"
                             value={formData.start_date}
-                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                            onChange={(e) => {
+                                const newStart = e.target.value;
+                                const duration = customer?.card?.duration_months || 6;
+                                let newDue = formData.due_date;
+                                if (newStart && (!formData.due_date || formData.due_date === '')) {
+                                    const d = new Date(newStart);
+                                    d.setMonth(d.getMonth() + duration);
+                                    newDue = d.toISOString().split('T')[0];
+                                }
+                                setFormData({ ...formData, start_date: newStart, due_date: newDue });
+                            }}
                         />
+                        <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '4px', fontSize: '11px' }}>
+                            Card Duration: {customer?.card?.duration_months || 6} Months (Default)
+                        </small>
                     </div>
                     <div className="form-group">
                         <label>Due Date</label>
