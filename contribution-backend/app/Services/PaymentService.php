@@ -108,6 +108,9 @@ class PaymentService
                 $customer->boxes_filled += $boxesToMark;
                 $customer->amount_paid += $paymentAmount;
                 $customer->last_payment_date = $paymentDate;
+                if (!$customer->start_date) {
+                    $customer->start_date = $paymentDate;
+                }
                 
                 // Update customer status
                 if ($customer->boxes_filled >= $customer->total_boxes) {

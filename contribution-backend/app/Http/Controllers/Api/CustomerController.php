@@ -59,6 +59,7 @@ class CustomerController extends Controller
             'in_progress' => (clone $statsQuery)->where('customers.status', 'in_progress')->count(),
             'completed' => (clone $statsQuery)->where('customers.status', 'completed')->count(),
             'defaulting' => (clone $statsQuery)->defaulting()->count(),
+            'due' => (clone $statsQuery)->due()->count(),
         ];
 
         // Default to active customers only (unless status filter is explicitly provided)
@@ -75,8 +76,22 @@ class CustomerController extends Controller
                 $query->completed();
             } elseif ($status === 'in_progress') {
                 $query->inProgress();
+            } elseif ($status === 'due' || $status === 'overdue') {
+                $query->due();
             } else {
                 $query->where('customers.status', $status);
+            }
+        }
+
+        // Apply due date filter (e.g. 'overdue', 'due', 'due_this_week', 'due_this_month')
+        if ($request->has('due_filter') && $request->due_filter !== '') {
+            $dueFilter = $request->due_filter;
+            if ($dueFilter === 'overdue' || $dueFilter === 'due') {
+                $query->due();
+            } elseif ($dueFilter === 'due_this_week') {
+                $query->dueThisWeek();
+            } elseif ($dueFilter === 'due_this_month') {
+                $query->dueThisMonth();
             }
         }
 
@@ -153,6 +168,8 @@ class CustomerController extends Controller
             'phone' => 'required|string|regex:/^[0-9]{10}$/',
             'location' => 'required|string',
             'card_id' => 'required|exists:cards,id',
+            'start_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
             'branch_id' => 'nullable|exists:branches,id',
             'worker_id' => 'nullable|exists:users,id',
             'total_boxes' => 'nullable|integer|min:1',
@@ -301,6 +318,8 @@ class CustomerController extends Controller
             ],
             'phone' => 'sometimes|string|regex:/^[0-9]{10}$/',
             'location' => 'sometimes|string',
+            'start_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
         ], [
             'phone.regex' => 'The phone number must be exactly 10 digits.',
         ]);

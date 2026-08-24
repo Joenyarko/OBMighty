@@ -238,6 +238,21 @@
     margin: 0;
 }
 
+.customer-details p {
+    margin: 8px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.card-date-info {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    font-size: 12px;
+}
+
 .status-badge {
     padding: 6px 12px;
     border-radius: 20px;

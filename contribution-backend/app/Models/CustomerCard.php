@@ -185,14 +185,18 @@ class CustomerCard extends Model
 
         // GLOBAL STATUS: If any card is still in progress, the customer is in progress
         $hasInProgress = $customer->customerCards()->where('status', '!=', 'completed')->exists();
-        $newStatus = $hasInProgress ? 'in_progress' : 'completed';
-
-        $customer->update([
+        $updateData = [
             'boxes_filled' => $totals->total_boxes_filled ?? $this->boxes_checked,
             'amount_paid' => $totals->total_amount_paid ?? $this->amount_paid,
             'last_payment_date' => $lastPaymentDate,
             'status' => $newStatus
-        ]);
+        ];
+
+        if (!$customer->start_date && $lastPaymentDate) {
+            $updateData['start_date'] = $lastPaymentDate;
+        }
+
+        $customer->update($updateData);
     }
 
     /**

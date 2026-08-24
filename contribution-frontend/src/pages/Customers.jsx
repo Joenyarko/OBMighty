@@ -330,13 +330,15 @@ function Customers() {
                             <th>Branch</th>
                             <th>Worker</th>
                             <th>Card</th>
+                            <th>Start Date</th>
+                            <th>Due Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {customers.length === 0 ? (
                             <tr>
-                                <td colSpan="7" className="no-data">No customers found</td>
+                                <td colSpan="9" className="no-data">No customers found</td>
                             </tr>
                         ) : (
                             customers.map((customer) => (
@@ -364,9 +366,24 @@ function Customers() {
                                         ) : '-'}
                                     </td>
                                     <td data-label="Location">{customer.location}</td>
-                                    <td data-label="Branch">{customer.branch?.name || 'N/A'}</td>
-                                    <td data-label="Worker">{customer.worker?.name || 'N/A'}</td>
-                                    <td data-label="Card">{customer.card?.card_name || 'N/A'}</td>
+                                    <td data-label="Branch">{customer.branch?.name || '-'}</td>
+                                    <td data-label="Worker">{customer.worker?.name || '-'}</td>
+                                    <td data-label="Card">{customer.card?.card_name || '-'}</td>
+                                    <td data-label="Start Date">
+                                        {customer.start_date ? new Date(customer.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                    </td>
+                                    <td data-label="Due Date">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ color: customer.is_due ? '#e74c3c' : 'inherit', fontWeight: customer.is_due ? '700' : 'normal' }}>
+                                                {customer.due_date ? new Date(customer.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                            </span>
+                                            {customer.is_due && (
+                                                <span style={{ background: '#e74c3c', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                                                    DUE
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td data-label="Actions" className="actions-cell">
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                                             <button
@@ -590,6 +607,8 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
         phone: '',
         location: '',
         card_id: preSelectedCardId || '',
+        start_date: '',
+        due_date: '',
         branch_id: '',
         worker_id: '',
     });
@@ -771,6 +790,24 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
                         </select>
                     </div>
 
+                    <div className="form-group">
+                        <label>Start Date (Optional)</label>
+                        <input
+                            type="date"
+                            value={formData.start_date}
+                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                        />
+                    </div>
+
+                    <div className="form-group">
+                        <label>Due Date (Optional)</label>
+                        <input
+                            type="date"
+                            value={formData.due_date}
+                            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                        />
+                    </div>
+
                     {selectedCard && (
                         <div className="card-preview">
                             <h4>Card Details:</h4>
@@ -809,9 +846,11 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
 
 function EditCustomerModal({ customer, onClose, onSubmit }) {
     const [formData, setFormData] = useState({
-        name: customer.name,
-        phone: customer.phone,
-        location: customer.location,
+        name: customer.name || '',
+        phone: customer.phone || '',
+        location: customer.location || '',
+        start_date: customer.start_date ? customer.start_date.substring(0, 10) : '',
+        due_date: customer.due_date ? customer.due_date.substring(0, 10) : '',
     });
 
     const handleSubmit = (e) => {
@@ -860,6 +899,22 @@ function EditCustomerModal({ customer, onClose, onSubmit }) {
                             value={formData.location}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                             required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date / Date Registered</label>
+                        <input
+                            type="date"
+                            value={formData.start_date}
+                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Due Date</label>
+                        <input
+                            type="date"
+                            value={formData.due_date}
+                            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                         />
                     </div>
 

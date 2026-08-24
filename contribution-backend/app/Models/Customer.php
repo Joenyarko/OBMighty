@@ -18,6 +18,8 @@ class Customer extends Model
         'branch_id',
         'worker_id',
         'card_id',
+        'start_date',
+        'due_date',
         'total_boxes',
         'boxes_filled',
         'price_per_box',
@@ -29,6 +31,8 @@ class Customer extends Model
     ];
 
     protected $casts = [
+        'start_date' => 'date',
+        'due_date' => 'date',
         'total_boxes' => 'integer',
         'boxes_filled' => 'integer',
         'price_per_box' => 'decimal:2',
@@ -38,7 +42,7 @@ class Customer extends Model
         'is_served' => 'boolean',
     ];
 
-    protected $appends = ['balance', 'completion_percentage', 'active_card'];
+    protected $appends = ['balance', 'completion_percentage', 'active_card', 'is_due'];
 
     /**
      * Get the branch this customer belongs to
@@ -178,6 +182,17 @@ class Customer extends Model
     }
 
     /**
+     * Check if customer's due date has arrived/passed and card is not completed
+     */
+    public function getIsDueAttribute()
+    {
+        if (!$this->due_date || $this->status === 'completed') {
+            return false;
+        }
+        return Carbon::parse($this->due_date)->isPast() || Carbon::parse($this->due_date)->isToday();
+    }
+
+    /**
      * Scope to get defaulting customers (No payment in > 7 days AND not completed)
      */
     public function scopeDefaulting($query)
@@ -185,11 +200,37 @@ class Customer extends Model
         return $query->where('status', '!=', 'completed')
                      ->where(function($q) {
                          $q->where('last_payment_date', '<', Carbon::now()->subDays(7))
-                           ->orWhereNull('last_payment_date'); // Optional: treat never paid as defaulting? let's stick to last_payment for now or maybe just those who started but stopped. 
-                           // actually, if they never paid, last_payment_date is null. 
-                           // Let's assume defaulting means they HAVE paid before but stopped.
-                           // If we want "never paid" to be defaulting, we'd add orWhereNull.
-                           // For now, let's stick to the user's definition: "not made a payment in 7 days".
+                           ->orWhereNull('last_payment_date');
                      });
+    }
+
+    /**
+     * Scope for customers who are due or overdue (due_date <= today and not completed)
+     */
+    public function scopeDue($query)
+    {
+        return $query->where('status', '!=', 'completed')
+                     ->whereNotNull('due_date')
+                     ->where('due_date', '<=', Carbon::today());
+    }
+
+    /**
+     * Scope for customers due this week (not completed)
+     */
+    public function scopeDueThisWeek($query)
+    {
+        return $query->where('status', '!=', 'completed')
+                     ->whereNotNull('due_date')
+                     ->whereBetween('due_date', [Carbon::today(), Carbon::today()->endOfWeek()]);
+    }
+
+    /**
+     * Scope for customers due this month (not completed)
+     */
+    public function scopeDueThisMonth($query)
+    {
+        return $query->where('status', '!=', 'completed')
+                     ->whereNotNull('due_date')
+                     ->whereBetween('due_date', [Carbon::today(), Carbon::today()->endOfMonth()]);
     }
 }

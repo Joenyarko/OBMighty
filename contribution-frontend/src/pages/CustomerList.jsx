@@ -16,6 +16,7 @@ function CustomerList() {
 
     const [statusFilter, setStatusFilter] = useState('');
     const [percentageFilter, setPercentageFilter] = useState('');
+    const [dueFilter, setDueFilter] = useState('');
     const [workerFilter, setWorkerFilter] = useState('');
     const [branchFilter, setBranchFilter] = useState('');
     const [workers, setWorkers] = useState([]);
@@ -31,7 +32,7 @@ function CustomerList() {
         total: 0,
         from: 0,
         to: 0,
-        stats: { total: 0, in_progress: 0, completed: 0, defaulting: 0 }
+        stats: { total: 0, in_progress: 0, completed: 0, defaulting: 0, due: 0 }
     });
 
     const { isCEO, isSecretary, user } = useAuth();
@@ -69,7 +70,7 @@ function CustomerList() {
         if (isCEO || isSecretary) {
             fetchFilterOptions();
         }
-    }, [statusFilter, percentageFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
+    }, [statusFilter, percentageFilter, dueFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
 
     // Debounce search
     useEffect(() => {
@@ -109,6 +110,7 @@ function CustomerList() {
                 search: searchTerm,
                 status: statusFilter,
                 percentage: percentageFilter,
+                due_filter: dueFilter,
                 worker_id: workerFilter,
                 branch_id: branchFilter
             };
@@ -238,6 +240,19 @@ function CustomerList() {
                         <option value="completed">Completed</option>
                         <option value="defaulting">Defaulting</option>
                         <option value="closed">Closed</option>
+                    </select>
+
+                    {/* Due Date Filter */}
+                    <select
+                        value={dueFilter}
+                        onChange={(e) => setDueFilter(e.target.value)}
+                        className="filter-select due-filter-select"
+                        title="Filter customers whose cards are due or overdue"
+                    >
+                        <option value="">All Due Dates</option>
+                        <option value="overdue">⚠️ Due / Overdue</option>
+                        <option value="due_this_week">Due This Week</option>
+                        <option value="due_this_month">Due This Month</option>
                     </select>
 
                     {/* Progress Percentage Filter */}
@@ -376,6 +391,29 @@ function CustomerList() {
                                 <p><strong>👷 Worker:</strong> {customer.worker?.name || 'N/A'}</p>
                                 <p><strong>🏢 Branch:</strong> {customer.branch?.name || 'N/A'}</p>
                                 <p><strong>💳 Card:</strong> {customer.card?.card_name || 'N/A'}</p>
+                                
+                                {/* Start Date & Due Date */}
+                                <div className="card-date-info" style={{ marginTop: '8px', padding: '6px 8px', background: 'rgba(255, 255, 255, 0.04)', borderRadius: '6px', fontSize: '12px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                        <span style={{ color: 'var(--text-secondary)' }}>📅 Start Date:</span>
+                                        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            {customer.start_date ? new Date(customer.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <span style={{ color: 'var(--text-secondary)' }}>⏰ Due Date:</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            <span style={{ fontWeight: 600, color: customer.is_due ? '#e74c3c' : 'var(--text-primary)' }}>
+                                                {customer.due_date ? new Date(customer.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                            </span>
+                                            {customer.is_due && (
+                                                <span style={{ background: '#e74c3c', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                                                    DUE
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="payment-info">
@@ -521,11 +559,12 @@ function CustomerList() {
 
 // ... (EditCustomerModal unchanged)
 function EditCustomerModal({ customer, onClose, onSubmit }) {
-    // ... (rest of EditCustomerModal)
     const [formData, setFormData] = useState({
-        name: customer.name,
-        phone: customer.phone,
-        location: customer.location,
+        name: customer.name || '',
+        phone: customer.phone || '',
+        location: customer.location || '',
+        start_date: customer.start_date ? customer.start_date.substring(0, 10) : '',
+        due_date: customer.due_date ? customer.due_date.substring(0, 10) : '',
     });
 
     const handleSubmit = (e) => {
@@ -563,6 +602,22 @@ function EditCustomerModal({ customer, onClose, onSubmit }) {
                             value={formData.location}
                             onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                             required
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Start Date / Date Registered</label>
+                        <input
+                            type="date"
+                            value={formData.start_date}
+                            onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Due Date</label>
+                        <input
+                            type="date"
+                            value={formData.due_date}
+                            onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                         />
                     </div>
 
