@@ -6,7 +6,7 @@ import SimpleBarChart from '../components/Charts/SimpleBarChart';
 import '../styles/Dashboard.css';
 
 function Dashboard() {
-    const { user, isCEO, isSecretary, isWorker } = useAuth();
+    const { user, isCEO, isSecretary, isManager, isWorker, hasRole } = useAuth();
     const [dailyData, setDailyData] = useState(null);
     const [trendPeriod, setTrendPeriod] = useState('weekly');
     const [trendData, setTrendData] = useState(null);
@@ -116,13 +116,13 @@ function Dashboard() {
             </div>
 
             {
-                isWorker && (
+                isWorker && !isCEO && !isManager && (
                     <WorkerDashboard data={dailyData} />
                 )
             }
 
             {
-                isSecretary && (
+                (isSecretary || isManager || hasRole('manager') || hasRole('branch_manager')) && !isCEO && (
                     <SecretaryDashboard data={dailyData} />
                 )
             }

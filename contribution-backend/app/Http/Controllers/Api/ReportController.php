@@ -22,6 +22,7 @@ class ReportController extends Controller
         $date = $request->input('date', Carbon::today());
         
         $data = [];
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
 
         if ($user->hasRole('ceo')) {
             // CEO sees company-wide data
@@ -35,23 +36,59 @@ class ReportController extends Controller
                 'company_total' => $companyTotal,
                 'branch_totals' => $branchTotals,
             ];
-            // Secretary sees branch data
-            $branchTotal = BranchDailyTotal::where('branch_id', $user->branch_id)
-                ->where('date', $date)
-                ->first();
+        } elseif ($isManager) {
+            // Manager / Secretary sees branch data
+            $branchId = $user->branch_id;
+
+            if ($branchId) {
+                $branchTotal = BranchDailyTotal::where('branch_id', $branchId)
+                    ->where('date', $date)
+                    ->first();
                 
-            // Inject total customers count
-            if ($branchTotal) {
-                $branchTotal = $branchTotal->toArray();
-                $branchTotal['total_customers'] = Customer::where('branch_id', $user->branch_id)->count();
+                $totalCustomers = Customer::where('branch_id', $branchId)->count();
+                $totalPayments = Payment::where('branch_id', $branchId)->whereDate('payment_date', $date)->count();
+                $totalCollections = Payment::where('branch_id', $branchId)->whereDate('payment_date', $date)->sum('payment_amount');
+                $activeWorkers = \App\Models\User::where('branch_id', $branchId)
+                    ->whereHas('roles', fn($q) => $q->where('name', 'worker'))
+                    ->count();
+
+                if ($branchTotal) {
+                    $branchTotal = $branchTotal->toArray();
+                    $branchTotal['total_customers'] = $totalCustomers;
+                    $branchTotal['total_payments'] = (float)($branchTotal['total_payments'] ?? $totalPayments);
+                    $branchTotal['total_collections'] = (float)($branchTotal['total_collections'] ?? $totalCollections);
+                    $branchTotal['total_workers_active'] = (int)($branchTotal['total_workers_active'] ?? $activeWorkers);
+                } else {
+                    $branchTotal = [
+                        'total_customers' => $totalCustomers,
+                        'total_payments' => $totalPayments,
+                        'total_collections' => $totalCollections,
+                        'total_workers_active' => $activeWorkers,
+                    ];
+                }
+                
+                $workerTotals = WorkerDailyTotal::with('worker')
+                    ->where('branch_id', $branchId)
+                    ->where('date', $date)
+                    ->get();
             } else {
-                $branchTotal = ['total_customers' => Customer::where('branch_id', $user->branch_id)->count()];
+                // If manager has no specific branch_id, aggregate company-wide
+                $totalCustomers = Customer::count();
+                $totalPayments = Payment::whereDate('payment_date', $date)->count();
+                $totalCollections = Payment::whereDate('payment_date', $date)->sum('payment_amount');
+                $activeWorkers = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'worker'))->count();
+
+                $branchTotal = [
+                    'total_customers' => $totalCustomers,
+                    'total_payments' => $totalPayments,
+                    'total_collections' => $totalCollections,
+                    'total_workers_active' => $activeWorkers,
+                ];
+
+                $workerTotals = WorkerDailyTotal::with('worker')
+                    ->where('date', $date)
+                    ->get();
             }
-            
-            $workerTotals = WorkerDailyTotal::with('worker')
-                ->where('branch_id', $user->branch_id)
-                ->where('date', $date)
-                ->get();
             
             $data = [
                 'date' => $date,
@@ -68,7 +105,6 @@ class ReportController extends Controller
             if ($workerTotal) {
                 $workerTotal = $workerTotal->toArray();
                 $workerTotal['total_customers'] = Customer::where('worker_id', $user->id)->count();
-                // Override with distinct customer count (total_customers_paid counts per-payment, not unique)
                 $workerTotal['total_customers_paid'] = Payment::where('worker_id', $user->id)
                     ->whereDate('payment_date', $date)
                     ->distinct('customer_id')
@@ -119,17 +155,24 @@ class ReportController extends Controller
         $user = $request->user();
         $endDate = $request->input('end_date', Carbon::today());
         $startDate = Carbon::parse($endDate)->subDays(6);
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
 
         if ($user->hasRole('worker')) {
             $totals = WorkerDailyTotal::where('worker_id', $user->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->orderBy('date')
                 ->get();
-        } elseif ($user->hasRole('secretary')) {
-            $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->orderBy('date')
-                ->get();
+        } elseif ($isManager) {
+            if ($user->branch_id) {
+                $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->orderBy('date')
+                    ->get();
+            } else {
+                $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
+                    ->orderBy('date')
+                    ->get();
+            }
         } else {
             $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
                 ->orderBy('date')
@@ -156,15 +199,21 @@ class ReportController extends Controller
         $month = $request->input('month', Carbon::now()->format('Y-m'));
         $startDate = Carbon::parse($month)->startOfMonth();
         $endDate = Carbon::parse($month)->endOfMonth();
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
 
         if ($user->hasRole('worker')) {
             $totals = WorkerDailyTotal::where('worker_id', $user->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
-        } elseif ($user->hasRole('secretary')) {
-            $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+        } elseif ($isManager) {
+            if ($user->branch_id) {
+                $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->get();
+            } else {
+                $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
+                    ->get();
+            }
         } else {
             $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
                 ->get();
@@ -189,15 +238,21 @@ class ReportController extends Controller
         $year = $request->input('year', Carbon::now()->year);
         $startDate = Carbon::createFromDate($year, 1, 1)->startOfYear();
         $endDate = Carbon::createFromDate($year, 12, 31)->endOfYear();
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
 
         if ($user->hasRole('worker')) {
             $totals = WorkerDailyTotal::where('worker_id', $user->id)
                 ->whereBetween('date', [$startDate, $endDate])
                 ->get();
-        } elseif ($user->hasRole('secretary')) {
-            $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+        } elseif ($isManager) {
+            if ($user->branch_id) {
+                $totals = BranchDailyTotal::where('branch_id', $user->branch_id)
+                    ->whereBetween('date', [$startDate, $endDate])
+                    ->get();
+            } else {
+                $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
+                    ->get();
+            }
         } else {
             $totals = CompanyDailyTotal::whereBetween('date', [$startDate, $endDate])
                 ->get();
