@@ -164,13 +164,13 @@ function BulkPayment() {
                         placeholder="Search customers..."
                         value={searchTerm}
                         onChange={handleSearchChange}
-                        style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 180px', minWidth: '0' }}
+                        style={{ padding: '10px 12px', fontSize: '16px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 180px', minWidth: '0' }}
                     />
                     {(isCEO || isManager) && (
                         <select
                             value={selectedWorker}
                             onChange={(e) => { setSelectedWorker(e.target.value); setPage(1); }}
-                            style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 150px', minWidth: '0' }}
+                            style={{ padding: '10px 12px', fontSize: '16px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', flex: '1 1 150px', minWidth: '0' }}
                         >
                             <option value="">All Workers</option>
                             {workers.map(w => (
