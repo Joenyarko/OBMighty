@@ -151,8 +151,6 @@ function BulkPayment() {
         setPage(1); // Reset to first page on search
     };
 
-    if (loading) return <div className="loading">Loading customers...</div>;
-
     return (
         <div className="bulk-payment-page">
             <div className="page-header" style={{ marginBottom: '24px' }}>
@@ -209,61 +207,69 @@ function BulkPayment() {
                         </tr>
                     </thead>
                     <tbody>
-                        {customers.map(customer => (
-                            <tr key={customer.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ fontWeight: '600' }}>{customer.name}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{customer.location}</div>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <div>{customer.card?.card_name || 'N/A'}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--primary-color)' }}>
-                                        GHS {customer.price_per_box} / box
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', width: '100px' }}>
-                                            <div style={{
-                                                width: `${(customer.boxes_filled / customer.total_boxes) * 100}%`,
-                                                background: 'var(--primary-color)',
-                                                height: '100%',
-                                                borderRadius: '4px'
-                                            }}></div>
-                                        </div>
-                                        <span style={{ fontSize: '12px' }}>{Math.round(customer.boxes_filled)}/{customer.total_boxes}</span>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px', fontWeight: 'bold' }}>
-                                    {customer.balance?.toFixed(2)}
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                        value={payments[customer.id] || ''}
-                                        onChange={(e) => handleAmountChange(customer.id, e.target.value)}
-                                        style={{
-                                            padding: '8px',
-                                            width: '120px',
-                                            borderRadius: '6px',
-                                            border: '1px solid var(--border-color)',
-                                            background: payments[customer.id] ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
-                                            color: 'var(--text-primary)',
-                                            borderColor: payments[customer.id] ? 'var(--primary-color)' : 'var(--border-color)'
-                                        }}
-                                    />
+                        {loading ? (
+                            <tr>
+                                <td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid rgba(212, 175, 55, 0.2)', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', verticalAlign: 'middle', marginRight: '10px' }}></div>
+                                    <span>Searching & loading customers...</span>
                                 </td>
                             </tr>
-                        ))}
-                        {customers.length === 0 && (
+                        ) : customers.length === 0 ? (
                             <tr>
                                 <td colSpan="5" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
                                     No customers found.
                                 </td>
                             </tr>
+                        ) : (
+                            customers.map(customer => (
+                                <tr key={customer.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ fontWeight: '600' }}>{customer.name}</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{customer.location}</div>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div>{customer.card?.card_name || 'N/A'}</div>
+                                        <div style={{ fontSize: '12px', color: 'var(--primary-color)' }}>
+                                            GHS {customer.price_per_box} / box
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <div style={{ flex: 1, background: 'rgba(255,255,255,0.1)', height: '8px', borderRadius: '4px', width: '100px' }}>
+                                                <div style={{
+                                                    width: `${(customer.boxes_filled / customer.total_boxes) * 100}%`,
+                                                    background: 'var(--primary-color)',
+                                                    height: '100%',
+                                                    borderRadius: '4px'
+                                                }}></div>
+                                            </div>
+                                            <span style={{ fontSize: '12px' }}>{Math.round(customer.boxes_filled)}/{customer.total_boxes}</span>
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px', fontWeight: 'bold' }}>
+                                        {customer.balance?.toFixed(2)}
+                                    </td>
+                                    <td style={{ padding: '16px' }}>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={payments[customer.id] || ''}
+                                            onChange={(e) => handleAmountChange(customer.id, e.target.value)}
+                                            style={{
+                                                padding: '8px',
+                                                width: '120px',
+                                                borderRadius: '6px',
+                                                border: '1px solid var(--border-color)',
+                                                background: payments[customer.id] ? 'rgba(212, 175, 55, 0.1)' : 'transparent',
+                                                color: 'var(--text-primary)',
+                                                borderColor: payments[customer.id] ? 'var(--primary-color)' : 'var(--border-color)'
+                                            }}
+                                        />
+                                    </td>
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>
