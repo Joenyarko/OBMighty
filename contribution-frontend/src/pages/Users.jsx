@@ -310,7 +310,7 @@ function Users({ roleFilter, title }) {
                                                 Permissions
                                             </button>
                                         )}
-                                        {user.roles?.[0]?.name === 'worker' && (
+                                        {(user.roles?.[0]?.name === 'worker' || user.roles?.[0]?.name === 'secretary' || user.roles?.[0]?.name === 'manager' || user.roles?.[0]?.name === 'branch_manager') && (
                                             <button
                                                 className="btn-secondary"
                                                 style={{ padding: '6px 12px', fontSize: '12px', background: 'rgba(33, 150, 243, 0.1)', color: '#2196f3', border: '1px solid rgba(33, 150, 243, 0.3)' }}

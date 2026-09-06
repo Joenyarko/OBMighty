@@ -216,7 +216,7 @@ class SalesController extends Controller
     }
     
     /**
-     * Get comprehensive worker performance metrics
+     * Get comprehensive worker or manager performance metrics
      */
     public function performance(Request $request, $workerId)
     {
@@ -228,13 +228,277 @@ class SalesController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        if ($user->hasRole('secretary') && $worker->branch_id !== $user->branch_id) {
+        if ($user->hasRole(['secretary', 'manager', 'branch_manager']) && $worker->branch_id !== $user->branch_id && $worker->id !== $user->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        // Get all-time stats (based on who RECORDED the payment)
         $companyId = config('app.company_id');
+        $isManager = $worker->hasRole(['secretary', 'manager', 'branch_manager']);
 
+        if ($isManager) {
+            $branchId = $worker->branch_id;
+
+            // 1. Get all workers in this branch / company
+            $branchWorkersQuery = User::where('company_id', $companyId);
+            if ($branchId) {
+                $branchWorkersQuery->where('branch_id', $branchId);
+            }
+            $branchWorkers = $branchWorkersQuery->whereHas('roles', function($q) {
+                $q->where('name', 'worker');
+            })->get();
+
+            $workerIds = $branchWorkers->pluck('id')->toArray();
+            $allStaffIds = array_unique(array_merge($workerIds, [$worker->id]));
+
+            // 2. Branch All-Time Sales
+            $allTimeStats = DB::table('payments')
+                ->where('payments.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('payments.branch_id', $branchId)
+                          ->orWhereIn('payments.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('payments.worker_id', $allStaffIds);
+                    }
+                })
+                ->select(
+                    DB::raw('SUM(payments.payment_amount) as total_sales'),
+                    DB::raw('COUNT(DISTINCT payments.customer_id) as total_customers'),
+                    DB::raw('COUNT(payments.id) as total_transactions'),
+                    DB::raw('AVG(payments.payment_amount) as avg_transaction')
+                )
+                ->first();
+
+            // 3. Branch This Month Sales
+            $thisMonthStats = DB::table('payments')
+                ->where('payments.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('payments.branch_id', $branchId)
+                          ->orWhereIn('payments.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('payments.worker_id', $allStaffIds);
+                    }
+                })
+                ->whereMonth('payments.payment_date', Carbon::now()->month)
+                ->whereYear('payments.payment_date', Carbon::now()->year)
+                ->select(
+                    DB::raw('SUM(payments.payment_amount) as total_sales'),
+                    DB::raw('COUNT(DISTINCT payments.customer_id) as customers_paid'),
+                    DB::raw('COUNT(payments.id) as transactions')
+                )
+                ->first();
+
+            // 4. Branch This Week Sales
+            $thisWeekStats = DB::table('payments')
+                ->where('payments.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('payments.branch_id', $branchId)
+                          ->orWhereIn('payments.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('payments.worker_id', $allStaffIds);
+                    }
+                })
+                ->whereBetween('payments.payment_date', [
+                    Carbon::now()->startOfWeek(),
+                    Carbon::now()->endOfWeek()
+                ])
+                ->select(
+                    DB::raw('SUM(payments.payment_amount) as total_sales'),
+                    DB::raw('COUNT(payments.id) as transactions')
+                )
+                ->first();
+
+            // 5. Branch Today Sales
+            $todayStats = DB::table('payments')
+                ->where('payments.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('payments.branch_id', $branchId)
+                          ->orWhereIn('payments.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('payments.worker_id', $allStaffIds);
+                    }
+                })
+                ->whereDate('payments.payment_date', Carbon::today())
+                ->select(
+                    DB::raw('SUM(payments.payment_amount) as total_sales'),
+                    DB::raw('COUNT(payments.id) as transactions')
+                )
+                ->first();
+
+            // 6. Branch Customer Metrics
+            $customerMetrics = DB::table('customers')
+                ->leftJoin('customer_cards', 'customers.id', '=', 'customer_cards.customer_id')
+                ->where('customers.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('customers.branch_id', $branchId)
+                          ->orWhereIn('customers.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('customers.worker_id', $allStaffIds);
+                    }
+                })
+                ->select(
+                    DB::raw('COUNT(DISTINCT customers.id) as total_customers'),
+                    DB::raw('COUNT(DISTINCT CASE WHEN customer_cards.status = "active" THEN customers.id END) as active_customers'),
+                    DB::raw('COUNT(DISTINCT CASE WHEN customer_cards.status = "completed" THEN customers.id END) as completed_customers')
+                )
+                ->first();
+
+            // 7. Workers detailed performance list under this manager
+            $workersPerformanceList = [];
+            foreach ($branchWorkers as $bw) {
+                $wCustomers = DB::table('customers')
+                    ->leftJoin('customer_cards', 'customers.id', '=', 'customer_cards.customer_id')
+                    ->where('customers.company_id', $companyId)
+                    ->where('customers.worker_id', $bw->id)
+                    ->select(
+                        DB::raw('COUNT(DISTINCT customers.id) as total_customers'),
+                        DB::raw('COUNT(DISTINCT CASE WHEN customer_cards.status = "active" THEN customers.id END) as active_customers'),
+                        DB::raw('COUNT(DISTINCT CASE WHEN customer_cards.status = "completed" THEN customers.id END) as completed_customers')
+                    )
+                    ->first();
+
+                $wAllTimeSales = DB::table('payments')
+                    ->where('payments.company_id', $companyId)
+                    ->where('payments.worker_id', $bw->id)
+                    ->sum('payment_amount');
+
+                $wMonthSales = DB::table('payments')
+                    ->where('payments.company_id', $companyId)
+                    ->where('payments.worker_id', $bw->id)
+                    ->whereMonth('payment_date', Carbon::now()->month)
+                    ->whereYear('payment_date', Carbon::now()->year)
+                    ->sum('payment_amount');
+
+                $wTodaySales = DB::table('payments')
+                    ->where('payments.company_id', $companyId)
+                    ->where('payments.worker_id', $bw->id)
+                    ->whereDate('payment_date', Carbon::today())
+                    ->sum('payment_amount');
+
+                $wTransactions = DB::table('payments')
+                    ->where('payments.company_id', $companyId)
+                    ->where('payments.worker_id', $bw->id)
+                    ->count();
+
+                $workersPerformanceList[] = [
+                    'id' => $bw->id,
+                    'name' => $bw->name,
+                    'email' => $bw->email,
+                    'phone' => $bw->phone,
+                    'status' => $bw->status ?? 'active',
+                    'total_customers' => (int)($wCustomers->total_customers ?? 0),
+                    'active_customers' => (int)($wCustomers->active_customers ?? 0),
+                    'completed_customers' => (int)($wCustomers->completed_customers ?? 0),
+                    'all_time_sales' => (float)($wAllTimeSales ?? 0),
+                    'this_month_sales' => (float)($wMonthSales ?? 0),
+                    'today_sales' => (float)($wTodaySales ?? 0),
+                    'transactions' => (int)$wTransactions,
+                ];
+            }
+
+            // 8. Performance Score for Manager (0-100)
+            $totalCust = (int)($customerMetrics->total_customers ?? 0);
+            $retentionRate = $totalCust > 0
+                ? (($customerMetrics->active_customers ?? 0) / $totalCust) * 100
+                : 0;
+            $retentionScore = ($retentionRate / 100) * 25;
+
+            $completionRate = $totalCust > 0
+                ? (($customerMetrics->completed_customers ?? 0) / $totalCust) * 100
+                : 0;
+            $completionScore = ($completionRate / 100) * 25;
+
+            $monthlySales = (float)($thisMonthStats->total_sales ?? 0);
+            $salesScore = min(30, ($monthlySales / 5000) * 30);
+
+            $activeWorkersCount = count(array_filter($workersPerformanceList, fn($w) => $w['this_month_sales'] > 0 || $w['total_customers'] > 0));
+            $totalWorkersCount = count($branchWorkers);
+            $teamScore = $totalWorkersCount > 0 ? ($activeWorkersCount / $totalWorkersCount) * 20 : 15;
+
+            $performanceScore = min(100, round($salesScore + $retentionScore + $completionScore + $teamScore));
+
+            // 9. Recent Branch Activity
+            $recentActivity = DB::table('payments')
+                ->join('customers', 'payments.customer_id', '=', 'customers.id')
+                ->leftJoin('users as collector', 'payments.worker_id', '=', 'collector.id')
+                ->where('payments.company_id', $companyId)
+                ->where(function($q) use ($branchId, $allStaffIds) {
+                    if ($branchId) {
+                        $q->where('payments.branch_id', $branchId)
+                          ->orWhereIn('payments.worker_id', $allStaffIds);
+                    } else {
+                        $q->whereIn('payments.worker_id', $allStaffIds);
+                    }
+                })
+                ->orderBy('payments.payment_date', 'desc')
+                ->orderBy('payments.created_at', 'desc')
+                ->limit(15)
+                ->select(
+                    'payments.payment_date',
+                    'customers.name as customer_name',
+                    'collector.name as collector_name',
+                    'payments.payment_amount as amount_paid',
+                    'payments.boxes_filled as boxes_checked'
+                )
+                ->get();
+
+            return response()->json([
+                'is_manager' => true,
+                'worker' => [
+                    'id' => $worker->id,
+                    'name' => $worker->name,
+                    'email' => $worker->email,
+                    'phone' => $worker->phone,
+                    'role' => $worker->getRoleNames()->first() ?? 'manager',
+                    'branch' => $worker->branch ? $worker->branch->name : 'All Branches',
+                    'branch_id' => $worker->branch_id,
+                    'total_workers' => count($branchWorkers),
+                    'joined_date' => $worker->created_at ? $worker->created_at->format('Y-m-d') : null,
+                ],
+                'sales_metrics' => [
+                    'all_time' => [
+                        'total_sales' => (float)($allTimeStats->total_sales ?? 0),
+                        'total_transactions' => (int)($allTimeStats->total_transactions ?? 0),
+                        'avg_transaction' => (float)($allTimeStats->avg_transaction ?? 0),
+                    ],
+                    'this_month' => [
+                        'total_sales' => (float)($thisMonthStats->total_sales ?? 0),
+                        'customers_paid' => (int)($thisMonthStats->customers_paid ?? 0),
+                        'transactions' => (int)($thisMonthStats->transactions ?? 0),
+                    ],
+                    'this_week' => [
+                        'total_sales' => (float)($thisWeekStats->total_sales ?? 0),
+                        'transactions' => (int)($thisWeekStats->transactions ?? 0),
+                    ],
+                    'today' => [
+                        'total_sales' => (float)($todayStats->total_sales ?? 0),
+                        'transactions' => (int)($todayStats->transactions ?? 0),
+                    ],
+                ],
+                'customer_metrics' => [
+                    'total_customers' => (int)($customerMetrics->total_customers ?? 0),
+                    'active_customers' => (int)($customerMetrics->active_customers ?? 0),
+                    'completed_customers' => (int)($customerMetrics->completed_customers ?? 0),
+                    'retention_rate' => round($retentionRate, 2),
+                    'completion_rate' => round($completionRate, 2),
+                ],
+                'workers' => $workersPerformanceList,
+                'performance_score' => $performanceScore,
+                'score_breakdown' => [
+                    'sales_volume' => round($salesScore, 2),
+                    'transaction_frequency' => round($teamScore, 2),
+                    'customer_retention' => round($retentionScore, 2),
+                    'completion_rate' => round($completionScore, 2),
+                ],
+                'recent_activity' => $recentActivity,
+            ]);
+        }
+        
+        // Individual Worker Performance
         $allTimeStats = DB::table('payments')
             ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
@@ -246,7 +510,7 @@ class SalesController extends Controller
             )
             ->first();
         
-        // Get this month stats (based on who RECORDED the payment)
+        // Get this month stats
         $thisMonthStats = DB::table('payments')
             ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
@@ -259,7 +523,7 @@ class SalesController extends Controller
             )
             ->first();
         
-        // Get this week stats (based on who RECORDED the payment)
+        // Get this week stats
         $thisWeekStats = DB::table('payments')
             ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
@@ -267,6 +531,17 @@ class SalesController extends Controller
                 Carbon::now()->startOfWeek(),
                 Carbon::now()->endOfWeek()
             ])
+            ->select(
+                DB::raw('SUM(payments.payment_amount) as total_sales'),
+                DB::raw('COUNT(payments.id) as transactions')
+            )
+            ->first();
+
+        // Get today stats
+        $todayStats = DB::table('payments')
+            ->where('payments.company_id', $companyId)
+            ->where('payments.worker_id', $workerId)
+            ->whereDate('payments.payment_date', Carbon::today())
             ->select(
                 DB::raw('SUM(payments.payment_amount) as total_sales'),
                 DB::raw('COUNT(payments.id) as transactions')
@@ -286,9 +561,6 @@ class SalesController extends Controller
             ->first();
         
         // Calculate performance score (0-100)
-        
-        // 1. Sales Score (40 points max)
-        // Compare against branch average total sales per worker
         $branchTotalSales = DB::table('payments')
             ->where('payments.company_id', $companyId)
             ->where('payments.branch_id', $worker->branch_id)
@@ -299,19 +571,18 @@ class SalesController extends Controller
         $workerCount = User::where('branch_id', $worker->branch_id)->count();
         $avgWorkerSales = $workerCount > 0 ? $branchTotalSales / $workerCount : 1;
         
-        // If they match the average, they get 30/40 (75%). To get 40/40, they need ~1.3x average.
         $salesScore = $avgWorkerSales > 0 
             ? min(40, (($thisMonthStats->total_sales ?? 0) / $avgWorkerSales) * 30)
             : 0;
         
-        $retentionRate = $customerMetrics->total_customers > 0
-            ? ($customerMetrics->active_customers / $customerMetrics->total_customers) * 100
+        $retentionRate = ($customerMetrics->total_customers ?? 0) > 0
+            ? (($customerMetrics->active_customers ?? 0) / $customerMetrics->total_customers) * 100
             : 0;
         
         $retentionScore = ($retentionRate / 100) * 20;
         
-        $completionRate = $customerMetrics->total_customers > 0
-            ? ($customerMetrics->completed_customers / $customerMetrics->total_customers) * 100
+        $completionRate = ($customerMetrics->total_customers ?? 0) > 0
+            ? (($customerMetrics->completed_customers ?? 0) / $customerMetrics->total_customers) * 100
             : 0;
         
         $completionScore = ($completionRate / 100) * 20;
@@ -320,14 +591,14 @@ class SalesController extends Controller
         
         $performanceScore = round($salesScore + $retentionScore + $completionScore + $transactionScore);
         
-        // Get recent activity (last 10 payments recorded by this user)
+        // Get recent activity (last 15 payments recorded by this user)
         $recentActivity = DB::table('payments')
             ->join('customers', 'payments.customer_id', '=', 'customers.id')
             ->where('payments.company_id', $companyId)
             ->where('payments.worker_id', $workerId)
             ->orderBy('payments.payment_date', 'desc')
             ->orderBy('payments.created_at', 'desc')
-            ->limit(10)
+            ->limit(15)
             ->select(
                 'payments.payment_date',
                 'customers.name as customer_name',
@@ -337,34 +608,40 @@ class SalesController extends Controller
             ->get();
         
         return response()->json([
+            'is_manager' => false,
             'worker' => [
                 'id' => $worker->id,
                 'name' => $worker->name,
                 'email' => $worker->email,
-                'role' => $worker->getRoleNames()->first(),
+                'phone' => $worker->phone,
+                'role' => $worker->getRoleNames()->first() ?? 'worker',
                 'branch' => $worker->branch ? $worker->branch->name : null,
-                'joined_date' => $worker->created_at->format('Y-m-d'),
+                'joined_date' => $worker->created_at ? $worker->created_at->format('Y-m-d') : null,
             ],
             'sales_metrics' => [
                 'all_time' => [
-                    'total_sales' => $allTimeStats->total_sales ?? 0,
-                    'total_transactions' => $allTimeStats->total_transactions ?? 0,
-                    'avg_transaction' => $allTimeStats->avg_transaction ?? 0,
+                    'total_sales' => (float)($allTimeStats->total_sales ?? 0),
+                    'total_transactions' => (int)($allTimeStats->total_transactions ?? 0),
+                    'avg_transaction' => (float)($allTimeStats->avg_transaction ?? 0),
                 ],
                 'this_month' => [
-                    'total_sales' => $thisMonthStats->total_sales ?? 0,
-                    'customers_paid' => $thisMonthStats->customers_paid ?? 0,
-                    'transactions' => $thisMonthStats->transactions ?? 0,
+                    'total_sales' => (float)($thisMonthStats->total_sales ?? 0),
+                    'customers_paid' => (int)($thisMonthStats->customers_paid ?? 0),
+                    'transactions' => (int)($thisMonthStats->transactions ?? 0),
                 ],
                 'this_week' => [
-                    'total_sales' => $thisWeekStats->total_sales ?? 0,
-                    'transactions' => $thisWeekStats->transactions ?? 0,
+                    'total_sales' => (float)($thisWeekStats->total_sales ?? 0),
+                    'transactions' => (int)($thisWeekStats->transactions ?? 0),
+                ],
+                'today' => [
+                    'total_sales' => (float)($todayStats->total_sales ?? 0),
+                    'transactions' => (int)($todayStats->transactions ?? 0),
                 ],
             ],
             'customer_metrics' => [
-                'total_customers' => $customerMetrics->total_customers ?? 0,
-                'active_customers' => $customerMetrics->active_customers ?? 0,
-                'completed_customers' => $customerMetrics->completed_customers ?? 0,
+                'total_customers' => (int)($customerMetrics->total_customers ?? 0),
+                'active_customers' => (int)($customerMetrics->active_customers ?? 0),
+                'completed_customers' => (int)($customerMetrics->completed_customers ?? 0),
                 'retention_rate' => round($retentionRate, 2),
                 'completion_rate' => round($completionRate, 2),
             ],
