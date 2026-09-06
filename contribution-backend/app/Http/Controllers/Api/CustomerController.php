@@ -20,8 +20,10 @@ class CustomerController extends Controller
         // Apply role-based filtering
         if ($user->hasRole('worker')) {
             $query->forWorker($user->id);
-        } elseif ($user->hasRole('secretary')) {
-            $query->forBranch($user->branch_id);
+        } elseif ($user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager')) {
+            if ($user->branch_id) {
+                $query->forBranch($user->branch_id);
+            }
         }
         // CEO sees all
 
@@ -98,51 +100,45 @@ class CustomerController extends Controller
         // Apply completion percentage filter (e.g. '60_plus', '70_plus', '80_plus', '90_plus', '100', '60', '70', '80', '90')
         if ($request->has('percentage') && $request->percentage !== '') {
             $val = (string) $request->percentage;
-            if ($val === '100') {
-                $query->whereRaw('boxes_filled >= total_boxes AND total_boxes > 0');
-            } elseif (str_ends_with($val, '_plus')) {
-                $pct = (float) str_replace('_plus', '', $val) / 100.0;
-                $query->whereRaw('(boxes_filled / total_boxes) >= ? AND total_boxes > 0', [$pct]);
-            } elseif (is_numeric($val)) {
-                $pct = (float) $val;
-                if ($pct >= 100) {
-                    $query->whereRaw('boxes_filled >= total_boxes AND total_boxes > 0');
-                } else {
-                    $min = $pct / 100.0;
-                    $max = ($pct + 9.999) / 100.0;
-                    $query->whereRaw('(boxes_filled / total_boxes) >= ? AND (boxes_filled / total_boxes) <= ? AND total_boxes > 0', [$min, $max]);
-                }
+            if ($val === '60_plus') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 60');
+            } elseif ($val === '70_plus') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 70');
+            } elseif ($val === '80_plus') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 80');
+            } elseif ($val === '90_plus') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 90');
+            } elseif ($val === '100') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 100');
+            } elseif ($val === '60') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 60 AND (boxes_filled / total_boxes * 100) < 70');
+            } elseif ($val === '70') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 70 AND (boxes_filled / total_boxes * 100) < 80');
+            } elseif ($val === '80') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 80 AND (boxes_filled / total_boxes * 100) < 90');
+            } elseif ($val === '90') {
+                $query->whereRaw('(boxes_filled / total_boxes * 100) >= 90 AND (boxes_filled / total_boxes * 100) < 100');
             }
         }
 
-        // Direct min_percentage / max_percentage support if passed
-        if ($request->has('min_percentage') && $request->min_percentage !== '') {
-            $minPct = (float) $request->min_percentage / 100.0;
-            $query->whereRaw('(boxes_filled / total_boxes) >= ? AND total_boxes > 0', [$minPct]);
-        }
-        if ($request->has('max_percentage') && $request->max_percentage !== '') {
-            $maxPct = (float) $request->max_percentage / 100.0;
-            $query->whereRaw('(boxes_filled / total_boxes) <= ? AND total_boxes > 0', [$maxPct]);
-        }
+        // Apply sorting
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
 
+        // Limit per_page to max 500 to prevent DoS
+        $perPage = min((int)$request->input('per_page', 15), 500);
+        $customers = $query->paginate($perPage);
 
+        // Attach global stats to the paginated response
+        $response = $customers->toArray();
+        $response['stats'] = $stats;
 
-        $perPage = max(1, min((int) $request->get('per_page', 12), 100));
-        $customers = $query->orderBy('created_at', 'desc')->paginate($perPage);
-
-        return response()->json([
-            'data' => $customers->items(),
-            'current_page' => $customers->currentPage(),
-            'last_page' => $customers->lastPage(),
-            'total' => $customers->total(),
-            'from' => $customers->firstItem(),
-            'to' => $customers->lastItem(),
-            'stats' => $stats
-        ]);
+        return response()->json($response);
     }
 
     /**
-     * Create a new customer
+     * Store a newly created customer
      */
     public function store(Request $request)
     {
@@ -153,78 +149,63 @@ class CustomerController extends Controller
                 'required',
                 'string',
                 'max:255',
-                \Illuminate\Validation\Rule::unique('customers', 'name')->where(function ($query) use ($request, $user) {
-                    // Extract worker_id from request, or default to current user if worker
-                    $workerId = $request->input('worker_id');
-                    if (!$workerId && $user->hasRole('worker')) {
-                        $workerId = $user->id;
-                    }
-                    if ($workerId) {
-                        return $query->where('worker_id', $workerId);
-                    }
-                    return $query;
+                \Illuminate\Validation\Rule::unique('customers', 'name')->where(function ($query) use ($request) {
+                    return $query->where('worker_id', $request->worker_id);
                 }),
             ],
             'phone' => 'required|string|regex:/^[0-9]{10}$/',
             'location' => 'required|string',
             'card_id' => 'required|exists:cards,id',
-            'start_date' => 'nullable|date',
-            'due_date' => 'nullable|date',
             'branch_id' => 'nullable|exists:branches,id',
             'worker_id' => 'nullable|exists:users,id',
+            'start_date' => 'nullable|date',
+            'due_date' => 'nullable|date',
             'total_boxes' => 'nullable|integer|min:1',
-            'price_per_box' => 'nullable|numeric|min:0.01',
-            'total_amount' => 'nullable|numeric|min:0.01',
+            'price_per_box' => 'nullable|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0',
         ], [
             'phone.regex' => 'The phone number must be exactly 10 digits.',
+            'name.unique' => 'A customer with this name already exists for the selected worker.',
         ]);
+
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
 
         // Auto-assign worker and branch for non-CEO users
         if ($user->hasRole('worker')) {
             $validated['worker_id'] = $user->id;
             $validated['branch_id'] = $user->branch_id;
-        } elseif ($user->hasRole('secretary')) {
-            // Secretary must provide worker_id, but verify it's in their branch
-            if (!isset($validated['worker_id'])) {
-                return response()->json([
-                    'message' => 'Worker ID is required for secretaries',
-                ], 422);
-            }
-            $worker = \App\Models\User::find($validated['worker_id']);
-            if (!$worker || $worker->branch_id !== $user->branch_id) {
-                return response()->json([
-                    'message' => 'Worker must be in your branch',
-                ], 422);
-            }
-            $validated['branch_id'] = $user->branch_id;
-        } elseif ($user->hasRole('ceo')) {
-            // CEO can assign to any worker
-            if (isset($validated['worker_id'])) {
+        } elseif ($isManager) {
+            if (!empty($validated['worker_id'])) {
                 $worker = \App\Models\User::find($validated['worker_id']);
                 if ($worker) {
-                    // Use worker's branch if they have one, otherwise use the selected branch
-                    if ($worker->branch_id) {
-                        $validated['branch_id'] = $worker->branch_id;
-                    } elseif (empty($validated['branch_id'])) {
-                         // If worker has no branch AND no branch was selected
-                        return response()->json([
-                            'message' => 'Selected worker belongs to no branch, and no branch was selected.',
-                        ], 422);
-                    }
-                    // If worker has no branch but branch_id was submitted, keep the submitted branch_id
+                    $validated['branch_id'] = $worker->branch_id ?: ($validated['branch_id'] ?? $user->branch_id);
                 } else {
+                    $validated['branch_id'] = $validated['branch_id'] ?? $user->branch_id;
+                }
+            } else {
+                $validated['worker_id'] = $user->id;
+                $validated['branch_id'] = $validated['branch_id'] ?? $user->branch_id;
+            }
+
+            if (empty($validated['branch_id'])) {
+                $validated['branch_id'] = $user->branch_id;
+            }
+        } elseif ($user->hasRole('ceo') || $user->hasRole('super_admin')) {
+            // CEO can assign to any worker
+            if (!empty($validated['worker_id'])) {
+                $worker = \App\Models\User::find($validated['worker_id']);
+                if ($worker) {
+                    $validated['branch_id'] = $worker->branch_id ?: ($validated['branch_id'] ?? $user->branch_id);
+                } elseif (empty($validated['branch_id'])) {
                     return response()->json([
-                        'message' => 'Invalid worker selected',
+                        'message' => 'Selected worker belongs to no branch, and no branch was selected.',
                     ], 422);
                 }
             } else {
-                // If CEO doesn't specify worker, assign to themselves
                 $validated['worker_id'] = $user->id;
-                // CEO might not have branch_id, use first available branch or create default
                 if ($user->branch_id) {
                     $validated['branch_id'] = $user->branch_id;
                 } elseif (empty($validated['branch_id'])) {
-                    // Get first branch or create a default one
                     $branch = \App\Models\Branch::first();
                     if (!$branch) {
                         return response()->json([
@@ -235,6 +216,9 @@ class CustomerController extends Controller
                 }
             }
         }
+
+        // Always ensure company_id is populated from current company
+        $validated['company_id'] = $user->company_id ?: config('app.company_id');
 
         try {
             // Get card details
@@ -377,11 +361,11 @@ public function deactivate(Request $request, $id)
     ]);
 }    
     /**
-     * Transfer customer to another worker (CEO only)
+     * Transfer customer to another worker (CEO, Manager, Secretary, Super Admin)
      */
     public function transfer(Request $request, $id)
     {
-        // ... (transfer logic remains same)
+        $user = $request->user();
         $validated = $request->validate([
             'new_worker_id' => 'required|exists:users,id',
         ]);
@@ -389,12 +373,17 @@ public function deactivate(Request $request, $id)
         $customer = Customer::findOrFail($id);
         $newWorker = \App\Models\User::with('roles')->findOrFail($validated['new_worker_id']);
 
-        // Verify new worker has worker role or similar? Not strictly necessary if CEO decides.
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
+        if ($isManager && $user->branch_id && $newWorker->branch_id && $user->branch_id !== $newWorker->branch_id && !$user->hasRole('ceo') && !$user->hasRole('super_admin')) {
+            return response()->json([
+                'message' => 'You can only transfer customers to workers within your branch.',
+            ], 403);
+        }
         
         $oldWorkerId = $customer->worker_id;
         $customer->worker_id = $newWorker->id;
         
-        // Also update branch if the new worker is in a different branch
+        // Also update branch if the new worker is in a branch
         if ($newWorker->branch_id) {
             $customer->branch_id = $newWorker->branch_id;
         }
@@ -413,7 +402,7 @@ public function deactivate(Request $request, $id)
     }
 
     /**
-     * Mark a customer as served (Secretary and CEO only)
+     * Mark a customer as served (CEO, Manager, Secretary, Super Admin)
      */
     public function markAsServed(Request $request, $id)
     {
@@ -425,8 +414,9 @@ public function deactivate(Request $request, $id)
             return response()->json(['message' => 'Unauthorized. Workers cannot perform this action.'], 403);
         }
 
-        if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
+        if ($isManager && $user->branch_id && $customer->branch_id && $customer->branch_id !== $user->branch_id && !$user->hasRole('ceo') && !$user->hasRole('super_admin')) {
+            return response()->json(['message' => 'Unauthorized. Customer is not in your branch.'], 403);
         }
 
         if ($customer->status !== 'completed') {

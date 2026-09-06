@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { customerAPI, cardAPI, branchAPI, userAPI, customerCardAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { showSuccess, showError, showWarning, showConfirm } from '../utils/sweetalert';
+import TransferCustomerModal from '../components/TransferCustomerModal';
 import '../styles/Customers.css';
 
 
@@ -16,6 +17,7 @@ function Customers() {
     const [searchQuery, setSearchQuery] = useState('');
     const [showEditForm, setShowEditForm] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [customerToTransfer, setCustomerToTransfer] = useState(null);
     const [preSelectedCardId, setPreSelectedCardId] = useState(null);
     const { user, isCEO, isSecretary } = useAuth();
     const navigate = useNavigate();
@@ -397,6 +399,16 @@ function Customers() {
                                             >
                                                 ✏️
                                             </button>
+                                            {(isCEO || isSecretary) && (
+                                                <button
+                                                    className="btn-icon-small"
+                                                    onClick={() => setCustomerToTransfer(customer)}
+                                                    title="Transfer Customer"
+                                                    style={{ padding: '8px', background: 'transparent', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                >
+                                                    ⇄
+                                                </button>
+                                            )}
                                             {isCEO && (
                                                 <button
                                                     className="btn-icon-small delete"
@@ -590,6 +602,14 @@ function Customers() {
                         setSelectedCustomer(null);
                     }}
                     onSubmit={handleUpdateCustomer}
+                />
+            )}
+            {/* Transfer Customer Modal */}
+            {customerToTransfer && (
+                <TransferCustomerModal
+                    customer={customerToTransfer}
+                    onClose={() => setCustomerToTransfer(null)}
+                    onSuccess={() => fetchCustomers(pagination.current_page)}
                 />
             )}
         </div>

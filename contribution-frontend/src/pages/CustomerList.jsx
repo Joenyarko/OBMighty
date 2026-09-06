@@ -472,11 +472,11 @@ function CustomerList() {
                                         <Trash2 size={18} />
                                     </button>
                                 )}
-                                {/* Transfer Button - CEO Only */}
-                                {isCEO && (
+                                {/* Transfer Button - CEO, Manager, Secretary */}
+                                {(isCEO || isSecretary) && (
                                     <button
                                         className="btn-icon"
-                                        title="Transfer"
+                                        title="Transfer Customer"
                                         style={{ color: 'var(--primary-color)' }}
                                         onClick={() => setCustomerToTransfer(customer)}
                                     >

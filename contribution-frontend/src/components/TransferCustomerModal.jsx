@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { userAPI, customerAPI } from '../services/api';
 import { showSuccess, showError, showConfirm } from '../utils/sweetalert';
+import { useAuth } from '../context/AuthContext';
 
 function TransferCustomerModal({ customer, onClose, onSuccess }) {
+    const { user, isCEO, isSuperAdmin } = useAuth();
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState('');
     const [loading, setLoading] = useState(true);
@@ -15,13 +17,14 @@ function TransferCustomerModal({ customer, onClose, onSuccess }) {
     const fetchWorkers = async () => {
         try {
             const response = await userAPI.getAll();
-            const allUsers = response.data;
-            // Filter for workers only (or maybe secretaries too if they can manage customers?)
-            // For now, let's allow transfer to any user who can be a "worker" (role: worker)
-            // But usually validation logic backend handles assignment. 
-            // Let's filter by role 'worker' for clarity, or just show all users for flexibility if CEO wants.
-            // Let's filter for simplicity based on typical use case.
-            const workerList = allUsers.filter(u => u.roles.some(r => r.name === 'worker'));
+            const raw = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+            let workerList = raw.filter(u => u.roles?.some(r => (typeof r === 'string' ? r === 'worker' : r.name === 'worker')));
+            
+            // If manager has a branch_id and is not CEO, filter to their branch
+            if (!isCEO && !isSuperAdmin && user?.branch_id) {
+                workerList = workerList.filter(w => w.branch_id === user.branch_id);
+            }
+
             setWorkers(workerList);
         } catch (error) {
             console.error('Failed to fetch workers', error);

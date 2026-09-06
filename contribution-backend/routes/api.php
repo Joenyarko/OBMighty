@@ -136,9 +136,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users/{id}/deactivate', [UserController::class, 'deactivate'])->middleware('role:ceo|super_admin');
     Route::post('/workers/{id}/deactivate-with-transfer', [UserController::class, 'deactivateWorker'])->middleware('role:ceo|super_admin');
     
-    // Customer Deactivation (CEO and Secretary)
-    Route::post('/customers/{id}/deactivate', [CustomerController::class, 'deactivate'])->middleware('role:ceo|secretary|super_admin');
-
+    // Customer Deactivation (CEO, Manager, Secretary)
+    Route::post('/customers/{id}/deactivate', [CustomerController::class, 'deactivate'])->middleware('role:ceo|secretary|manager|branch_manager|super_admin');
 
     // Cards (View All - Accessible to Workers/Secretary/CEO for selection)
     Route::get('/cards', [CardController::class, 'index']);
@@ -148,13 +147,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payments/bulk', [PaymentController::class, 'bulkStore']);
     Route::apiResource('payments', PaymentController::class)->only(['index', 'store']);
     
-    // Customer Transfer (CEO only)
-    // ADDED super_admin here
-    Route::post('/customers/{id}/transfer', [CustomerController::class, 'transfer'])->middleware('role:ceo|super_admin');
+    // Customer Transfer (CEO, Manager, Secretary)
+    Route::post('/customers/{id}/transfer', [CustomerController::class, 'transfer'])->middleware('role:ceo|secretary|manager|branch_manager|super_admin');
 
-    // Customer Served (CEO and Secretary)
-    // ADDED super_admin here
-    Route::post('/customers/{id}/serve', [CustomerController::class, 'markAsServed'])->middleware('role:ceo|secretary|super_admin');
+    // Customer Served (CEO, Manager, Secretary)
+    Route::post('/customers/{id}/serve', [CustomerController::class, 'markAsServed'])->middleware('role:ceo|secretary|manager|branch_manager|super_admin');
     
     // Sales (All roles, scoped by controller logic)
     Route::prefix('sales')->group(function () {
