@@ -12,6 +12,7 @@ class AuditLog extends Model
     const UPDATED_AT = null; // Only created_at timestamp
 
     protected $fillable = [
+        'company_id',
         'user_id',
         'action',
         'auditable_type',
@@ -42,8 +43,10 @@ class AuditLog extends Model
      */
     public static function log($action, $auditable, $oldValues = null, $newValues = null, $userId = null)
     {
+        $companyId = config('app.company_id') ?: ($auditable->company_id ?? auth()->user()?->company_id);
+
         return static::create([
-            'company_id' => config('app.company_id'),
+            'company_id' => $companyId,
             'user_id' => $userId ?? auth()->id(),
             'action' => $action,
             'auditable_type' => get_class($auditable),

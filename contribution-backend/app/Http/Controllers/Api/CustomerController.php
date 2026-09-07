@@ -369,43 +369,52 @@ class CustomerController extends Controller
         DB::beginTransaction();
         try {
             $oldValues = $customer->toArray();
+            $customerCards = \App\Models\CustomerCard::where('customer_id', $customer->id)->get();
+            $cardIds = $customerCards->pluck('id');
 
             if ($shouldRefund && $totalAmountPaid > 0) {
                 // Option 1: Delete and Refund
-                // 1. Remove all payment records so total revenue / collected sales reduces
-                \App\Models\Payment::where('customer_id', $customer->id)->delete();
-
-                // 2. Clear customer card box payments and states
-                $customerCards = \App\Models\CustomerCard::where('customer_id', $customer->id)->get();
-                foreach ($customerCards as $card) {
-                    \App\Models\BoxPayment::where('customer_card_id', $card->id)->delete();
-                    \App\Models\BoxState::where('customer_card_id', $card->id)->update([
+                // 1. Reset BoxStates first to break FK to box_payments
+                if ($cardIds->isNotEmpty()) {
+                    \App\Models\BoxState::whereIn('customer_card_id', $cardIds)->update([
                         'is_checked' => false,
                         'checked_date' => null,
                         'payment_id' => null,
                     ]);
-                    $card->update([
+
+                    // 2. Remove box payments
+                    \App\Models\BoxPayment::whereIn('customer_card_id', $cardIds)->delete();
+
+                    // 3. Update customer cards
+                    \App\Models\CustomerCard::whereIn('id', $cardIds)->update([
                         'status' => 'cancelled',
                         'amount_paid' => 0,
                         'boxes_checked' => 0,
-                        'amount_remaining' => $card->total_amount,
                     ]);
                 }
 
+                // 4. Remove all payment records so total revenue / collected sales reduces
+                \App\Models\Payment::where('customer_id', $customer->id)->delete();
+
+                // 5. Update customer status to 'closed'
                 $customer->update([
                     'amount_paid' => 0,
                     'boxes_filled' => 0,
-                    'status' => 'inactive',
+                    'status' => 'closed',
                 ]);
 
-                // Soft delete the customer
+                // 6. Soft delete the customer
                 $customer->delete();
 
-                // Create audit log
-                \App\Models\AuditLog::log('customer_deleted_with_refund', $customer, $oldValues, [
-                    'refunded_amount' => $totalAmountPaid,
-                    'deleted_at' => $customer->deleted_at,
-                ]);
+                // 7. Create audit log
+                try {
+                    \App\Models\AuditLog::log('customer_deleted_with_refund', $customer, $oldValues, [
+                        'refunded_amount' => $totalAmountPaid,
+                        'deleted_at' => $customer->deleted_at,
+                    ]);
+                } catch (\Exception $logEx) {
+                    \Log::warning('AuditLog creation failed on customer refund deletion: ' . $logEx->getMessage());
+                }
 
                 DB::commit();
 
@@ -416,22 +425,28 @@ class CustomerController extends Controller
                 ]);
             } else {
                 // Option 2: Delete without refund (Keep sales/revenue intact)
-                \App\Models\CustomerCard::where('customer_id', $customer->id)->update([
-                    'status' => 'cancelled',
-                ]);
+                if ($cardIds->isNotEmpty()) {
+                    \App\Models\CustomerCard::whereIn('id', $cardIds)->update([
+                        'status' => 'cancelled',
+                    ]);
+                }
 
                 $customer->update([
-                    'status' => 'inactive',
+                    'status' => 'closed',
                 ]);
 
                 // Soft delete the customer
                 $customer->delete();
 
                 // Create audit log
-                \App\Models\AuditLog::log('customer_deleted_without_refund', $customer, $oldValues, [
-                    'retained_amount' => $totalAmountPaid,
-                    'deleted_at' => $customer->deleted_at,
-                ]);
+                try {
+                    \App\Models\AuditLog::log('customer_deleted_without_refund', $customer, $oldValues, [
+                        'retained_amount' => $totalAmountPaid,
+                        'deleted_at' => $customer->deleted_at,
+                    ]);
+                } catch (\Exception $logEx) {
+                    \Log::warning('AuditLog creation failed on customer non-refund deletion: ' . $logEx->getMessage());
+                }
 
                 DB::commit();
 
