@@ -402,22 +402,230 @@
     box-shadow: 0 6px 12px rgba(239, 68, 68, 0.4);
 }
 
-.no-customers {
-    grid-column: 1 / -1;
+/* Quick Status Tabs */
+.quick-tabs-container {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tab-btn.active {
+    background: var(--primary-color);
+    color: #0b0e14;
+    border-color: var(--primary-color);
+    font-weight: 700;
+}
+
+.tab-btn.highlight-served {
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.tab-btn.highlight-served.active {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #10b981;
+}
+
+/* Served Customers Table Styles */
+.served-table-wrapper {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.table-header-info {
+    margin-bottom: 18px;
+}
+
+.table-header-info h2 {
+    margin: 0 0 4px 0;
+    color: #10b981;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.table-header-info p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+.served-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary);
+}
+
+.served-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.served-table td {
+    padding: 14px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    vertical-align: middle;
+}
+
+.served-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.customer-name-bold {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.customer-sub-info {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.card-name-tag {
+    background: rgba(255, 255, 255, 0.06);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.amount-fulfilled {
+    color: #10b981;
+    font-weight: 800;
+    font-size: 14px;
+}
+
+.boxes-tag {
+    background: rgba(59, 130, 246, 0.12);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-served {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.badge-due {
+    background: #ef4444;
+    color: #ffffff;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.table-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-action-view {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: rgba(0, 223, 162, 0.12);
+    color: var(--primary-color);
+    border: 1px solid rgba(0, 223, 162, 0.3);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-action-view:hover {
+    background: var(--primary-color);
+    color: #0b0e14;
+}
+
+.btn-action-delete {
+    padding: 6px 8px;
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-action-delete:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.loading-state {
     text-align: center;
     padding: 60px 20px;
     color: var(--text-secondary);
 }
 
-.no-customers p {
-    font-size: 18px;
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 223, 162, 0.2);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    animation: spin 0.8s linear infinite;
 }
 
-.loading {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary);
-    font-size: 18px;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Responsive Design */

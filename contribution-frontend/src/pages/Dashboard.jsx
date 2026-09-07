@@ -275,13 +275,22 @@ function CEODashboard({ data }) {
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Overall Expense</h3>
+                    <h3>Goods Fulfilled (Served)</h3>
+                    <p className="stat-value" style={{ color: '#f39c12' }}>
+                        GHS {formatGHS(overview.served_deductions)}
+                    </p>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                        {formatNumber(overview.served_customers)} served customers
+                    </span>
+                </div>
+                <div className="stat-card">
+                    <h3>Operating Expenses</h3>
                     <p className="stat-value" style={{ color: '#e74c3c' }}>
                         GHS {formatGHS(overview.overall_expense)}
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Overall Profit</h3>
+                    <h3>Net Profit</h3>
                     <p className="stat-value" style={{ color: (overview.overall_profit || 0) >= 0 ? '#2ecc71' : '#e74c3c' }}>
                         GHS {formatGHS(overview.overall_profit)}
                     </p>
@@ -290,13 +299,6 @@ function CEODashboard({ data }) {
                     <h3>Total Staff</h3>
                     <p className="stat-value">
                         {formatNumber(overview.total_staff)}
-                    </p>
-                </div>
-
-                <div className="stat-card">
-                    <h3>Card Types</h3>
-                    <p className="stat-value">
-                        {formatNumber(overview.total_card_templates)}
                     </p>
                 </div>
             </div>
@@ -315,9 +317,9 @@ function CEODashboard({ data }) {
                     </p>
                 </div>
                 <div className="stat-card">
-                    <h3>Total Profit</h3>
-                    <p className="stat-value" style={{ color: (overview.overall_profit || 0) >= 0 ? '#2ecc71' : '#e74c3c' }}>
-                        GHS {formatGHS(overview.overall_profit)}
+                    <h3>Active Customers</h3>
+                    <p className="stat-value">
+                        {formatNumber(overview.active_customers)}
                     </p>
                 </div>
                 <div className="stat-card">

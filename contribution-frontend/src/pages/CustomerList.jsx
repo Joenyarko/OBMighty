@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { customerAPI, userAPI, branchAPI } from '../services/api';
 import { showSuccess, showError, showConfirm, showWarning } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Filter, Edit, Trash2, ArrowRightLeft } from 'lucide-react';
+import { Search, Trash2, ArrowRightLeft, Eye, Edit, CheckCircle2, AlertTriangle, Clock, Layers } from 'lucide-react';
 import TransferCustomerModal from '../components/TransferCustomerModal';
 import '../styles/CustomerList.css';
 
@@ -32,51 +32,31 @@ function CustomerList() {
         total: 0,
         from: 0,
         to: 0,
-        stats: { total: 0, in_progress: 0, completed: 0, defaulting: 0, due: 0 }
+        stats: { total: 0, in_progress: 0, completed: 0, defaulting: 0, due: 0, served: 0, unserved: 0 }
     });
 
-    const { isCEO, isSecretary, user } = useAuth();
+    const { isCEO, isSecretary, isManager, user } = useAuth();
     const navigate = useNavigate();
 
     // Fetch company configuration for logo
     useEffect(() => {
-        const fetchConfig = async () => {
-            try {
-                // Assuming there's an API to get company config or just use the user context if available
-                // For now, let's try to get it from a public config or similar, but since we are authenticated,
-                // we might have it in the user object or need to fetch it.
-                // Let's assume the user object has the company logo or we fetch it.
-                // If not, we might need a specific endpoint. 
-                // Let's use the layout's logo logic pattern if possible, but for now 
-                // let's assume we can get it from the user.company.logo_url if joined, 
-                // or fetch from /config endpoint if global.
-                // Actually, the user object from useAuth might have it.
-                if (user?.company?.logo_url) {
-                    setCompanyLogo(user.company.logo_url);
-                } else if (user?.company_id) {
-                    // Try to construct it or leave it null.
-                    // A safe bet is to assume it's available via a standard path if we knew it.
-                    // But we can try to fetch the company details if needed.
-                }
-            } catch (err) {
-                console.error("Failed to fetch logo", err);
-            }
-        };
-        fetchConfig();
+        if (user?.company?.logo_url) {
+            setCompanyLogo(user.company.logo_url);
+        }
     }, [user]);
 
     useEffect(() => {
         fetchCustomers(1);
-        if (isCEO || isSecretary) {
+        if (isCEO || isSecretary || isManager) {
             fetchFilterOptions();
         }
-    }, [statusFilter, percentageFilter, dueFilter, workerFilter, branchFilter, isCEO, isSecretary, servedFilter]);
+    }, [statusFilter, percentageFilter, dueFilter, workerFilter, branchFilter, servedFilter]);
 
     // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchCustomers(1);
-        }, 500);
+        }, 400);
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
@@ -88,8 +68,7 @@ function CustomerList() {
             ]);
 
             const workerList = Array.isArray(workerRes.data) ? workerRes.data : (workerRes.data?.data || []);
-            // Filter workers if secretary (Use function result)
-            if (isSecretary && user) {
+            if ((isSecretary || isManager) && user?.branch_id) {
                 setWorkers(workerList.filter(w => w.branch_id === user.branch_id));
             } else {
                 setWorkers(workerList);
@@ -118,6 +97,8 @@ function CustomerList() {
             // If status is 'completed', apply served filter
             if (statusFilter === 'completed') {
                 params.is_served = servedFilter === 'served' ? 'true' : 'false';
+            } else if (statusFilter === 'served') {
+                params.is_served = 'true';
             }
 
             // Remove empty params
@@ -133,7 +114,7 @@ function CustomerList() {
                 total: data.total,
                 from: data.from,
                 to: data.to,
-                stats: data.stats || { total: 0, in_progress: 0, completed: 0, defaulting: 0 }
+                stats: data.stats || { total: 0, in_progress: 0, completed: 0, defaulting: 0, served: 0, unserved: 0 }
             });
         } catch (error) {
             showError('Failed to fetch customers');
@@ -167,37 +148,91 @@ function CustomerList() {
         }
     };
 
-    const handleDeactivate = async (id, name) => {
-        const result = await showConfirm(
-            `Deactivate Customer "${name}"?`,
-            'This customer will be marked as inactive and will no longer appear in active lists. This can be reversed later.'
-        );
+    // 2-Option Deletion Handler (Refund vs Keep without Refund)
+    const handleDeleteCustomer = async (customer) => {
+        const amountPaid = parseFloat(customer.amount_paid || 0);
+        const customerName = customer.name;
+        const isDone = customer.status === 'completed' || customer.is_served;
 
-        if (result.isConfirmed) {
-            try {
-                await customerAPI.deactivate(id);
-                setCustomers(customers.filter(c => c.id !== id));
-                showSuccess('Customer deactivated successfully');
-            } catch (error) {
-                console.error('Failed to deactivate customer:', error);
-                showError('Failed to deactivate customer');
+        // If customer has contributed money and is not completed/served
+        if (amountPaid > 0 && !isDone) {
+            const Swal = (await import('sweetalert2')).default;
+            const result = await Swal.fire({
+                title: `Delete & Cancel Customer?`,
+                html: `
+                    <div style="text-align: left; font-size: 14px; color: #d1d5db; line-height: 1.6;">
+                        <p style="margin-bottom: 8px;">Customer <strong style="color:#fff;">${customerName}</strong> has paid a total of <strong style="color: #00dfa2;">GHS ${amountPaid.toFixed(2)}</strong> (${customer.boxes_filled}/${customer.total_boxes} boxes).</p>
+                        <p style="margin-bottom: 16px; color: #f87171;">Since this customer has not completed their contribution, how should the collected funds be treated?</p>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '💸 Delete & Refund (Reduce Total Sales)',
+                denyButtonText: '🔒 Delete Without Refund (Keep in Total Sales)',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#ef4444',
+                denyButtonColor: '#f59e0b',
+                cancelButtonColor: '#374151',
+                background: '#161920',
+                color: '#fff',
+            });
+
+            if (result.isConfirmed) {
+                // Delete with refund
+                try {
+                    const res = await customerAPI.deactivate(customer.id, { refund: true, delete_type: 'refund' });
+                    showSuccess(res.data?.message || 'Customer deleted and payment refunded.');
+                    fetchCustomers(pagination.current_page);
+                } catch (err) {
+                    console.error(err);
+                    showError(err.response?.data?.message || 'Failed to delete customer.');
+                }
+            } else if (result.isDenied) {
+                // Delete without refund
+                try {
+                    const res = await customerAPI.deactivate(customer.id, { refund: false, delete_type: 'no_refund' });
+                    showSuccess(res.data?.message || 'Customer deleted without refund.');
+                    fetchCustomers(pagination.current_page);
+                } catch (err) {
+                    console.error(err);
+                    showError(err.response?.data?.message || 'Failed to delete customer.');
+                }
+            }
+        } else {
+            // Zero balance or already served/completed customer
+            const result = await showConfirm(
+                `Delete Customer "${customerName}"?`,
+                'This customer record will be removed from active lists.',
+                'Yes, Delete',
+                'Cancel'
+            );
+            if (result.isConfirmed) {
+                try {
+                    await customerAPI.deactivate(customer.id, { refund: false });
+                    showSuccess('Customer deleted successfully');
+                    fetchCustomers(pagination.current_page);
+                } catch (err) {
+                    console.error(err);
+                    showError(err.response?.data?.message || 'Failed to delete customer.');
+                }
             }
         }
     };
+
     const handleMarkAsServed = async (customer) => {
-        // Confirmation with Logo
         const result = await showConfirm(
             'Mark as Served?',
-            `Are you sure ${customer.name} has been served?`,
+            `Are you sure ${customer.name} has been served with their items? This will fulfill their card.`,
             'Yes, Mark Served',
-            companyLogo // Pass logo URL if available (SweetAlert customization might be needed in utils)
+            'Cancel'
         );
 
         if (result.isConfirmed) {
             try {
                 await customerAPI.markServed(customer.id);
-                showSuccess('Customer marked as served');
-                fetchCustomers(pagination.current_page); // Refresh list
+                showSuccess('Customer marked as served successfully');
+                fetchCustomers(pagination.current_page);
             } catch (error) {
                 console.error('Failed to mark as served', error);
                 showError(error.response?.data?.message || 'Failed to action');
@@ -205,27 +240,58 @@ function CustomerList() {
         }
     };
 
-    // ... (rest of the file until return)
-
     return (
         <div className="customer-list-container">
-            {/* ... (Header) */}
+            {/* Header */}
             <div className="page-header">
                 <h1>Customer Management</h1>
-                <p>View and manage all customers with box tracking</p>
+                <p>View and manage all customer accounts, card tracking, and served fulfillments</p>
+            </div>
+
+            {/* Quick Status Tabs */}
+            <div className="quick-tabs-container">
+                <button 
+                    className={`tab-btn ${statusFilter === '' ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter(''); setServedFilter('unserved'); }}
+                >
+                    <Layers size={14} /> All Active ({pagination.stats?.total || 0})
+                </button>
+                <button 
+                    className={`tab-btn ${statusFilter === 'in_progress' ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter('in_progress'); setServedFilter('unserved'); }}
+                >
+                    <Clock size={14} /> In Progress ({pagination.stats?.in_progress || 0})
+                </button>
+                <button 
+                    className={`tab-btn ${statusFilter === 'completed' && servedFilter === 'unserved' ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter('completed'); setServedFilter('unserved'); }}
+                >
+                    <CheckCircle2 size={14} /> Completed Unserved ({pagination.stats?.unserved || 0})
+                </button>
+                <button 
+                    className={`tab-btn highlight-served ${statusFilter === 'served' ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter('served'); }}
+                >
+                    ✓ Served Customers ({pagination.stats?.served || 0})
+                </button>
+                <button 
+                    className={`tab-btn ${statusFilter === 'defaulting' ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter('defaulting'); setServedFilter('unserved'); }}
+                >
+                    <AlertTriangle size={14} /> Defaulting ({pagination.stats?.defaulting || 0})
+                </button>
             </div>
 
             {/* Filter Controls */}
             <div className="controls-section">
                 <div className="search-form">
-                    <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                    <Search size={18} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Search by name, phone, or location..."
+                        placeholder="Search by customer name, phone, or location..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="search-input"
-                        style={{ paddingLeft: '36px', width: '100%' }}
                     />
                 </div>
 
@@ -235,11 +301,12 @@ function CustomerList() {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         className="filter-select"
                     >
-                        <option value="">All Statuses</option>
+                        <option value="">All Active Statuses</option>
                         <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
+                        <option value="completed">Completed (Unserved)</option>
+                        <option value="served">Served Customers (Fulfilled)</option>
                         <option value="defaulting">Defaulting</option>
-                        <option value="closed">Closed</option>
+                        <option value="closed">Closed / Inactive</option>
                     </select>
 
                     {/* Due Date Filter */}
@@ -247,7 +314,6 @@ function CustomerList() {
                         value={dueFilter}
                         onChange={(e) => setDueFilter(e.target.value)}
                         className="filter-select due-filter-select"
-                        title="Filter customers whose cards are due or overdue"
                     >
                         <option value="">All Due Dates</option>
                         <option value="overdue">⚠️ Due / Overdue</option>
@@ -260,39 +326,16 @@ function CustomerList() {
                         value={percentageFilter}
                         onChange={(e) => setPercentageFilter(e.target.value)}
                         className="filter-select percentage-filter-select"
-                        title="Filter by completion percentage"
                     >
                         <option value="">All Progress (%)</option>
                         <option value="60_plus">60%+ (About to Complete)</option>
                         <option value="70_plus">70%+ (About to Complete)</option>
                         <option value="80_plus">80%+ (Almost Done)</option>
                         <option value="90_plus">90%+ (Near Completion)</option>
-                        <option value="60">60% – 69%</option>
-                        <option value="70">70% – 79%</option>
-                        <option value="80">80% – 89%</option>
-                        <option value="90">90% – 99%</option>
                         <option value="100">100% (Completed)</option>
                     </select>
 
-                    {/* Sub-filter for Completed status */}
-                    {statusFilter === 'completed' && (
-                        <div className="served-toggle">
-                            <button
-                                className={`toggle-btn ${servedFilter === 'unserved' ? 'active' : ''}`}
-                                onClick={() => setServedFilter('unserved')}
-                            >
-                                Unserved
-                            </button>
-                            <button
-                                className={`toggle-btn ${servedFilter === 'served' ? 'active' : ''}`}
-                                onClick={() => setServedFilter('served')}
-                            >
-                                Served
-                            </button>
-                        </div>
-                    )}
-
-                    {(isCEO || isSecretary) && (
+                    {(isCEO || isSecretary || isManager) && (
                         <select
                             value={workerFilter}
                             onChange={(e) => setWorkerFilter(e.target.value)}
@@ -320,56 +363,135 @@ function CustomerList() {
                 </div>
             </div>
 
-            {/* Customer Stats */}
-            {/* ... (Stats grid unchanged) */}
+            {/* Stats Summary Cards */}
             <div className="stats-grid">
-                <div className="stat-card">
+                <div className="stat-card" onClick={() => setStatusFilter('')} style={{ cursor: 'pointer' }}>
                     <div className="stat-icon">👥</div>
                     <div className="stat-content">
                         <h3>Total Customers</h3>
                         <p className="stat-value">{pagination.total}</p>
                     </div>
                 </div>
-                {/* Remove or adjust stats if needed based on served/unserved view? 
-                    The user didn't explicitly ask for served/unserved *stats* here, 
-                    but the list should update. Let's keep general stats for now. */}
-                <div className="stat-card">
+                <div className="stat-card" onClick={() => setStatusFilter('in_progress')} style={{ cursor: 'pointer' }}>
                     <div className="stat-icon">⏳</div>
                     <div className="stat-content">
                         <h3>In Progress</h3>
-                        <p className="stat-value">
-                            {pagination.stats?.in_progress || 0}
-                        </p>
+                        <p className="stat-value">{pagination.stats?.in_progress || 0}</p>
                     </div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" onClick={() => { setStatusFilter('completed'); setServedFilter('unserved'); }} style={{ cursor: 'pointer' }}>
                     <div className="stat-icon">✅</div>
                     <div className="stat-content">
                         <h3>Completed</h3>
-                        <p className="stat-value">
-                            {pagination.stats?.completed || 0}
-                        </p>
+                        <p className="stat-value">{pagination.stats?.completed || 0}</p>
                     </div>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card" onClick={() => setStatusFilter('served')} style={{ cursor: 'pointer' }}>
+                    <div className="stat-icon">🎁</div>
+                    <div className="stat-content">
+                        <h3>Served (Fulfilled)</h3>
+                        <p className="stat-value" style={{ color: '#00dfa2' }}>{pagination.stats?.served || 0}</p>
+                    </div>
+                </div>
+                <div className="stat-card" onClick={() => setStatusFilter('defaulting')} style={{ cursor: 'pointer' }}>
                     <div className="stat-icon">⚠️</div>
                     <div className="stat-content">
                         <h3>Defaulting</h3>
-                        <p className="stat-value">
-                            {pagination.stats?.defaulting || 0}
-                        </p>
+                        <p className="stat-value">{pagination.stats?.defaulting || 0}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Customer List */}
-            <div className="customers-grid">
-                {customers.length === 0 ? (
-                    <div className="no-customers">
-                        <p>No customers found matching your search.</p>
+            {/* Main Content Area */}
+            {loading ? (
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Loading customer data...</p>
+                </div>
+            ) : customers.length === 0 ? (
+                <div className="no-customers">
+                    <p>No customers found matching your criteria.</p>
+                </div>
+            ) : statusFilter === 'served' ? (
+                /* SERVED CUSTOMERS TABLE VIEW (Clean Table Format without Card Boxes) */
+                <div className="served-table-wrapper">
+                    <div className="table-header-info">
+                        <h2>🎁 Served Customers List ({customers.length})</h2>
+                        <p>All customers whose items have been purchased and fulfilled.</p>
                     </div>
-                ) : (
-                    customers.map((customer) => (
+                    <div className="table-scroll">
+                        <table className="served-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer</th>
+                                    <th>Card / Item</th>
+                                    <th>Fulfilled Amount</th>
+                                    <th>Boxes Completed</th>
+                                    <th>Worker</th>
+                                    <th>Branch</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {customers.map((c) => (
+                                    <tr key={c.id}>
+                                        <td>
+                                            <div className="customer-name-bold">{c.name}</div>
+                                            <div className="customer-sub-info">📞 {c.phone} • 📍 {c.location}</div>
+                                        </td>
+                                        <td>
+                                            <span className="card-name-tag">
+                                                {c.card?.card_name || 'Standard Card'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="amount-fulfilled">
+                                                GHS {parseFloat(c.amount_paid || c.total_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="boxes-tag">
+                                                {c.boxes_filled || c.total_boxes}/{c.total_boxes} boxes
+                                            </span>
+                                        </td>
+                                        <td>{c.worker?.name || 'N/A'}</td>
+                                        <td>{c.branch?.name || 'N/A'}</td>
+                                        <td>
+                                            <span className="badge-served">
+                                                ✓ SERVED
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="table-action-buttons">
+                                                <button
+                                                    className="btn-action-view"
+                                                    onClick={() => navigate(`/customers/${c.id}/boxes`)}
+                                                    title="View Card History"
+                                                >
+                                                    <Eye size={14} /> View
+                                                </button>
+                                                {(isCEO || isSecretary || isManager) && (
+                                                    <button
+                                                        className="btn-action-delete"
+                                                        onClick={() => handleDeleteCustomer(c)}
+                                                        title="Delete Customer Record"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                /* STANDARD CUSTOMER GRID VIEW */
+                <div className="customers-grid">
+                    {customers.map((customer) => (
                         <div key={customer.id} className="customer-card">
                             <div className="customer-header">
                                 <h3>{customer.name}</h3>
@@ -378,7 +500,7 @@ function CustomerList() {
                                         {customer.status?.replace('_', ' ')}
                                     </span>
                                     {customer.is_served && (
-                                        <span className="status-badge served" style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+                                        <span className="status-badge served" style={{ backgroundColor: '#10b981', color: 'white' }}>
                                             Served
                                         </span>
                                     )}
@@ -393,7 +515,7 @@ function CustomerList() {
                                 <p><strong>💳 Card:</strong> {customer.card?.card_name || 'N/A'}</p>
                                 
                                 {/* Start Date & Due Date */}
-                                <div className="card-date-info" style={{ marginTop: '8px', padding: '6px 8px', background: 'rgba(255, 255, 255, 0.04)', borderRadius: '6px', fontSize: '12px' }}>
+                                <div className="card-date-info">
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                                         <span style={{ color: 'var(--text-secondary)' }}>📅 Start Date:</span>
                                         <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
@@ -403,11 +525,11 @@ function CustomerList() {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ color: 'var(--text-secondary)' }}>⏰ Due Date:</span>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            <span style={{ fontWeight: 600, color: customer.is_due ? '#e74c3c' : 'var(--text-primary)' }}>
+                                            <span style={{ fontWeight: 600, color: customer.is_due ? '#ef4444' : 'var(--text-primary)' }}>
                                                 {customer.due_date ? new Date(customer.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
                                             </span>
                                             {customer.is_due && (
-                                                <span style={{ background: '#e74c3c', color: '#fff', padding: '1px 5px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>
+                                                <span className="badge-due">
                                                     DUE
                                                 </span>
                                             )}
@@ -429,8 +551,8 @@ function CustomerList() {
                                         />
                                     </div>
                                 </div>
-                                <p><strong>Amount Paid:</strong> GHS{customer.amount_paid}</p>
-                                <p><strong>Balance:</strong> GHS{customer.balance}</p>
+                                <p><strong>Amount Paid:</strong> GHS {parseFloat(customer.amount_paid || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                <p><strong>Balance:</strong> GHS {parseFloat(customer.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                             </div>
 
                             <div className="customer-actions">
@@ -442,15 +564,15 @@ function CustomerList() {
                                     📦 View
                                 </button>
 
-                                {/* Mark as Served Button - Only for Completed Defaulting/Completed Unserved customers */}
-                                {(isCEO || isSecretary) &&
+                                {/* Mark as Served Button - For Completed Unserved customers */}
+                                {(isCEO || isSecretary || isManager) &&
                                     customer.status === 'completed' &&
                                     !customer.is_served && (
                                         <button
-                                            className="btn-icon"
+                                            className="btn-icon serve"
                                             onClick={() => handleMarkAsServed(customer)}
                                             title="Mark as Served"
-                                            style={{ color: '#27ae60' }}
+                                            style={{ color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '4px 8px', borderRadius: '6px', fontSize: '12px' }}
                                         >
                                             ✓ Serve
                                         </button>
@@ -461,21 +583,23 @@ function CustomerList() {
                                     onClick={() => handleEdit(customer)}
                                     title="Edit Customer"
                                 >
-                                    ✏️ Edit
+                                    <Edit size={16} />
                                 </button>
-                                {isCEO && (
+
+                                {(isCEO || isSecretary || isManager) && (
                                     <button
                                         className="btn-icon delete"
-                                        onClick={() => handleDeactivate(customer.id, customer.name)}
-                                        title="Deactivate"
+                                        onClick={() => handleDeleteCustomer(customer)}
+                                        title="Delete Customer"
                                     >
-                                        <Trash2 size={18} />
+                                        <Trash2 size={16} />
                                     </button>
                                 )}
+
                                 {/* Transfer Button - CEO, Manager, Secretary */}
-                                {(isCEO || isSecretary) && (
+                                {(isCEO || isSecretary || isManager) && (
                                     <button
-                                        className="btn-icon"
+                                        className="btn-icon transfer"
                                         title="Transfer Customer"
                                         style={{ color: 'var(--primary-color)' }}
                                         onClick={() => setCustomerToTransfer(customer)}
@@ -485,16 +609,15 @@ function CustomerList() {
                                 )}
                             </div>
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {/* Pagination Controls */}
-            {/* ... (Pagination unchanged) */}
             {pagination.total > 0 && (
-                <div className="pagination-controls" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', padding: '10px', background: 'var(--card-bg)', borderRadius: '8px' }}>
+                <div className="pagination-controls">
                     <div style={{ color: 'var(--text-secondary)' }}>
-                        Showing {pagination.from}–{pagination.to} of {pagination.total} customers
+                        Showing {pagination.from || 0}–{pagination.to || 0} of {pagination.total} customers
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
                         <button
@@ -557,7 +680,6 @@ function CustomerList() {
     );
 }
 
-// ... (EditCustomerModal unchanged)
 function EditCustomerModal({ customer, onClose, onSubmit }) {
     const [formData, setFormData] = useState({
         name: customer.name || '',

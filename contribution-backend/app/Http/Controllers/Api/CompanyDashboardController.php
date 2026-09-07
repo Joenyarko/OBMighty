@@ -73,8 +73,10 @@ class CompanyDashboardController extends Controller
         $totalCardTemplates = $company->cards()->active()->count();
 
         // Overall stats for CEO
-        $overallRevenue = $company->payments()->sum('payment_amount');
-        $overallExpense = $company->expenses()->sum('amount');
+        $overallRevenue = (float)$company->payments()->sum('payment_amount');
+        $overallExpense = (float)$company->expenses()->sum('amount');
+        $servedDeductions = (float)$company->customers()->where('is_served', true)->sum('amount_paid');
+        $servedCustomersCount = (int)$company->customers()->where('is_served', true)->count();
         $totalCardsIssued = $company->customerCards()->count();
         
         // Total staff includes workers, managers, and secretaries
@@ -88,6 +90,8 @@ class CompanyDashboardController extends Controller
             'month_revenue' => $monthPayments,
             'total_customers' => $totalCustomers,
             'active_customers' => $activeCustomers,
+            'served_customers' => $servedCustomersCount,
+            'served_deductions' => round($servedDeductions, 2),
             'completion_rate' => $totalCustomers > 0 
                 ? round((($totalCustomers - $activeCustomers) / $totalCustomers) * 100, 2)
                 : 0,
@@ -98,7 +102,7 @@ class CompanyDashboardController extends Controller
             'total_card_templates' => $totalCardTemplates,
             'overall_revenue' => round($overallRevenue, 2),
             'overall_expense' => round($overallExpense, 2),
-            'overall_profit' => round($overallRevenue - $overallExpense, 2),
+            'overall_profit' => round($overallRevenue - $overallExpense - $servedDeductions, 2),
         ];
     }
 

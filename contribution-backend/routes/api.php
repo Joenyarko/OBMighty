@@ -94,11 +94,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/company/dashboard', [App\Http\Controllers\Api\CompanyDashboardController::class, 'index']);
     });
 
-    // Common Admin Routes (CEO & Secretary & Super Admin)
-    // ADDED super_admin here
-    Route::middleware('role:ceo|secretary|super_admin')->group(function () {
+    // Common Admin Routes (CEO & Secretary & Manager & Super Admin)
+    Route::middleware('role:ceo|secretary|manager|branch_manager|super_admin')->group(function () {
         Route::get('/branches', [BranchController::class, 'index']);
         Route::get('/branches/{branch}', [BranchController::class, 'show']);
+        Route::get('/branches/{branch}/performance', [BranchController::class, 'performance']);
         Route::apiResource('users', UserController::class);
     });
 

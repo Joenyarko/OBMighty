@@ -60,6 +60,8 @@ class CustomerController extends Controller
             'total' => (clone $statsQuery)->where('customers.status', '!=', 'inactive')->count(),
             'in_progress' => (clone $statsQuery)->where('customers.status', 'in_progress')->count(),
             'completed' => (clone $statsQuery)->where('customers.status', 'completed')->count(),
+            'served' => (clone $statsQuery)->where('customers.is_served', true)->count(),
+            'unserved' => (clone $statsQuery)->where('customers.status', 'completed')->where('customers.is_served', false)->count(),
             'defaulting' => (clone $statsQuery)->defaulting()->count(),
             'due' => (clone $statsQuery)->due()->count(),
         ];
@@ -74,6 +76,8 @@ class CustomerController extends Controller
             $status = $request->status;
             if ($status === 'defaulting') {
                 $query->defaulting();
+            } elseif ($status === 'served') {
+                $query->where('customers.is_served', true);
             } elseif ($status === 'completed') {
                 $query->completed();
             } elseif ($status === 'in_progress') {
@@ -334,32 +338,117 @@ class CustomerController extends Controller
     }
 
     /**
- * Deactivate a customer (soft delete)
- */
-public function deactivate(Request $request, $id)
-{
-    $user = $request->user();
-    $customer = Customer::findOrFail($id);
-
-    // Only CEO and Secretary can deactivate
-    if ($user->hasRole('worker')) {
-        return response()->json(['message' => 'Unauthorized'], 403);
+     * Delete a customer (Resource route)
+     */
+    public function destroy(Request $request, $id)
+    {
+        return $this->deactivate($request, $id);
     }
 
-    if ($user->hasRole('secretary') && $customer->branch_id !== $user->branch_id) {
-        return response()->json(['message' => 'Unauthorized'], 403);
-    }
+    /**
+     * Deactivate or Delete a customer (with option to Refund or Keep payments)
+     */
+    public function deactivate(Request $request, $id)
+    {
+        $user = $request->user();
+        $customer = Customer::findOrFail($id);
 
-    $oldValues = $customer->toArray();
-    $customer->delete();
+        // Authorization check
+        if ($user->hasRole('worker')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-    // Create audit log
-    \App\Models\AuditLog::log('customer_deactivated', $customer, $oldValues, ['deleted_at' => $customer->deleted_at]);
+        $isManager = $user->hasRole('secretary') || $user->hasRole('manager') || $user->hasRole('branch_manager');
+        if ($isManager && $user->branch_id && $customer->branch_id && $customer->branch_id !== $user->branch_id && !$user->hasRole('ceo') && !$user->hasRole('super_admin')) {
+            return response()->json(['message' => 'Unauthorized. Customer belongs to another branch.'], 403);
+        }
 
-    return response()->json([
-        'message' => 'Customer deactivated successfully',
-    ]);
-}    
+        $shouldRefund = $request->boolean('refund') || $request->input('delete_type') === 'refund';
+        $totalAmountPaid = (float)($customer->amount_paid ?? 0);
+
+        DB::beginTransaction();
+        try {
+            $oldValues = $customer->toArray();
+
+            if ($shouldRefund && $totalAmountPaid > 0) {
+                // Option 1: Delete and Refund
+                // 1. Remove all payment records so total revenue / collected sales reduces
+                \App\Models\Payment::where('customer_id', $customer->id)->delete();
+
+                // 2. Clear customer card box payments and states
+                $customerCards = \App\Models\CustomerCard::where('customer_id', $customer->id)->get();
+                foreach ($customerCards as $card) {
+                    \App\Models\BoxPayment::where('customer_card_id', $card->id)->delete();
+                    \App\Models\BoxState::where('customer_card_id', $card->id)->update([
+                        'is_checked' => false,
+                        'checked_date' => null,
+                        'payment_id' => null,
+                    ]);
+                    $card->update([
+                        'status' => 'cancelled',
+                        'amount_paid' => 0,
+                        'boxes_checked' => 0,
+                        'amount_remaining' => $card->total_amount,
+                    ]);
+                }
+
+                $customer->update([
+                    'amount_paid' => 0,
+                    'boxes_filled' => 0,
+                    'status' => 'inactive',
+                ]);
+
+                // Soft delete the customer
+                $customer->delete();
+
+                // Create audit log
+                \App\Models\AuditLog::log('customer_deleted_with_refund', $customer, $oldValues, [
+                    'refunded_amount' => $totalAmountPaid,
+                    'deleted_at' => $customer->deleted_at,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'message' => "Customer deleted and GHS " . number_format($totalAmountPaid, 2) . " was refunded.",
+                    'refunded' => true,
+                    'refunded_amount' => $totalAmountPaid,
+                ]);
+            } else {
+                // Option 2: Delete without refund (Keep sales/revenue intact)
+                \App\Models\CustomerCard::where('customer_id', $customer->id)->update([
+                    'status' => 'cancelled',
+                ]);
+
+                $customer->update([
+                    'status' => 'inactive',
+                ]);
+
+                // Soft delete the customer
+                $customer->delete();
+
+                // Create audit log
+                \App\Models\AuditLog::log('customer_deleted_without_refund', $customer, $oldValues, [
+                    'retained_amount' => $totalAmountPaid,
+                    'deleted_at' => $customer->deleted_at,
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'message' => "Customer deleted without refund (total sales remain intact).",
+                    'refunded' => false,
+                    'retained_amount' => $totalAmountPaid,
+                ]);
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Failed to delete customer', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Failed to delete customer: ' . $e->getMessage()
+            ], 500);
+        }
+    }    
     /**
      * Transfer customer to another worker (CEO, Manager, Secretary, Super Admin)
      */
