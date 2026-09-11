@@ -50,6 +50,10 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
             'address' => 'nullable|string|max:500',
+            'guarantor_name' => 'nullable|string|max:255',
+            'guarantor_phone' => 'nullable|string|max:50',
+            'national_id_number' => 'nullable|string|max:100',
+            'national_id_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'password' => [
                 'required',
@@ -95,6 +99,17 @@ class UserController extends Controller
             }
         }
 
+        $nationalIdImageUrl = null;
+        if ($request->hasFile('national_id_image')) {
+            try {
+                $imageService = app(\App\Services\ImageUploadService::class);
+                $uploadRes = $imageService->upload($request->file('national_id_image'), 'documents', 'national_id_' . time());
+                $nationalIdImageUrl = $uploadRes['url'];
+            } catch (\Exception $e) {
+                \Log::warning('National ID image upload failed: ' . $e->getMessage());
+            }
+        }
+
         $roleToAssign = $validated['role'];
         // Normalize role if manager or branch_manager
         if (in_array($roleToAssign, ['manager', 'branch_manager'])) {
@@ -106,6 +121,10 @@ class UserController extends Controller
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
             'address' => $validated['address'] ?? null,
+            'guarantor_name' => $validated['guarantor_name'] ?? null,
+            'guarantor_phone' => $validated['guarantor_phone'] ?? null,
+            'national_id_number' => $validated['national_id_number'] ?? null,
+            'national_id_image' => $nationalIdImageUrl,
             'profile_pic' => $profilePicUrl,
             'password' => $validated['password'],
             'branch_id' => $validated['branch_id'],
@@ -155,6 +174,10 @@ class UserController extends Controller
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
             'address' => 'nullable|string|max:500',
+            'guarantor_name' => 'nullable|string|max:255',
+            'guarantor_phone' => 'nullable|string|max:50',
+            'national_id_number' => 'nullable|string|max:100',
+            'national_id_image' => 'nullable',
             'profile_pic' => 'nullable',
             'password' => [
                 'nullable',
@@ -186,6 +209,21 @@ class UserController extends Controller
             $validated['profile_pic'] = null;
         } else {
             unset($validated['profile_pic']);
+        }
+
+        // Handle national ID file upload if provided
+        if ($request->hasFile('national_id_image')) {
+            try {
+                $imageService = app(\App\Services\ImageUploadService::class);
+                $uploadRes = $imageService->upload($request->file('national_id_image'), 'documents', 'national_id_' . time());
+                $validated['national_id_image'] = $uploadRes['url'];
+            } catch (\Exception $e) {
+                \Log::warning('National ID upload on update failed: ' . $e->getMessage());
+            }
+        } elseif ($request->has('national_id_image') && is_null($request->input('national_id_image'))) {
+            $validated['national_id_image'] = null;
+        } else {
+            unset($validated['national_id_image']);
         }
 
         // Only set password if provided

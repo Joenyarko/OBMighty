@@ -17,6 +17,8 @@ import {
     Camera, 
     X,
     Shield,
+    CreditCard,
+    UserCheck,
 } from 'lucide-react';
 import '../styles/App.css';
 
@@ -32,10 +34,14 @@ function Users({ roleFilter, title }) {
     const [createImagePreview, setCreateImagePreview] = useState(null);
     const [createImageFile, setCreateImageFile] = useState(null);
     const createFileInputRef = useRef(null);
+    const [createNationalIdPreview, setCreateNationalIdPreview] = useState(null);
+    const [createNationalIdFile, setCreateNationalIdFile] = useState(null);
+    const createNationalIdInputRef = useRef(null);
 
     // View Modal State
     const [viewUser, setViewUser] = useState(null);
     const [showViewModal, setShowViewModal] = useState(false);
+    const [previewCardModal, setPreviewCardModal] = useState(null);
 
     // Edit Modal State
     const [editUser, setEditUser] = useState(null);
@@ -43,6 +49,9 @@ function Users({ roleFilter, title }) {
     const [editImagePreview, setEditImagePreview] = useState(null);
     const [editImageFile, setEditImageFile] = useState(null);
     const editFileInputRef = useRef(null);
+    const [editNationalIdPreview, setEditNationalIdPreview] = useState(null);
+    const [editNationalIdFile, setEditNationalIdFile] = useState(null);
+    const editNationalIdInputRef = useRef(null);
 
     // Password view toggles
     const [showPassword, setShowPassword] = useState(false);
@@ -69,6 +78,9 @@ function Users({ roleFilter, title }) {
         email: '',
         phone: '',
         address: '',
+        guarantor_name: '',
+        guarantor_phone: '',
+        national_id_number: '',
         password: '',
         password_confirmation: '',
         role: roleFilter || 'worker',
@@ -80,6 +92,9 @@ function Users({ roleFilter, title }) {
         email: '',
         phone: '',
         address: '',
+        guarantor_name: '',
+        guarantor_phone: '',
+        national_id_number: '',
         branch_id: '',
         role: 'worker',
         status: 'active',
@@ -141,6 +156,18 @@ function Users({ roleFilter, title }) {
         }
     };
 
+    const handleCreateNationalIdChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                showError('National ID image size must be less than 5MB');
+                return;
+            }
+            setCreateNationalIdFile(file);
+            setCreateNationalIdPreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleEditImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -150,6 +177,18 @@ function Users({ roleFilter, title }) {
             }
             setEditImageFile(file);
             setEditImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const handleEditNationalIdChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                showError('National ID image size must be less than 5MB');
+                return;
+            }
+            setEditNationalIdFile(file);
+            setEditNationalIdPreview(URL.createObjectURL(file));
         }
     };
 
@@ -173,6 +212,9 @@ function Users({ roleFilter, title }) {
             email: targetUser.email || '',
             phone: targetUser.phone || '',
             address: targetUser.address || '',
+            guarantor_name: targetUser.guarantor_name || '',
+            guarantor_phone: targetUser.guarantor_phone || '',
+            national_id_number: targetUser.national_id_number || '',
             branch_id: targetUser.branch_id || '',
             role: targetUser.roles?.[0]?.name || 'worker',
             status: targetUser.status || 'active',
@@ -181,6 +223,8 @@ function Users({ roleFilter, title }) {
         });
         setEditImagePreview(targetUser.profile_pic || null);
         setEditImageFile(null);
+        setEditNationalIdPreview(targetUser.national_id_image || null);
+        setEditNationalIdFile(null);
         setShowEditModal(true);
     };
 
@@ -261,6 +305,9 @@ function Users({ roleFilter, title }) {
             data.append('email', formData.email);
             if (formData.phone) data.append('phone', formData.phone);
             if (formData.address) data.append('address', formData.address);
+            if (formData.guarantor_name) data.append('guarantor_name', formData.guarantor_name);
+            if (formData.guarantor_phone) data.append('guarantor_phone', formData.guarantor_phone);
+            if (formData.national_id_number) data.append('national_id_number', formData.national_id_number);
             data.append('branch_id', formData.branch_id);
             data.append('role', formData.role);
             data.append('password', formData.password);
@@ -268,16 +315,22 @@ function Users({ roleFilter, title }) {
             if (createImageFile) {
                 data.append('profile_pic', createImageFile);
             }
+            if (createNationalIdFile) {
+                data.append('national_id_image', createNationalIdFile);
+            }
 
             await userAPI.create(data);
             setShowModal(false);
             setFormData({
-                name: '', email: '', phone: '', address: '', password: '', password_confirmation: '',
+                name: '', email: '', phone: '', address: '', guarantor_name: '', guarantor_phone: '', national_id_number: '',
+                password: '', password_confirmation: '',
                 role: roleFilter || 'worker',
                 branch_id: isSecretary ? user.branch_id : ''
             });
             setCreateImageFile(null);
             setCreateImagePreview(null);
+            setCreateNationalIdFile(null);
+            setCreateNationalIdPreview(null);
             fetchData();
             showSuccess('Staff member created successfully');
         } catch (error) {
@@ -314,6 +367,9 @@ function Users({ roleFilter, title }) {
             data.append('email', editFormData.email);
             if (editFormData.phone) data.append('phone', editFormData.phone);
             data.append('address', editFormData.address || '');
+            data.append('guarantor_name', editFormData.guarantor_name || '');
+            data.append('guarantor_phone', editFormData.guarantor_phone || '');
+            data.append('national_id_number', editFormData.national_id_number || '');
             if (editFormData.branch_id) data.append('branch_id', editFormData.branch_id);
             if (editFormData.role) data.append('role', editFormData.role);
             if (editFormData.status) data.append('status', editFormData.status);
@@ -324,12 +380,17 @@ function Users({ roleFilter, title }) {
             if (editImageFile) {
                 data.append('profile_pic', editImageFile);
             }
+            if (editNationalIdFile) {
+                data.append('national_id_image', editNationalIdFile);
+            }
 
             await userAPI.update(editUser.id, data);
             setShowEditModal(false);
             setEditUser(null);
             setEditImageFile(null);
             setEditImagePreview(null);
+            setEditNationalIdFile(null);
+            setEditNationalIdPreview(null);
             fetchData();
             showSuccess('Staff details updated successfully');
         } catch (error) {
@@ -661,7 +722,7 @@ function Users({ roleFilter, title }) {
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
                             <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
                                 <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Mail size={12} /> Email Address
@@ -698,6 +759,69 @@ function Users({ roleFilter, title }) {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Guarantor Details (Optional) */}
+                        {(viewUser.guarantor_name || viewUser.guarantor_phone) && (
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
+                                    <UserCheck size={14} /> Guarantor Information
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                    <div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Guarantor Name</div>
+                                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>{viewUser.guarantor_name || 'Not provided'}</div>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Guarantor Phone</div>
+                                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>
+                                            {viewUser.guarantor_phone ? (
+                                                <a href={`tel:${viewUser.guarantor_phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>{viewUser.guarantor_phone}</a>
+                                            ) : 'Not provided'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* National ID / Ghana Card (Optional) */}
+                        {(viewUser.national_id_number || viewUser.national_id_image) && (
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '20px' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
+                                    <CreditCard size={14} /> National ID / Ghana Card
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: viewUser.national_id_image ? '8px' : '0' }}>
+                                    <div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Card / ID Number</div>
+                                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff', letterSpacing: '0.5px' }}>
+                                            {viewUser.national_id_number || 'Not provided'}
+                                        </div>
+                                    </div>
+                                    {viewUser.national_id_image && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setPreviewCardModal(viewUser.national_id_image)}
+                                            className="btn-secondary"
+                                            style={{ padding: '4px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                        >
+                                            <Eye size={12} /> View Card Photo
+                                        </button>
+                                    )}
+                                </div>
+                                {viewUser.national_id_image && (
+                                    <div
+                                        style={{ marginTop: '8px', cursor: 'pointer', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0a', textAlign: 'center' }}
+                                        onClick={() => setPreviewCardModal(viewUser.national_id_image)}
+                                        title="Click to view full image"
+                                    >
+                                        <img
+                                            src={viewUser.national_id_image}
+                                            alt="National Card"
+                                            style={{ width: '100%', maxHeight: '140px', objectFit: 'contain' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Summary Stats */}
                         <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
@@ -923,8 +1047,97 @@ function Users({ roleFilter, title }) {
                                 </div>
                             </div>
 
+                            {/* Guarantor Information Section (Optional) */}
+                            <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--primary-color)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <UserCheck size={15} /> Guarantor Information <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>(Optional)</span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>Guarantor Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Kwame Mensah"
+                                            value={editFormData.guarantor_name}
+                                            onChange={e => setEditFormData({ ...editFormData, guarantor_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>Guarantor Phone</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. 0244123456"
+                                            value={editFormData.guarantor_phone}
+                                            onChange={e => setEditFormData({ ...editFormData, guarantor_phone: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* National ID Card Section (Optional) */}
+                            <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--primary-color)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <CreditCard size={15} /> National ID / Ghana Card <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>(Optional)</span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>National ID Number</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. GHA-123456789-0"
+                                            value={editFormData.national_id_number}
+                                            onChange={e => setEditFormData({ ...editFormData, national_id_number: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '6px' }}>
+                                            National Card Photo
+                                        </label>
+                                        <input
+                                            type="file"
+                                            ref={editNationalIdInputRef}
+                                            onChange={handleEditNationalIdChange}
+                                            accept="image/png,image/jpeg,image/webp"
+                                            style={{ display: 'none' }}
+                                        />
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-secondary"
+                                                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                onClick={() => editNationalIdInputRef.current?.click()}
+                                            >
+                                                <Camera size={14} /> {editNationalIdPreview ? 'Change Card' : 'Upload Card'}
+                                            </button>
+                                            {editNationalIdPreview && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-secondary"
+                                                    style={{ padding: '6px 10px', fontSize: '12px', color: '#f87171' }}
+                                                    onClick={() => {
+                                                        setEditNationalIdFile(null);
+                                                        setEditNationalIdPreview(null);
+                                                    }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {editNationalIdPreview && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <img
+                                            src={editNationalIdPreview}
+                                            alt="National ID Preview"
+                                            style={{ maxWidth: '100%', maxHeight: '140px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#000' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Optional Password Change Accordion / Box */}
-                            <div style={{ marginTop: '16px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                            <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
                                 <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '10px' }}>
                                     Change Password <span style={{ fontSize: '11px', fontWeight: 'normal' }}>(Leave blank to keep unchanged)</span>
                                 </div>
@@ -1127,7 +1340,98 @@ function Users({ roleFilter, title }) {
                                         </select>
                                     )}
                                 </div>
+                            </div>
 
+                            {/* Guarantor Information Section (Optional) */}
+                            <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--primary-color)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <UserCheck size={15} /> Guarantor Information <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>(Optional)</span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>Guarantor Name</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Kwame Mensah"
+                                            value={formData.guarantor_name}
+                                            onChange={e => setFormData({ ...formData, guarantor_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>Guarantor Phone</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. 0244123456"
+                                            value={formData.guarantor_phone}
+                                            onChange={e => setFormData({ ...formData, guarantor_phone: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* National ID Card Section (Optional) */}
+                            <div style={{ marginTop: '14px', padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--primary-color)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <CreditCard size={15} /> National ID / Ghana Card <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'normal' }}>(Optional)</span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center' }}>
+                                    <div className="form-group" style={{ marginBottom: 0 }}>
+                                        <label style={{ fontSize: '12px' }}>National ID Number</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. GHA-123456789-0"
+                                            value={formData.national_id_number}
+                                            onChange={e => setFormData({ ...formData, national_id_number: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '6px' }}>
+                                            National Card Photo
+                                        </label>
+                                        <input
+                                            type="file"
+                                            ref={createNationalIdInputRef}
+                                            onChange={handleCreateNationalIdChange}
+                                            accept="image/png,image/jpeg,image/webp"
+                                            style={{ display: 'none' }}
+                                        />
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                            <button
+                                                type="button"
+                                                className="btn-secondary"
+                                                style={{ padding: '6px 12px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                onClick={() => createNationalIdInputRef.current?.click()}
+                                            >
+                                                <Camera size={14} /> {createNationalIdPreview ? 'Change Card' : 'Upload Card'}
+                                            </button>
+                                            {createNationalIdPreview && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-secondary"
+                                                    style={{ padding: '6px 10px', fontSize: '12px', color: '#f87171' }}
+                                                    onClick={() => {
+                                                        setCreateNationalIdFile(null);
+                                                        setCreateNationalIdPreview(null);
+                                                    }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {createNationalIdPreview && (
+                                    <div style={{ marginTop: '10px' }}>
+                                        <img
+                                            src={createNationalIdPreview}
+                                            alt="National ID Preview"
+                                            style={{ maxWidth: '100%', maxHeight: '140px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', objectFit: 'contain', background: '#000' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '14px' }}>
                                 <div className="form-group">
                                     <label>Password *</label>
                                     <div style={{ position: 'relative' }}>
@@ -1180,6 +1484,27 @@ function Users({ roleFilter, title }) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* --- National Card Lightbox Modal --- */}
+            {previewCardModal && (
+                <div className="custom-modal-overlay" onClick={() => setPreviewCardModal(null)} style={{ zIndex: 1100 }}>
+                    <div className="custom-modal-content" style={{ maxWidth: '640px', padding: '16px', background: '#0a0a0a', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <h3 style={{ margin: 0, color: 'var(--primary-color)', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <CreditCard size={16} /> National ID Card Photo
+                            </h3>
+                            <button onClick={() => setPreviewCardModal(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <img
+                            src={previewCardModal}
+                            alt="National Card Full Preview"
+                            style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
+                        />
                     </div>
                 </div>
             )}
