@@ -16,6 +16,7 @@ import {
     User, 
     Camera, 
     X,
+    Shield,
 } from 'lucide-react';
 import '../styles/App.css';
 
@@ -525,62 +526,67 @@ function Users({ roleFilter, title }) {
                                             </span>
                                         </td>
                                         <td style={{ padding: '16px' }}>
-                                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                                            <div className="staff-actions-group">
                                                 {/* View Button */}
                                                 <button
-                                                    className="btn-secondary"
-                                                    style={{ padding: '5px 10px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                    className="staff-action-btn view-btn"
                                                     onClick={() => handleViewUser(u)}
                                                     title="View Profile Details"
+                                                    aria-label="View Details"
                                                 >
-                                                    <Eye size={13} /> View
+                                                    <Eye size={14} />
+                                                    <span className="btn-label">View</span>
                                                 </button>
 
                                                 {/* Edit Button */}
                                                 {(isSuperAdmin || isCEO || (isSecretary && u.branch_id === user?.branch_id && roleName === 'worker')) && (
                                                     <button
-                                                        className="btn-secondary"
-                                                        style={{ padding: '5px 10px', fontSize: '12px', background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                        className="staff-action-btn edit-btn"
                                                         onClick={() => handleOpenEdit(u)}
                                                         title="Edit Staff Information"
+                                                        aria-label="Edit Staff"
                                                     >
-                                                        <Edit size={13} /> Edit
+                                                        <Edit size={14} />
+                                                        <span className="btn-label">Edit</span>
                                                     </button>
                                                 )}
 
                                                 {/* Permissions Button - CEO Only */}
                                                 {(isSuperAdmin || isCEO) && (
                                                     <button
-                                                        className="btn-secondary"
-                                                        style={{ padding: '5px 10px', fontSize: '12px' }}
+                                                        className="staff-action-btn perm-btn"
                                                         onClick={() => handleOpenPermissions(u)}
                                                         title="Manage Permissions"
+                                                        aria-label="Manage Permissions"
                                                     >
-                                                        Permissions
+                                                        <Shield size={14} />
+                                                        <span className="btn-label">Permissions</span>
                                                     </button>
                                                 )}
 
                                                 {/* Performance Button */}
                                                 {isManagerOrWorker && (
                                                     <button
-                                                        className="btn-secondary"
-                                                        style={{ padding: '5px 10px', fontSize: '12px', background: 'rgba(33, 150, 243, 0.1)', color: '#2196f3', border: '1px solid rgba(33, 150, 243, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                        className="staff-action-btn perf-btn"
                                                         onClick={() => navigate(`/performance/${u.id}`)}
-                                                        title="View Performance Intelligence"
+                                                        title="Performance Intelligence"
+                                                        aria-label="Performance"
                                                     >
-                                                        <TrendingUp size={13} /> Performance
+                                                        <TrendingUp size={14} />
+                                                        <span className="btn-label">Performance</span>
                                                     </button>
                                                 )}
 
                                                 {/* Deactivate Button */}
                                                 {(isCEO || isSuperAdmin) && (roleName === 'worker' || roleName === 'secretary') && u.id !== user?.id && (
                                                     <button
-                                                        className="btn-danger"
-                                                        style={{ padding: '5px 10px', fontSize: '12px', background: 'rgba(244, 67, 54, 0.1)', color: '#f44336', border: '1px solid rgba(244, 67, 54, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                                        className="staff-action-btn deact-btn"
                                                         onClick={() => handleDeactivate(u)}
                                                         title="Deactivate Staff"
+                                                        aria-label="Deactivate Staff"
                                                     >
-                                                        <Trash2 size={13} /> Deactivate
+                                                        <Trash2 size={14} />
+                                                        <span className="btn-label">Deactivate</span>
                                                     </button>
                                                 )}
                                             </div>
