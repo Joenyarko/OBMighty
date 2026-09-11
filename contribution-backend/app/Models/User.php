@@ -18,6 +18,8 @@ class User extends Authenticatable
         'email',
         'password',
         'phone',
+        'profile_pic',
+        'address',
         'company_id',
         'branch_id',
         'status',

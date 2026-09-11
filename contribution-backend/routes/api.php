@@ -100,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/branches/{branch}', [BranchController::class, 'show']);
         Route::get('/branches/{branch}/performance', [BranchController::class, 'performance']);
         Route::apiResource('users', UserController::class);
+        Route::post('/users/{id}', [UserController::class, 'update']);
     });
 
     // Branches & System (CEO & Secretary & Super Admin)

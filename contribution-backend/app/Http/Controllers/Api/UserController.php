@@ -18,24 +18,23 @@ class UserController extends Controller
         $user = auth()->user();
         $includeInactive = $request->query('include_inactive', false);
         
-        if ($user->hasRole('ceo')) {
-            $query = User::with('roles', 'branch', 'permissions');
-            
+        $query = User::with('roles', 'branch', 'permissions')
+            ->withCount(['customers', 'payments']);
+
+        if ($user->hasRole('ceo') || $user->hasRole('super_admin')) {
             if (!$includeInactive) {
                 $query->where('status', 'active');
             }
-            
-            $users = $query->get();
+            $users = $query->orderBy('name')->get();
         } else {
-            // Secretary can only see workers in their branch
-            $query = User::where('branch_id', $user->branch_id)
-                ->with('roles', 'branch', 'permissions');
+            // Secretary / Manager can only see workers in their branch
+            $query->where('branch_id', $user->branch_id);
                 
             if (!$includeInactive) {
                 $query->where('status', 'active');
             }
             
-            $users = $query->get();
+            $users = $query->orderBy('name')->get();
         }
 
         return response()->json($users);
@@ -50,6 +49,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+            'address' => 'nullable|string|max:500',
+            'profile_pic' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
             'password' => [
                 'required',
                 'string',
@@ -61,43 +62,57 @@ class UserController extends Controller
                 'regex:/[@$!%*#?&]/',
             ],
             'branch_id' => 'required|exists:branches,id',
-            'role' => 'required|in:secretary,worker',
+            'role' => 'required|in:secretary,worker,manager,branch_manager',
             'status' => 'nullable|in:active,inactive,suspended'
         ], [
             'phone.regex' => 'The phone number must be exactly 10 digits.',
             'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
-        // Authorization logic could be moved to Policy
-        // Only CEO can create Secretary
-        // Only CEO can create new users
-        // Check permission: CEO or 'create_workers'
-        if (!auth()->user()->hasRole('ceo') && !auth()->user()->can('create_workers')) {
+        // Authorization check
+        if (!auth()->user()->hasRole('ceo') && !auth()->user()->hasRole('super_admin') && !auth()->user()->can('create_workers')) {
             abort(403, 'Unauthorized. You do not have permission to create users.');
         }
 
         // Additional restrictions for non-CEOs (e.g. Secretaries)
-        if (!auth()->user()->hasRole('ceo')) {
-            // Can only create 'worker' role
+        if (!auth()->user()->hasRole('ceo') && !auth()->user()->hasRole('super_admin')) {
             if ($validated['role'] !== 'worker') {
                 abort(403, 'Unauthorized. You can only create Worker accounts.');
             }
-            // Can only assign to own branch
             if ($validated['branch_id'] != auth()->user()->branch_id) {
                 abort(403, 'Unauthorized. You can only assign users to your own branch.');
             }
+        }
+
+        $profilePicUrl = null;
+        if ($request->hasFile('profile_pic')) {
+            try {
+                $imageService = app(\App\Services\ImageUploadService::class);
+                $uploadRes = $imageService->upload($request->file('profile_pic'), 'profiles', 'user_' . time());
+                $profilePicUrl = $uploadRes['url'];
+            } catch (\Exception $e) {
+                \Log::warning('Profile pic upload failed: ' . $e->getMessage());
+            }
+        }
+
+        $roleToAssign = $validated['role'];
+        // Normalize role if manager or branch_manager
+        if (in_array($roleToAssign, ['manager', 'branch_manager'])) {
+            $roleToAssign = 'secretary';
         }
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?? null,
+            'address' => $validated['address'] ?? null,
+            'profile_pic' => $profilePicUrl,
             'password' => $validated['password'],
             'branch_id' => $validated['branch_id'],
             'status' => $validated['status'] ?? 'active',
         ]);
 
-        $user->assignRole($validated['role']);
+        $user->assignRole($roleToAssign);
 
         // Create audit log
         \App\Models\AuditLog::log('user_created', $user, null, $user->toArray());
@@ -109,35 +124,42 @@ class UserController extends Controller
     }
 
     /**
-     * Get single user
+     * Get single user with details and stats
      */
     public function show($id)
     {
-        $user = User::with('roles', 'branch', 'permissions')->findOrFail($id);
+        $user = User::with('roles', 'branch', 'permissions')
+            ->withCount(['customers', 'payments'])
+            ->findOrFail($id);
         return response()->json($user);
     }
 
     /**
-     * Update user
+     * Update user (CEO, Super Admin, or Secretary updating their worker)
      */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        $authUser = auth()->user();
         
-        // Only CEO can update users
-        if (!auth()->user()->hasRole('ceo')) {
-            abort(403, 'Unauthorized. Only CEO can update users.');
+        // Authorization: CEO, Super Admin, or Manager in the same branch
+        $isCeoOrSuper = $authUser->hasRole('ceo') || $authUser->hasRole('super_admin');
+        $isManagerOfBranch = ($authUser->hasRole('secretary') || $authUser->hasRole('manager')) && $authUser->branch_id === $user->branch_id;
+
+        if (!$isCeoOrSuper && !$isManagerOfBranch) {
+            abort(403, 'Unauthorized. You do not have permission to edit this user.');
         }
 
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'email', Rule::unique('users')->ignore($user->id)],
             'phone' => 'nullable|string|regex:/^[0-9]{10}$/',
+            'address' => 'nullable|string|max:500',
+            'profile_pic' => 'nullable',
             'password' => [
                 'nullable',
                 'string',
                 'min:8',
-                'confirmed',
                 'regex:/[a-z]/',
                 'regex:/[A-Z]/',
                 'regex:/[0-9]/',
@@ -145,25 +167,46 @@ class UserController extends Controller
             ],
             'branch_id' => 'sometimes|exists:branches,id',
             'status' => 'sometimes|in:active,inactive,suspended',
-            'role' => 'sometimes|in:secretary,worker'
+            'role' => 'sometimes|in:secretary,worker,manager,branch_manager,ceo'
         ], [
             'phone.regex' => 'The phone number must be exactly 10 digits.',
             'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
         ]);
 
-        if (isset($validated['password'])) {
-            $validated['password'] = $validated['password'];
+        // Handle profile picture file upload if provided
+        if ($request->hasFile('profile_pic')) {
+            try {
+                $imageService = app(\App\Services\ImageUploadService::class);
+                $uploadRes = $imageService->upload($request->file('profile_pic'), 'profiles', 'user_' . time());
+                $validated['profile_pic'] = $uploadRes['url'];
+            } catch (\Exception $e) {
+                \Log::warning('Profile pic upload on update failed: ' . $e->getMessage());
+            }
+        } elseif ($request->has('profile_pic') && is_null($request->input('profile_pic'))) {
+            $validated['profile_pic'] = null;
+        } else {
+            unset($validated['profile_pic']);
+        }
+
+        // Only set password if provided
+        if (empty($validated['password'])) {
+            unset($validated['password']);
         }
 
         $oldValues = $user->toArray();
         $user->update($validated);
 
+        // Update role if provided and permitted
+        if (isset($validated['role']) && $isCeoOrSuper) {
+            $roleToAssign = $validated['role'];
+            if (in_array($roleToAssign, ['manager', 'branch_manager'])) {
+                $roleToAssign = 'secretary';
+            }
+            $user->syncRoles([$roleToAssign]);
+        }
+
         // Create audit log
         \App\Models\AuditLog::log('user_updated', $user, $oldValues, $user->getChanges());
-
-        if (isset($validated['role']) && auth()->user()->hasRole('ceo')) {
-            $user->syncRoles([$validated['role']]);
-        }
 
         return response()->json([
             'message' => 'User updated successfully',

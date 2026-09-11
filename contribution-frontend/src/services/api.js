@@ -116,10 +116,24 @@ export const branchAPI = {
 
 // User API
 export const userAPI = {
-    getAll: () => api.get('/users'),
+    getAll: (params) => api.get('/users', { params }),
     get: (id) => api.get(`/users/${id}`),
-    create: (data) => api.post('/users', data),
-    update: (id, data) => api.put(`/users/${id}`, data),
+    create: (data) => {
+        if (data instanceof FormData) {
+            return api.post('/users', data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
+        return api.post('/users', data);
+    },
+    update: (id, data) => {
+        if (data instanceof FormData) {
+            return api.post(`/users/${id}`, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
+        return api.put(`/users/${id}`, data);
+    },
     delete: (id) => api.delete(`/users/${id}`),
     deactivate: (id) => api.post(`/users/${id}/deactivate`),
     deactivateWorker: (id, transferToWorkerId) => api.post(`/workers/${id}/deactivate-with-transfer`, { transfer_to_worker_id: transferToWorkerId }),

@@ -92,7 +92,15 @@ function Performance() {
             <div className="worker-overview-card">
                 <div className="worker-info">
                     <div className="worker-avatar">
-                        {worker.name.charAt(0).toUpperCase()}
+                        {worker.profile_pic ? (
+                            <img 
+                                src={worker.profile_pic} 
+                                alt={worker.name} 
+                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                            />
+                        ) : (
+                            worker.name.charAt(0).toUpperCase()
+                        )}
                     </div>
                     <div className="worker-details">
                         <h2>{worker.name}</h2>
@@ -340,7 +348,15 @@ function Performance() {
                                             <td>
                                                 <div className="worker-cell">
                                                     <div className="mini-avatar">
-                                                        {w.name.charAt(0).toUpperCase()}
+                                                        {w.profile_pic ? (
+                                                            <img 
+                                                                src={w.profile_pic} 
+                                                                alt={w.name} 
+                                                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+                                                            />
+                                                        ) : (
+                                                            w.name.charAt(0).toUpperCase()
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <div className="worker-name-title">{w.name}</div>
