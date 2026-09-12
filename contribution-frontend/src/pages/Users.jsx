@@ -663,19 +663,19 @@ function Users({ roleFilter, title }) {
             {/* --- View Staff Details Modal --- */}
             {showViewModal && viewUser && (
                 <div className="custom-modal-overlay" onClick={() => setShowViewModal(false)}>
-                    <div className="custom-modal-content" style={{ maxWidth: '520px', padding: '28px' }} onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                            <h2 style={{ margin: 0, color: 'var(--primary-color)', fontSize: '20px' }}>Staff Profile Details</h2>
-                            <button onClick={() => setShowViewModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                    <div className="custom-modal-content" style={{ maxWidth: '520px' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                            <h2 style={{ margin: 0, color: 'var(--primary-color)', fontSize: '18px' }}>Staff Profile Details</h2>
+                            <button onClick={() => setShowViewModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}>
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid var(--border-color)' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '18px', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)' }}>
                             {/* Profile Image */}
                             <div style={{
-                                width: '84px',
-                                height: '84px',
+                                width: '76px',
+                                height: '76px',
                                 borderRadius: '50%',
                                 background: 'linear-gradient(135deg, #00dfa2, #0083b0)',
                                 display: 'flex',
@@ -683,9 +683,9 @@ function Users({ roleFilter, title }) {
                                 justifyContent: 'center',
                                 fontWeight: '800',
                                 color: '#fff',
-                                fontSize: '32px',
+                                fontSize: '28px',
                                 overflow: 'hidden',
-                                marginBottom: '14px',
+                                marginBottom: '10px',
                                 boxShadow: '0 4px 14px rgba(0, 223, 162, 0.25)',
                                 border: '2px solid rgba(255,255,255,0.15)'
                             }}>
@@ -695,8 +695,8 @@ function Users({ roleFilter, title }) {
                                     viewUser.name?.charAt(0).toUpperCase()
                                 )}
                             </div>
-                            <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#fff' }}>{viewUser.name}</h3>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <h3 style={{ margin: '0 0 6px 0', fontSize: '18px', color: '#fff', wordBreak: 'break-word' }}>{viewUser.name}</h3>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
                                 <span style={{
                                     textTransform: 'uppercase',
                                     fontSize: '11px',
@@ -722,39 +722,39 @@ function Users({ roleFilter, title }) {
                             </div>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', minWidth: 0 }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Mail size={12} /> Email Address
                                 </div>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff', wordBreak: 'break-all' }}>
+                                <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', wordBreak: 'break-word' }}>
                                     {viewUser.email || '-'}
                                 </div>
                             </div>
 
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', minWidth: 0 }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Phone size={12} /> Phone Number
                                 </div>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>
+                                <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', wordBreak: 'break-word' }}>
                                     {viewUser.phone ? <a href={`tel:${viewUser.phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>{viewUser.phone}</a> : 'Not provided'}
                                 </div>
                             </div>
 
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', minWidth: 0 }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <Building size={12} /> Assigned Branch
                                 </div>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>
+                                <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', wordBreak: 'break-word' }}>
                                     {viewUser.branch?.name || (viewUser.roles?.[0]?.name === 'ceo' ? 'All Branches' : 'Unassigned')}
                                 </div>
                             </div>
 
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', minWidth: 0 }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                     <MapPin size={12} /> Home Address
                                 </div>
-                                <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>
+                                <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', wordBreak: 'break-word' }}>
                                     {viewUser.address || 'Not provided'}
                                 </div>
                             </div>
@@ -762,18 +762,18 @@ function Users({ roleFilter, title }) {
 
                         {/* Guarantor Details (Optional) */}
                         {(viewUser.guarantor_name || viewUser.guarantor_phone) && (
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '16px' }}>
-                                <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                                    <UserCheck size={14} /> Guarantor Information
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '14px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--primary-color)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}>
+                                    <UserCheck size={13} /> Guarantor Information
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     <div>
-                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Guarantor Name</div>
-                                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>{viewUser.guarantor_name || 'Not provided'}</div>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Name</div>
+                                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff', wordBreak: 'break-word' }}>{viewUser.guarantor_name || 'Not provided'}</div>
                                     </div>
                                     <div>
-                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Guarantor Phone</div>
-                                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#fff' }}>
+                                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Phone</div>
+                                        <div style={{ fontSize: '12px', fontWeight: '500', color: '#fff' }}>
                                             {viewUser.guarantor_phone ? (
                                                 <a href={`tel:${viewUser.guarantor_phone}`} style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>{viewUser.guarantor_phone}</a>
                                             ) : 'Not provided'}
@@ -785,14 +785,14 @@ function Users({ roleFilter, title }) {
 
                         {/* National ID / Ghana Card (Optional) */}
                         {(viewUser.national_id_number || viewUser.national_id_image) && (
-                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '20px' }}>
-                                <div style={{ fontSize: '12px', color: 'var(--primary-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
-                                    <CreditCard size={14} /> National ID / Ghana Card
+                            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '16px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--primary-color)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}>
+                                    <CreditCard size={13} /> National ID / Ghana Card
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: viewUser.national_id_image ? '8px' : '0' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: viewUser.national_id_image ? '8px' : '0' }}>
                                     <div>
                                         <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Card / ID Number</div>
-                                        <div style={{ fontSize: '13px', fontWeight: '600', color: '#fff', letterSpacing: '0.5px' }}>
+                                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff', letterSpacing: '0.5px' }}>
                                             {viewUser.national_id_number || 'Not provided'}
                                         </div>
                                     </div>
@@ -801,7 +801,7 @@ function Users({ roleFilter, title }) {
                                             type="button"
                                             onClick={() => setPreviewCardModal(viewUser.national_id_image)}
                                             className="btn-secondary"
-                                            style={{ padding: '4px 10px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                            style={{ padding: '4px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px', minHeight: 'auto' }}
                                         >
                                             <Eye size={12} /> View Card Photo
                                         </button>
@@ -809,14 +809,14 @@ function Users({ roleFilter, title }) {
                                 </div>
                                 {viewUser.national_id_image && (
                                     <div
-                                        style={{ marginTop: '8px', cursor: 'pointer', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0a', textAlign: 'center' }}
+                                        style={{ marginTop: '6px', cursor: 'pointer', borderRadius: '6px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0a', textAlign: 'center' }}
                                         onClick={() => setPreviewCardModal(viewUser.national_id_image)}
                                         title="Click to view full image"
                                     >
                                         <img
                                             src={viewUser.national_id_image}
                                             alt="National Card"
-                                            style={{ width: '100%', maxHeight: '140px', objectFit: 'contain' }}
+                                            style={{ width: '100%', maxHeight: '130px', objectFit: 'contain' }}
                                         />
                                     </div>
                                 )}
@@ -824,60 +824,60 @@ function Users({ roleFilter, title }) {
                         )}
 
                         {/* Summary Stats */}
-                        <div style={{ display: 'flex', gap: '12px', marginBottom: '24px' }}>
-                            <div style={{ flex: 1, background: 'rgba(0, 223, 162, 0.06)', border: '1px solid rgba(0, 223, 162, 0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Assigned Customers</div>
-                                <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--primary-color)', marginTop: '2px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '18px' }}>
+                            <div style={{ background: 'rgba(0, 223, 162, 0.06)', border: '1px solid rgba(0, 223, 162, 0.2)', padding: '10px 4px', borderRadius: '8px', textAlign: 'center', minWidth: 0 }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Customers</div>
+                                <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--primary-color)', marginTop: '2px' }}>
                                     {viewUser.customers_count ?? 0}
                                 </div>
                             </div>
-                            <div style={{ flex: 1, background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Total Payments</div>
-                                <div style={{ fontSize: '18px', fontWeight: '700', color: '#60a5fa', marginTop: '2px' }}>
+                            <div style={{ background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '10px 4px', borderRadius: '8px', textAlign: 'center', minWidth: 0 }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Payments</div>
+                                <div style={{ fontSize: '16px', fontWeight: '700', color: '#60a5fa', marginTop: '2px' }}>
                                     {viewUser.payments_count ?? 0}
                                 </div>
                             </div>
-                            <div style={{ flex: 1, background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '12px', borderRadius: '8px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Joined Date</div>
-                                <div style={{ fontSize: '12px', fontWeight: '600', color: '#fff', marginTop: '4px' }}>
+                            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '10px 4px', borderRadius: '8px', textAlign: 'center', minWidth: 0 }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Joined</div>
+                                <div style={{ fontSize: '11px', fontWeight: '600', color: '#fff', marginTop: '4px', wordBreak: 'break-all' }}>
                                     {viewUser.created_at ? new Date(viewUser.created_at).toLocaleDateString() : '-'}
                                 </div>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                             {(viewUser.roles?.[0]?.name === 'worker' || viewUser.roles?.[0]?.name === 'secretary' || viewUser.roles?.[0]?.name === 'manager') && (
                                 <button
                                     type="button"
                                     className="btn-primary"
-                                    style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                    style={{ flex: '1 1 120px', minHeight: '38px', padding: '8px 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                     onClick={() => {
                                         setShowViewModal(false);
                                         navigate(`/performance/${viewUser.id}`);
                                     }}
                                 >
-                                    <TrendingUp size={16} /> View Performance
+                                    <TrendingUp size={15} /> Performance
                                 </button>
                             )}
                             {(isSuperAdmin || isCEO) && (
                                 <button
                                     type="button"
                                     className="btn-secondary"
-                                    style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                    style={{ flex: '1 1 100px', minHeight: '38px', padding: '8px 12px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                     onClick={() => {
                                         setShowViewModal(false);
                                         handleOpenEdit(viewUser);
                                     }}
                                 >
-                                    <Edit size={16} /> Edit Details
+                                    <Edit size={15} /> Edit Details
                                 </button>
                             )}
                             <button
                                 type="button"
                                 className="btn-secondary"
                                 onClick={() => setShowViewModal(false)}
-                                style={{ padding: '0 16px' }}
+                                style={{ flex: '1 1 70px', minHeight: '38px', padding: '8px 12px', fontSize: '13px' }}
                             >
                                 Close
                             </button>
