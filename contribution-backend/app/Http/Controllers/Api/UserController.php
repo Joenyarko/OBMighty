@@ -16,26 +16,27 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $includeInactive = $request->query('include_inactive', false);
+        $includeInactive = filter_var($request->query('include_inactive', true), FILTER_VALIDATE_BOOLEAN);
         
         $query = User::with('roles', 'branch', 'permissions')
             ->withCount(['customers', 'payments']);
 
         if ($user->hasRole('ceo') || $user->hasRole('super_admin')) {
-            if (!$includeInactive) {
-                $query->where('status', 'active');
+            if ($request->has('branch_id') && $request->query('branch_id') !== 'all' && !empty($request->query('branch_id'))) {
+                $query->where('branch_id', $request->query('branch_id'));
             }
-            $users = $query->orderBy('name')->get();
         } else {
             // Secretary / Manager can only see workers in their branch
             $query->where('branch_id', $user->branch_id);
-                
-            if (!$includeInactive) {
-                $query->where('status', 'active');
-            }
-            
-            $users = $query->orderBy('name')->get();
         }
+
+        if ($request->has('status') && in_array($request->query('status'), ['active', 'inactive', 'suspended'])) {
+            $query->where('status', $request->query('status'));
+        } elseif (!$includeInactive) {
+            $query->where('status', 'active');
+        }
+
+        $users = $query->orderBy('name')->get();
 
         return response()->json($users);
     }

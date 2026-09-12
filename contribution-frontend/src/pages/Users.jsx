@@ -19,6 +19,10 @@ import {
     Shield,
     CreditCard,
     UserCheck,
+    UserX,
+    Search,
+    Filter,
+    RotateCcw
 } from 'lucide-react';
 import '../styles/App.css';
 
@@ -28,6 +32,11 @@ function Users({ roleFilter, title }) {
     const [users, setUsers] = useState([]);
     const [branches, setBranches] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Filters State
+    const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'inactive'
+    const [selectedBranch, setSelectedBranch] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
     
     // Create Modal State
     const [showModal, setShowModal] = useState(false);
@@ -475,6 +484,78 @@ function Users({ roleFilter, title }) {
         }
     };
 
+    // --- Reactivation Handler ---
+    const handleReactivate = async (targetUser) => {
+        const userId = targetUser.id;
+        const userName = targetUser.name;
+        const roleName = targetUser.roles?.[0]?.name || 'worker';
+
+        if (!isCEO && !isSuperAdmin && !(isSecretary && targetUser.branch_id === user?.branch_id && roleName === 'worker')) {
+            showError('You do not have permission to reactivate this staff member');
+            return;
+        }
+
+        const result = await showConfirm(
+            `Reactivate Staff Member "${userName}"?`,
+            'This staff member will be restored to active status and will regain system access.',
+            'Yes, Reactivate',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await userAPI.update(userId, { status: 'active' });
+            showSuccess(`${userName} has been reactivated successfully!`);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to reactivate staff member', error);
+            showError(error.response?.data?.message || 'Error reactivating staff member.');
+        }
+    };
+
+    // Filter computations
+    const totalStaffCount = users.length;
+    const activeStaffCount = users.filter(u => (u.status || 'active') === 'active').length;
+    const inactiveStaffCount = users.filter(u => u.status === 'inactive' || u.status === 'suspended').length;
+
+    const filteredUsers = users.filter(u => {
+        // Status filter
+        const userStatus = u.status || 'active';
+        if (statusFilter === 'active' && userStatus !== 'active') return false;
+        if (statusFilter === 'inactive' && userStatus !== 'inactive' && userStatus !== 'suspended') return false;
+
+        // Branch filter
+        if (selectedBranch !== 'all' && String(u.branch_id) !== String(selectedBranch)) {
+            return false;
+        }
+
+        // Search query filter
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            const name = (u.name || '').toLowerCase();
+            const email = (u.email || '').toLowerCase();
+            const phone = (u.phone || '').toLowerCase();
+            const address = (u.address || '').toLowerCase();
+            const branchName = (u.branch?.name || '').toLowerCase();
+            const guarantor = (u.guarantor_name || '').toLowerCase();
+            const guarantorPhone = (u.guarantor_phone || '').toLowerCase();
+            const nationalId = (u.national_id_number || '').toLowerCase();
+
+            const matches = name.includes(q) ||
+                            email.includes(q) ||
+                            phone.includes(q) ||
+                            address.includes(q) ||
+                            branchName.includes(q) ||
+                            guarantor.includes(q) ||
+                            guarantorPhone.includes(q) ||
+                            nationalId.includes(q);
+            if (!matches) return false;
+        }
+
+        return true;
+    });
+
     return (
         <div className="users-page">
             <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
@@ -487,6 +568,96 @@ function Users({ roleFilter, title }) {
                         + Add New {roleFilter === 'worker' ? 'Worker' : roleFilter === 'secretary' ? 'Manager' : 'Staff'}
                     </button>
                 )}
+            </div>
+
+            {/* Staff Filters & Search Bar */}
+            <div className="staff-filters-container">
+                {/* Status Tabs */}
+                <div className="staff-filter-tabs">
+                    <button
+                        type="button"
+                        className={`staff-tab-btn ${statusFilter === 'all' ? 'active' : ''}`}
+                        onClick={() => setStatusFilter('all')}
+                    >
+                        <span>All Staff</span>
+                        <span className="staff-tab-badge">{totalStaffCount}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`staff-tab-btn ${statusFilter === 'active' ? 'active' : ''}`}
+                        onClick={() => setStatusFilter('active')}
+                    >
+                        <UserCheck size={14} />
+                        <span>Active</span>
+                        <span className="staff-tab-badge">{activeStaffCount}</span>
+                    </button>
+                    <button
+                        type="button"
+                        className={`staff-tab-btn inactive-tab ${statusFilter === 'inactive' ? 'active' : ''}`}
+                        onClick={() => setStatusFilter('inactive')}
+                    >
+                        <UserX size={14} />
+                        <span>Inactive / Deactivated</span>
+                        <span className="staff-tab-badge">{inactiveStaffCount}</span>
+                    </button>
+                </div>
+
+                {/* Filter Controls Row */}
+                <div className="staff-filter-controls">
+                    <div className="staff-search-box">
+                        <Search size={16} className="staff-search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, phone, guarantor, national ID..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="staff-search-input"
+                        />
+                        {searchQuery && (
+                            <button
+                                type="button"
+                                className="staff-search-clear"
+                                onClick={() => setSearchQuery('')}
+                                title="Clear search"
+                            >
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    {(isCEO || isSuperAdmin) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <select
+                                value={selectedBranch}
+                                onChange={(e) => setSelectedBranch(e.target.value)}
+                                className="staff-branch-select"
+                            >
+                                <option value="all">🏢 All Branches</option>
+                                {branches.map(b => (
+                                    <option key={b.id} value={b.id}>
+                                        {b.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {(searchQuery || statusFilter !== 'all' || selectedBranch !== 'all') && (
+                        <button
+                            type="button"
+                            className="staff-reset-btn"
+                            onClick={() => {
+                                setSearchQuery('');
+                                setStatusFilter('all');
+                                setSelectedBranch('all');
+                            }}
+                            title="Reset all filters"
+                        >
+                            <RotateCcw size={14} />
+                            <span>Reset</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="table-container">
@@ -502,14 +673,36 @@ function Users({ roleFilter, title }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.length === 0 ? (
+                        {filteredUsers.length === 0 ? (
                             <tr>
-                                <td colSpan="6" style={{ padding: '32px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                                    {loading ? 'Loading staff records...' : 'No staff members found.'}
+                                <td colSpan="6" style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    {loading ? (
+                                        'Loading staff records...'
+                                    ) : (
+                                        <div>
+                                            <div style={{ fontSize: '15px', fontWeight: '500', marginBottom: '6px', color: '#cbd5e1' }}>
+                                                No staff members found matching your filters.
+                                            </div>
+                                            {(searchQuery || statusFilter !== 'all' || selectedBranch !== 'all') && (
+                                                <button
+                                                    type="button"
+                                                    className="staff-reset-btn"
+                                                    style={{ margin: '8px auto 0' }}
+                                                    onClick={() => {
+                                                        setSearchQuery('');
+                                                        setStatusFilter('all');
+                                                        setSelectedBranch('all');
+                                                    }}
+                                                >
+                                                    <RotateCcw size={13} /> Reset Filters
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ) : (
-                            users.map(u => {
+                            filteredUsers.map(u => {
                                 const roleName = u.roles?.[0]?.name || 'worker';
                                 const displayRole = roleName === 'secretary' ? 'Manager' : roleName;
                                 const isManagerOrWorker = roleName === 'worker' || roleName === 'secretary' || roleName === 'manager' || roleName === 'branch_manager';
@@ -638,17 +831,29 @@ function Users({ roleFilter, title }) {
                                                     </button>
                                                 )}
 
-                                                {/* Deactivate Button */}
-                                                {(isCEO || isSuperAdmin) && (roleName === 'worker' || roleName === 'secretary') && u.id !== user?.id && (
-                                                    <button
-                                                        className="staff-action-btn deact-btn"
-                                                        onClick={() => handleDeactivate(u)}
-                                                        title="Deactivate Staff"
-                                                        aria-label="Deactivate Staff"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                        <span className="btn-label">Deactivate</span>
-                                                    </button>
+                                                {/* Deactivate / Reactivate Button */}
+                                                {(isCEO || isSuperAdmin || (isSecretary && u.branch_id === user?.branch_id && roleName === 'worker')) && (roleName === 'worker' || roleName === 'secretary') && u.id !== user?.id && (
+                                                    (u.status === 'inactive' || u.status === 'suspended') ? (
+                                                        <button
+                                                            className="staff-action-btn react-btn"
+                                                            onClick={() => handleReactivate(u)}
+                                                            title="Reactivate Staff Account"
+                                                            aria-label="Reactivate Staff"
+                                                        >
+                                                            <UserCheck size={14} />
+                                                            <span className="btn-label">Reactivate</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            className="staff-action-btn deact-btn"
+                                                            onClick={() => handleDeactivate(u)}
+                                                            title="Deactivate Staff"
+                                                            aria-label="Deactivate Staff"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                            <span className="btn-label">Deactivate</span>
+                                                        </button>
+                                                    )
                                                 )}
                                             </div>
                                         </td>

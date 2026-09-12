@@ -536,6 +536,192 @@ tr:hover {
   color: #fca5a5;
 }
 
+.staff-action-btn.react-btn {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+.staff-action-btn.react-btn:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.55);
+  color: #6ee7b7;
+}
+
+/* Staff Filter Bar */
+.staff-filters-container {
+  background: var(--card-bg, #1a1f2c);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.staff-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.staff-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #94a3b8);
+  transition: all 0.2s ease;
+}
+
+.staff-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #ffffff;
+}
+
+.staff-tab-btn.active {
+  background: rgba(0, 223, 162, 0.15);
+  border-color: rgba(0, 223, 162, 0.4);
+  color: #00dfa2;
+  font-weight: 600;
+}
+
+.staff-tab-btn.active.inactive-tab {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.staff-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+}
+
+.staff-tab-btn.active .staff-tab-badge {
+  background: rgba(0, 223, 162, 0.25);
+  color: #00dfa2;
+}
+
+.staff-tab-btn.active.inactive-tab .staff-tab-badge {
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+}
+
+.staff-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.staff-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+}
+
+.staff-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 38px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.staff-search-input:focus {
+  border-color: var(--primary-color, #00dfa2);
+}
+
+.staff-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.staff-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.staff-search-clear:hover {
+  color: #ffffff;
+}
+
+.staff-branch-select {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
+.staff-branch-select:focus {
+  border-color: var(--primary-color, #00dfa2);
+}
+
+.staff-branch-select option {
+  background: #1a1f2c;
+  color: #ffffff;
+}
+
+.staff-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.staff-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
 @media (max-width: 768px) {
   .staff-actions-group {
     gap: 6px;
