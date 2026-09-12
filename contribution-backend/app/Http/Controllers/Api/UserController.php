@@ -259,14 +259,15 @@ class UserController extends Controller
     public function deactivate($id)
     {
         $user = User::findOrFail($id);
+        $authUser = auth()->user();
         
-        // Only CEO can deactivate users
-        if (!auth()->user()->hasRole('ceo')) {
-            abort(403, 'Unauthorized. Only CEO can deactivate users.');
+        // CEO or Super Admin can deactivate users
+        if (!$authUser->hasRole('ceo') && !$authUser->hasRole('super_admin')) {
+            abort(403, 'Unauthorized. Only CEO or Super Admin can deactivate users.');
         }
         
         // Prevent deactivating yourself
-        if ($user->id === auth()->id()) {
+        if ($user->id === $authUser->id) {
             abort(403, 'Cannot deactivate yourself');
         }
 
@@ -292,17 +293,18 @@ class UserController extends Controller
 
         return \DB::transaction(function () use ($id, $validated) {
             $worker = User::findOrFail($id);
+            $authUser = auth()->user();
             
-            // Only CEO can deactivate workers
-            if (!auth()->user()->hasRole('ceo')) {
-                abort(403, 'Unauthorized. Only CEO can deactivate workers.');
+            // CEO or Super Admin can deactivate workers
+            if (!$authUser->hasRole('ceo') && !$authUser->hasRole('super_admin')) {
+                abort(403, 'Unauthorized. Only CEO or Super Admin can deactivate workers.');
             }
 
             // Check if worker has customers
             $customerCount = \App\Models\Customer::where('worker_id', $id)->count();
 
             if ($customerCount > 0) {
-                if (!isset($validated['transfer_to_worker_id'])) {
+                if (empty($validated['transfer_to_worker_id'])) {
                     return response()->json([
                         'error' => 'Worker has customers',
                         'message' => 'This worker has ' . $customerCount . ' customer(s). Please select a worker to transfer them to.',
@@ -324,17 +326,12 @@ class UserController extends Controller
                     ->update(['worker_id' => $validated['transfer_to_worker_id']]);
 
                 // Log the transfer
-                \App\Models\AuditLog::create([
-                    'company_id' => auth()->user()->company_id,
-                    'user_id' => auth()->id(),
-                    'action' => 'customers_transferred',
-                    'details' => json_encode([
-                        'from_worker_id' => $id,
-                        'to_worker_id' => $validated['transfer_to_worker_id'],
-                        'customer_count' => $customerCount,
-                    ]),
-                    'ip_address' => request()->ip(),
-                ]);
+                \App\Models\AuditLog::log(
+                    'customers_transferred',
+                    $worker,
+                    ['from_worker_id' => $id, 'customer_count' => $customerCount],
+                    ['to_worker_id' => $validated['transfer_to_worker_id']]
+                );
             }
 
             // Deactivate worker

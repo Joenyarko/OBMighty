@@ -82,13 +82,7 @@ class ImageController extends Controller
 
             // Log upload
             if (auth()->check()) {
-                \App\Models\AuditLog::create([
-                    'company_id' => auth()->user()->company_id,
-                    'user_id' => auth()->user()->id,
-                    'action' => "Image uploaded to {$folder}",
-                    'details' => json_encode(['filename' => $result['filename']]),
-                    'ip_address' => $request->ip(),
-                ]);
+                \App\Models\AuditLog::log("image_uploaded_{$folder}", auth()->user(), null, ['filename' => $result['filename'], 'url' => $result['url']]);
             }
 
             return response()->json([
@@ -122,13 +116,7 @@ class ImageController extends Controller
             $this->imageService->delete($folder, $filename);
 
             // Log deletion
-            \App\Models\AuditLog::create([
-                'company_id' => auth()->user()->company_id,
-                'user_id' => auth()->user()->id,
-                'action' => "Image deleted from {$folder}",
-                'details' => json_encode(['filename' => $filename]),
-                'ip_address' => request()->ip(),
-            ]);
+            \App\Models\AuditLog::log("image_deleted_{$folder}", auth()->user(), ['filename' => $filename], null);
 
             return response()->json(['message' => 'Image deleted successfully']);
         } catch (\Exception $e) {

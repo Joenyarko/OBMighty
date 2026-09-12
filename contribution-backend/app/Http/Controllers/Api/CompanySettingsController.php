@@ -183,13 +183,7 @@ class CompanySettingsController extends Controller
             $company->update(['logo_url' => $result['url']]);
  
             // Log this action
-            \App\Models\AuditLog::create([
-                'company_id' => $company->id,
-                'user_id' => $user->id,
-                'action' => 'Company logo updated',
-                'details' => json_encode(['filename' => $result['filename']]),
-                'ip_address' => $request->ip(),
-            ]);
+            \App\Models\AuditLog::log('company_logo_updated', $company, null, ['logo_url' => $result['url'], 'filename' => $result['filename']]);
  
             return response()->json([
                 'message' => 'Logo uploaded successfully',
