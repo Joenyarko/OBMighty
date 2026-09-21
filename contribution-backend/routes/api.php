@@ -174,8 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/adjust', [SurplusController::class, 'adjust']);
     });
     
-    // Payroll (CEO only)
-    // ADDED super_admin here
+    // Payroll (CEO & Super Admin)
     Route::prefix('payroll')->middleware('role:ceo|super_admin')->group(function () {
         Route::get('/employees', [PayrollController::class, 'employees']);
         Route::get('/employees/{id}', [PayrollController::class, 'employeeDetails']);
@@ -185,6 +184,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/records/{id}', [PayrollController::class, 'recordDetails']);
         Route::get('/summary/{month}', [PayrollController::class, 'monthlySummary']);
         Route::get('/unpaid/{month}', [PayrollController::class, 'unpaidEmployees']);
+        // Attendance
+        Route::get('/attendance', [PayrollController::class, 'getAttendance']);
+        Route::post('/attendance', [PayrollController::class, 'setAttendance']);
     });
     
     // Card Summary (All roles, scoped by controller)
