@@ -34,6 +34,7 @@ class PayrollController extends Controller
         }
 
         $employees = User::with(['branch', 'roles'])
+            ->where('status', 'active')
             ->whereHas('roles', function ($q) {
                 $q->whereIn('name', ['worker', 'secretary']);
             })
@@ -229,7 +230,7 @@ class PayrollController extends Controller
 
         $monthDate = Carbon::parse($month)->startOfMonth();
 
-        $employees       = User::whereHas('roles', fn($q) => $q->whereIn('name', ['worker', 'secretary']))->get();
+        $employees       = User::where('status', 'active')->whereHas('roles', fn($q) => $q->whereIn('name', ['worker', 'secretary']))->get();
         $totalEmployees  = $employees->count();
         $expectedPayroll = 0;
         $paidEmployees   = 0;
@@ -271,6 +272,7 @@ class PayrollController extends Controller
         $monthDate = Carbon::parse($month)->startOfMonth();
 
         $employees = User::with(['branch', 'roles'])
+            ->where('status', 'active')
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['worker', 'secretary']))
             ->get()
             ->filter(function ($employee) use ($monthDate) {
@@ -294,6 +296,7 @@ class PayrollController extends Controller
     /**
      * Get attendance data for a date range.
      * Auto-detects presence from the payments table; manual overrides take precedence.
+     * Sundays are non-working days (status 'off') unless a sale was made or manually marked.
      *
      * Query params:
      *   month      YYYY-MM  (monthly view)
@@ -321,8 +324,9 @@ class PayrollController extends Controller
             $end   = Carbon::now()->endOfMonth();
         }
 
-        // --- Workers ---
+        // --- Active Workers Only ---
         $workersQuery = User::with(['branch', 'roles'])
+            ->where('status', 'active')
             ->whereHas('roles', fn($q) => $q->whereIn('name', ['worker', 'secretary']));
 
         if ($request->has('worker_id')) $workersQuery->where('id', $request->worker_id);
@@ -401,8 +405,15 @@ class PayrollController extends Controller
             $absentCount  = 0;
 
             foreach ($days as $day) {
+                $isSunday = Carbon::parse($day)->isSunday();
+
                 if ($day > $today) {
-                    $attendance[$day] = ['status' => 'future', 'source' => null, 'notes' => null];
+                    $attendance[$day] = [
+                        'status'    => 'future',
+                        'is_sunday' => $isSunday,
+                        'source'    => null,
+                        'notes'     => null,
+                    ];
                     continue;
                 }
 
@@ -411,16 +422,30 @@ class PayrollController extends Controller
                     $status   = $override->status;
                     $source   = 'manual';
                     $notes    = $override->notes;
+                } elseif ($isSunday) {
+                    // Sunday is non-working day ('off') unless worker recorded sales/payments
+                    $hasActivity = in_array($day, $payDays);
+                    $status      = $hasActivity ? 'present' : 'off';
+                    $source      = $hasActivity ? 'auto' : 'sunday';
+                    $notes       = null;
                 } else {
                     $status = in_array($day, $payDays) ? 'present' : 'absent';
                     $source = 'auto';
                     $notes  = null;
                 }
 
-                $attendance[$day] = ['status' => $status, 'source' => $source, 'notes' => $notes];
+                $attendance[$day] = [
+                    'status'    => $status,
+                    'is_sunday' => $isSunday,
+                    'source'    => $source,
+                    'notes'     => $notes,
+                ];
 
-                if ($status === 'present') $presentCount++;
-                else $absentCount++;
+                if ($status === 'present') {
+                    $presentCount++;
+                } elseif ($status === 'absent') {
+                    $absentCount++;
+                }
             }
 
             return [
@@ -451,7 +476,7 @@ class PayrollController extends Controller
      * Manually mark a worker's attendance for a specific date.
      *
      * POST /payroll/attendance
-     * Body: { worker_id, date, status: 'present'|'absent', notes? }
+     * Body: { worker_id, date, status: 'present'|'absent'|'off', notes? }
      */
     public function setAttendance(Request $request)
     {
@@ -464,7 +489,7 @@ class PayrollController extends Controller
         $validated = $request->validate([
             'worker_id' => 'required|exists:users,id',
             'date'      => 'required|date|before_or_equal:today',
-            'status'    => 'required|in:present,absent',
+            'status'    => 'required|in:present,absent,off',
             'notes'     => 'nullable|string|max:500',
         ]);
 

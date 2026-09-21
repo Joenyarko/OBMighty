@@ -487,6 +487,7 @@ function Payroll() {
                         <div className="attendance-legend">
                             <span className="legend-item present-legend">✓ Present</span>
                             <span className="legend-item absent-legend">✗ Absent</span>
+                            <span className="legend-item off-legend">– Sunday (Off)</span>
                             <span className="legend-item manual-legend">✎ Manual</span>
                             <span className="legend-item future-legend">– Future</span>
                         </div>
@@ -494,7 +495,7 @@ function Payroll() {
 
                     {/* Hint */}
                     <p className="attendance-hint">
-                        Click any past day to toggle or override attendance. Auto-detected from sales.
+                        Click any past day to toggle or override attendance. Sundays are non-working days by default.
                     </p>
 
                     {attendanceLoading && (
@@ -518,14 +519,17 @@ function Payroll() {
                                         <thead>
                                             <tr>
                                                 <th className="att-worker-col">Worker</th>
-                                                {attendanceData.days.map((day) => (
-                                                    <th key={day} className="att-day-col">
-                                                        <div className="att-day-header">
-                                                            <span className="att-day-name">{formatDayName(day)}</span>
-                                                            <span className="att-day-num">{formatDate(day)}</span>
-                                                        </div>
-                                                    </th>
-                                                ))}
+                                                {attendanceData.days.map((day) => {
+                                                    const isSun = formatDayName(day) === 'SUN';
+                                                    return (
+                                                        <th key={day} className={`att-day-col ${isSun ? 'att-sunday-header' : ''}`}>
+                                                            <div className="att-day-header">
+                                                                <span className="att-day-name">{formatDayName(day)}</span>
+                                                                <span className="att-day-num">{formatDate(day)}</span>
+                                                            </div>
+                                                        </th>
+                                                    );
+                                                })}
                                                 <th className="att-summary-col">Present</th>
                                                 <th className="att-summary-col">Absent</th>
                                                 <th className="att-summary-col">Days</th>
@@ -561,22 +565,27 @@ function Payroll() {
                                                         const status = entry?.status || 'future';
                                                         const isManual = entry?.source === 'manual';
                                                         const isFuture = status === 'future';
+                                                        const isOff = status === 'off';
+
+                                                        let tooltipText = 'Future date';
+                                                        if (!isFuture) {
+                                                            const statusLabel = isOff ? 'Sunday / Off' : status === 'present' ? 'Present' : 'Absent';
+                                                            tooltipText = `${statusLabel} (${isManual ? 'manual' : 'auto'})${entry?.notes ? ' – ' + entry.notes : ''}\nClick to override`;
+                                                        }
 
                                                         return (
                                                             <td
                                                                 key={day}
                                                                 className={`att-day-cell att-${status} ${isManual ? 'att-manual' : ''} ${isFuture ? '' : 'att-clickable'}`}
                                                                 onClick={() => !isFuture && openOverrideModal(worker, day, entry)}
-                                                                title={
-                                                                    isFuture
-                                                                        ? 'Future date'
-                                                                        : `${status === 'present' ? 'Present' : 'Absent'} (${isManual ? 'manual' : 'auto'})${entry?.notes ? ' – ' + entry.notes : ''}\nClick to override`
-                                                                }
+                                                                title={tooltipText}
                                                             >
                                                                 {isSaving ? (
                                                                     <span className="att-saving">⟳</span>
                                                                 ) : isFuture ? (
                                                                     <span className="att-icon">–</span>
+                                                                ) : isOff ? (
+                                                                    <span className="att-icon att-off-icon">Off{isManual && <sup>✎</sup>}</span>
                                                                 ) : status === 'present' ? (
                                                                     <span className="att-icon">✓{isManual && <sup>✎</sup>}</span>
                                                                 ) : (
@@ -617,9 +626,9 @@ function Payroll() {
                             })}
                         </p>
                         <p className="override-auto-info">
-                            Auto-detected: <span className={`status-badge ${overrideModal.currentEntry.source === 'auto' ? overrideModal.currentEntry.status : ''}`}>
+                            Current: <span className={`status-badge ${overrideModal.currentEntry.source === 'auto' ? overrideModal.currentEntry.status : ''}`}>
                                 {overrideModal.currentEntry.source === 'auto'
-                                    ? overrideModal.currentEntry.status
+                                    ? (overrideModal.currentEntry.status === 'off' ? 'Sunday (Off)' : overrideModal.currentEntry.status)
                                     : `Manual (${overrideModal.currentEntry.status})`}
                             </span>
                         </p>
@@ -638,6 +647,12 @@ function Payroll() {
                                 >
                                     ✗ Absent
                                 </button>
+                                <button
+                                    className={`override-btn off-btn ${overrideForm.status === 'off' ? 'selected' : ''}`}
+                                    onClick={() => setOverrideForm({ ...overrideForm, status: 'off' })}
+                                >
+                                    – Sunday / Off
+                                </button>
                             </div>
                         </div>
                         <div className="form-group">
@@ -646,7 +661,7 @@ function Payroll() {
                                 type="text"
                                 value={overrideForm.notes}
                                 onChange={(e) => setOverrideForm({ ...overrideForm, notes: e.target.value })}
-                                placeholder="e.g., Sick leave, Excused absence"
+                                placeholder="e.g., Sick leave, Excused, Sunday service"
                             />
                         </div>
                         <div className="modal-actions">
