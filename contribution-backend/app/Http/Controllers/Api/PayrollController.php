@@ -330,14 +330,45 @@ class PayrollController extends Controller
 
         $workers = $workersQuery->get();
 
-        // --- Payment dates per worker ---
-        $paymentDates = Payment::select('worker_id', 'payment_date')
-            ->whereBetween('payment_date', [$start->toDateString(), $end->toDateString()])
-            ->whereIn('worker_id', $workers->pluck('id'))
-            ->get()
+        // --- Payment & Activity dates per worker (checks Payments, BoxPayments, Creator ID, and Daily Totals) ---
+        $workerIds = $workers->pluck('id')->toArray();
+        $startDateStr = $start->toDateString();
+        $endDateStr   = $end->toDateString();
+
+        $paymentWorkerDates = Payment::select('worker_id', 'payment_date')
+            ->whereBetween('payment_date', [$startDateStr, $endDateStr])
+            ->whereIn('worker_id', $workerIds)
+            ->get();
+
+        $paymentCreatorDates = Payment::select('created_by as worker_id', 'payment_date')
+            ->whereBetween('payment_date', [$startDateStr, $endDateStr])
+            ->whereIn('created_by', $workerIds)
+            ->get();
+
+        $boxPaymentDates = \App\Models\BoxPayment::select('worker_id', 'payment_date')
+            ->whereBetween('payment_date', [$startDateStr, $endDateStr])
+            ->whereIn('worker_id', $workerIds)
+            ->get();
+
+        $dailyTotalDates = \App\Models\WorkerDailyTotal::select('worker_id', 'date as payment_date')
+            ->whereBetween('date', [$startDateStr, $endDateStr])
+            ->whereIn('worker_id', $workerIds)
+            ->where(function ($q) {
+                $q->where('total_collections', '>', 0)
+                  ->orWhere('total_customers_paid', '>', 0);
+            })
+            ->get();
+
+        $allActivity = $paymentWorkerDates
+            ->concat($paymentCreatorDates)
+            ->concat($boxPaymentDates)
+            ->concat($dailyTotalDates);
+
+        $paymentDates = $allActivity
             ->groupBy('worker_id')
             ->map(fn($items) => $items
                 ->pluck('payment_date')
+                ->filter()
                 ->map(fn($d) => Carbon::parse($d)->toDateString())
                 ->unique()
                 ->values()
