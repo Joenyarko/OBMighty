@@ -514,6 +514,40 @@ function Users({ roleFilter, title }) {
         }
     };
 
+    // --- Permanent Delete Handler (Only for inactive workers without sales or customers) ---
+    const handlePermanentDelete = async (targetUser) => {
+        const userId = targetUser.id;
+        const userName = targetUser.name;
+
+        if (!isCEO && !isSuperAdmin) {
+            showError('Only CEO or Super Admin has permission to delete staff accounts');
+            return;
+        }
+
+        if (userId === user?.id) {
+            showError('You cannot delete your own account');
+            return;
+        }
+
+        const result = await showConfirm(
+            `Permanently Delete "${userName}"?`,
+            'This will completely and permanently remove this worker from the system. This cannot be undone.',
+            'Yes, Delete',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            const res = await userAPI.delete(userId);
+            showSuccess(res.data?.message || `${userName} has been permanently deleted.`);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to permanently delete user', error);
+            showError(error.response?.data?.message || 'Failed to delete worker.');
+        }
+    };
+
     // Filter computations
     const totalStaffCount = users.length;
     const activeStaffCount = users.filter(u => (u.status || 'active') === 'active').length;
@@ -831,18 +865,36 @@ function Users({ roleFilter, title }) {
                                                     </button>
                                                 )}
 
-                                                {/* Deactivate / Reactivate Button */}
+                                                {/* Deactivate / Reactivate / Delete Action Buttons */}
                                                 {(isCEO || isSuperAdmin || (isSecretary && u.branch_id === user?.branch_id && roleName === 'worker')) && (roleName === 'worker' || roleName === 'secretary') && u.id !== user?.id && (
                                                     (u.status === 'inactive' || u.status === 'suspended') ? (
-                                                        <button
-                                                            className="staff-action-btn react-btn"
-                                                            onClick={() => handleReactivate(u)}
-                                                            title="Reactivate Staff Account"
-                                                            aria-label="Reactivate Staff"
-                                                        >
-                                                            <UserCheck size={14} />
-                                                            <span className="btn-label">Reactivate</span>
-                                                        </button>
+                                                        <>
+                                                            <button
+                                                                className="staff-action-btn react-btn"
+                                                                onClick={() => handleReactivate(u)}
+                                                                title="Reactivate Staff Account"
+                                                                aria-label="Reactivate Staff"
+                                                            >
+                                                                <UserCheck size={14} />
+                                                                <span className="btn-label">Reactivate</span>
+                                                            </button>
+                                                            {(isCEO || isSuperAdmin) && (
+                                                                <button
+                                                                    className="staff-action-btn deact-btn"
+                                                                    onClick={() => handlePermanentDelete(u)}
+                                                                    title="Permanently Delete Inactive Worker (No sales or customers)"
+                                                                    aria-label="Delete Staff Permanently"
+                                                                    style={{
+                                                                        background: 'rgba(239, 68, 68, 0.12)',
+                                                                        color: '#ef4444',
+                                                                        borderColor: 'rgba(239, 68, 68, 0.3)'
+                                                                    }}
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                    <span className="btn-label">Delete</span>
+                                                                </button>
+                                                            )}
+                                                        </>
                                                     ) : (
                                                         <button
                                                             className="staff-action-btn deact-btn"
@@ -850,7 +902,7 @@ function Users({ roleFilter, title }) {
                                                             title="Deactivate Staff"
                                                             aria-label="Deactivate Staff"
                                                         >
-                                                            <Trash2 size={14} />
+                                                            <UserX size={14} />
                                                             <span className="btn-label">Deactivate</span>
                                                         </button>
                                                     )

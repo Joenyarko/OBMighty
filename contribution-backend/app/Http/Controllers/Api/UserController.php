@@ -347,4 +347,60 @@ class UserController extends Controller
             ]);
         });
     }
+
+    /**
+     * Permanently delete a worker/user.
+     * Only allowed if worker has no sales/payments and no assigned customers.
+     */
+    public function destroy($id)
+    {
+        $authUser = auth()->user();
+
+        // Only CEO or Super Admin can permanently delete workers/users
+        if (!$authUser->hasRole('ceo') && !$authUser->hasRole('super_admin')) {
+            abort(403, 'Unauthorized. Only CEO or Super Admin can delete users.');
+        }
+
+        $userToDelete = User::withTrashed()->findOrFail($id);
+
+        if ($userToDelete->id === $authUser->id) {
+            return response()->json(['message' => 'You cannot delete yourself.'], 422);
+        }
+
+        // 1. Check for assigned customers
+        $customerCount = \App\Models\Customer::where('worker_id', $id)->count();
+        if ($customerCount > 0) {
+            return response()->json([
+                'message' => "Cannot delete this worker because they have {$customerCount} customer(s) assigned. Please transfer or remove their customers first."
+            ], 422);
+        }
+
+        // 2. Check for payment / sales records
+        $paymentCount = \App\Models\Payment::where('worker_id', $id)->count();
+        $boxPaymentCount = \App\Models\BoxPayment::where('worker_id', $id)->count();
+        if ($paymentCount > 0 || $boxPaymentCount > 0) {
+            $totalSalesRecords = $paymentCount + $boxPaymentCount;
+            return response()->json([
+                'message' => "Cannot delete this worker because they have {$totalSalesRecords} recorded sale/payment transaction(s) in history. Workers with financial history can only be deactivated, not deleted."
+            ], 422);
+        }
+
+        // 3. Clean up non-financial records and permanently delete user
+        \DB::transaction(function () use ($userToDelete, $id) {
+            \App\Models\WorkerAttendance::where('worker_id', $id)->delete();
+            \App\Models\EmployeeSalary::where('user_id', $id)->delete();
+            \App\Models\WorkerDailyTotal::where('worker_id', $id)->delete();
+            \App\Models\PayrollRecord::where('user_id', $id)->delete();
+
+            // Create audit log
+            \App\Models\AuditLog::log('user_permanently_deleted', $userToDelete, $userToDelete->toArray(), null);
+
+            // Permanently delete user
+            $userToDelete->forceDelete();
+        });
+
+        return response()->json([
+            'message' => 'Worker permanently deleted successfully.'
+        ]);
+    }
 }
