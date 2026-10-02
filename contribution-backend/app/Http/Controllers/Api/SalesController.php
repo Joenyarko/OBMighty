@@ -20,8 +20,8 @@ class SalesController extends Controller
         $user = $request->user();
         $period = $request->input('period', 'today'); // today, week, month
         
-        // Determine date range based on period
-        $dateRange = $this->getDateRange($period);
+        // Determine date range based on period and filters
+        $dateRange = $this->getDateRange($period, $request);
         
         // Build base query - include workers AND any other user who has recorded sales
         $query = User::where('company_id', $user->company_id)
@@ -69,6 +69,7 @@ class SalesController extends Controller
         
         return response()->json([
             'period' => $period,
+            'period_label' => $dateRange['label'] ?? ucfirst($period),
             'date_range' => $dateRange,
             'workers' => $workers,
         ]);
@@ -92,7 +93,7 @@ class SalesController extends Controller
         }
         
         $period = $request->input('period', 'today');
-        $dateRange = $this->getDateRange($period);
+        $dateRange = $this->getDateRange($period, $request);
         
         // Get payment history
         $payments = Payment::forWorker($workerId)
@@ -137,6 +138,7 @@ class SalesController extends Controller
                 'branch' => $worker->branch ? $worker->branch->name : null,
             ],
             'period' => $period,
+            'period_label' => $dateRange['label'] ?? ucfirst($period),
             'date_range' => $dateRange,
             'summary' => $summary,
             'payments' => $payments,
@@ -160,8 +162,7 @@ class SalesController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
         
-        $period = $request->input('period', 'week');
-        $dateRange = $this->getDateRange($period);
+        $dateRange = $this->getDateRange($period, $request);
         
         // Get daily breakdown
         $dailyStats = Payment::forWorker($workerId)
@@ -179,38 +180,80 @@ class SalesController extends Controller
         return response()->json([
             'worker_id' => $workerId,
             'period' => $period,
+            'period_label' => $dateRange['label'] ?? ucfirst($period),
             'date_range' => $dateRange,
             'daily_stats' => $dailyStats,
         ]);
     }
     
     /**
-     * Helper method to get date range based on period
+     * Helper method to get date range based on period and request filters
      */
-    private function getDateRange($period)
+    private function getDateRange($period, Request $request = null)
     {
         $now = Carbon::now();
-        
+
+        // 1. If explicit month is passed (e.g. month=2026-09)
+        if ($request && $request->filled('month')) {
+            try {
+                $m = Carbon::parse($request->input('month') . '-01');
+                return [
+                    'start' => $m->copy()->startOfMonth()->toDateString(),
+                    'end' => $m->copy()->endOfMonth()->toDateString(),
+                    'label' => $m->format('F Y'),
+                ];
+            } catch (\Exception $e) {}
+        }
+
+        // 2. If explicit year is passed (e.g. year=2025)
+        if ($request && $request->filled('year')) {
+            $y = (int)$request->input('year');
+            return [
+                'start' => Carbon::createFromDate($y, 1, 1)->startOfYear()->toDateString(),
+                'end' => Carbon::createFromDate($y, 12, 31)->endOfYear()->toDateString(),
+                'label' => 'Year ' . $y,
+            ];
+        }
+
+        // 3. If explicit custom date range is passed
+        if ($request && $request->filled('start_date') && $request->filled('end_date')) {
+            return [
+                'start' => Carbon::parse($request->input('start_date'))->toDateString(),
+                'end' => Carbon::parse($request->input('end_date'))->toDateString(),
+                'label' => Carbon::parse($request->input('start_date'))->format('M d, Y') . ' - ' . Carbon::parse($request->input('end_date'))->format('M d, Y'),
+            ];
+        }
+
         switch ($period) {
             case 'today':
                 return [
                     'start' => $now->startOfDay()->toDateString(),
                     'end' => $now->endOfDay()->toDateString(),
+                    'label' => 'Today',
                 ];
             case 'week':
                 return [
                     'start' => $now->startOfWeek()->toDateString(),
                     'end' => $now->endOfWeek()->toDateString(),
+                    'label' => 'This Week',
                 ];
             case 'month':
                 return [
                     'start' => $now->startOfMonth()->toDateString(),
                     'end' => $now->endOfMonth()->toDateString(),
+                    'label' => $now->format('F Y'),
+                ];
+            case 'year':
+                return [
+                    'start' => $now->startOfYear()->toDateString(),
+                    'end' => $now->endOfYear()->toDateString(),
+                    'label' => 'Year ' . $now->year,
                 ];
             default:
                 return [
                     'start' => $now->startOfDay()->toDateString(),
                     'end' => $now->endOfDay()->toDateString(),
+                    'label' => 'Today',
                 ];
         }
     }

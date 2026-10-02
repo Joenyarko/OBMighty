@@ -4,9 +4,10 @@ import '../styles/Sales.css';
 
 // API service for sales
 const salesAPI = {
-    getWorkerSales: async (period = 'today') => {
+    getWorkerSales: async (params = {}) => {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/sales?period=${period}`, {
+        const query = typeof params === 'string' ? `period=${params}` : new URLSearchParams(params).toString();
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/sales?${query}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
@@ -16,9 +17,10 @@ const salesAPI = {
         return response.json();
     },
 
-    getWorkerDetails: async (workerId, period = 'today') => {
+    getWorkerDetails: async (workerId, params = {}) => {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/sales/${workerId}?period=${period}`, {
+        const query = typeof params === 'string' ? `period=${params}` : new URLSearchParams(params).toString();
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/sales/${workerId}?${query}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
@@ -30,39 +32,56 @@ const salesAPI = {
 };
 
 function Sales() {
+    const currentYear = new Date().getFullYear();
+    const currentMonthStr = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const years = Array.from({ length: 7 }, (_, i) => currentYear - i);
+
     const [workers, setWorkers] = useState([]);
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [workerDetails, setWorkerDetails] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [period, setPeriod] = useState('today');
+    const [period, setPeriod] = useState('month');
+    const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
+    const [selectedYear, setSelectedYear] = useState(String(currentYear));
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const { user } = useAuth();
 
+    const getFilterParams = () => {
+        const params = { period };
+        if (period === 'month' && selectedMonth) {
+            params.month = selectedMonth;
+        } else if (period === 'year' && selectedYear) {
+            params.year = selectedYear;
+        }
+        return params;
+    };
+
     useEffect(() => {
         fetchWorkerSales();
-    }, [period]);
+    }, [period, selectedMonth, selectedYear]);
 
     useEffect(() => {
         if (selectedWorker) {
             fetchWorkerDetails(selectedWorker.id);
         }
-    }, [selectedWorker, period]);
+    }, [selectedWorker, period, selectedMonth, selectedYear]);
 
     const fetchWorkerSales = async () => {
         try {
             setLoading(true);
-            const data = await salesAPI.getWorkerSales(period);
-            setWorkers(data.workers);
+            const params = getFilterParams();
+            const data = await salesAPI.getWorkerSales(params);
+            setWorkers(data.workers || []);
 
             // Auto-select first worker if user is branch manager/secretary
-            if (user.role !== 'worker' && data.workers.length > 0 && !selectedWorker) {
+            if (user.role !== 'worker' && data.workers?.length > 0 && !selectedWorker) {
                 setSelectedWorker(data.workers[0]);
             }
 
             // Auto-select self if user is worker
-            if (user.role === 'worker' && data.workers.length > 0) {
+            if (user.role === 'worker' && data.workers?.length > 0) {
                 setSelectedWorker(data.workers[0]);
             }
         } catch (error) {
@@ -74,7 +93,8 @@ function Sales() {
 
     const fetchWorkerDetails = async (workerId) => {
         try {
-            const data = await salesAPI.getWorkerDetails(workerId, period);
+            const params = getFilterParams();
+            const data = await salesAPI.getWorkerDetails(workerId, params);
             setWorkerDetails(data);
         } catch (error) {
             console.error('Failed to fetch worker details:', error);
@@ -92,7 +112,7 @@ function Sales() {
 
     if (workerDetails && workerDetails.payments) {
         filteredPayments = workerDetails.payments.filter(payment =>
-            payment.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+            payment.customer_name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -106,25 +126,58 @@ function Sales() {
         <div className="sales-page">
             <div className="page-header">
                 <h1>Sales</h1>
-                <div className="period-selector">
-                    <button
-                        className={period === 'today' ? 'active' : ''}
-                        onClick={() => setPeriod('today')}
-                    >
-                        Today
-                    </button>
-                    <button
-                        className={period === 'week' ? 'active' : ''}
-                        onClick={() => setPeriod('week')}
-                    >
-                        This Week
-                    </button>
-                    <button
-                        className={period === 'month' ? 'active' : ''}
-                        onClick={() => setPeriod('month')}
-                    >
-                        This Month
-                    </button>
+                <div className="period-selector-container">
+                    <div className="period-selector">
+                        <button
+                            className={period === 'today' ? 'active' : ''}
+                            onClick={() => setPeriod('today')}
+                        >
+                            Today
+                        </button>
+                        <button
+                            className={period === 'week' ? 'active' : ''}
+                            onClick={() => setPeriod('week')}
+                        >
+                            This Week
+                        </button>
+                        <button
+                            className={period === 'month' ? 'active' : ''}
+                            onClick={() => setPeriod('month')}
+                        >
+                            Month
+                        </button>
+                        <button
+                            className={period === 'year' ? 'active' : ''}
+                            onClick={() => setPeriod('year')}
+                        >
+                            Year
+                        </button>
+                    </div>
+
+                    {period === 'month' && (
+                        <div className="period-picker-wrapper">
+                            <input
+                                type="month"
+                                className="period-picker-input"
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                            />
+                        </div>
+                    )}
+
+                    {period === 'year' && (
+                        <div className="period-picker-wrapper">
+                            <select
+                                className="period-picker-input"
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                            >
+                                {years.map((y) => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -165,9 +218,12 @@ function Sales() {
                             <div>
                                 <h2>{workerDetails.worker.name}'s Sales</h2>
                                 <p className="period-info">
-                                    {period === 'today' && 'Today'}
-                                    {period === 'week' && 'This Week'}
-                                    {period === 'month' && 'This Month'}
+                                    {workerDetails.period_label || (
+                                        period === 'today' ? 'Today' :
+                                        period === 'week' ? 'This Week' :
+                                        period === 'month' ? selectedMonth :
+                                        'Year ' + selectedYear
+                                    )}
                                 </p>
                             </div>
                             <button

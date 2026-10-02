@@ -17,18 +17,28 @@ class CompanyDashboardController extends Controller
             $user = $request->user();
             $company = $user->company;
 
-            if (!$company) {
-                return response()->json(['message' => 'Company not found'], 404);
-            }
-
             $today = Carbon::today();
-            $startOfMonth = Carbon::now()->startOfMonth();
-            $endOfMonth = Carbon::now()->endOfMonth();
+            
+            if ($request->filled('month')) {
+                $startOfMonth = Carbon::parse($request->input('month') . '-01')->startOfMonth();
+                $endOfMonth = Carbon::parse($request->input('month') . '-01')->endOfMonth();
+                $periodLabel = Carbon::parse($request->input('month') . '-01')->format('F Y');
+            } elseif ($request->filled('year')) {
+                $yearVal = (int)$request->input('year');
+                $startOfMonth = Carbon::createFromDate($yearVal, 1, 1)->startOfYear();
+                $endOfMonth = Carbon::createFromDate($yearVal, 12, 31)->endOfYear();
+                $periodLabel = 'Year ' . $yearVal;
+            } else {
+                $startOfMonth = Carbon::now()->startOfMonth();
+                $endOfMonth = Carbon::now()->endOfMonth();
+                $periodLabel = Carbon::now()->format('F Y');
+            }
 
             $companyTotal = \App\Models\CompanyDailyTotal::where('company_id', $company->id)
                 ->where('date', $today)->first();
 
             return response()->json([
+                'period_label' => $periodLabel,
                 'overview' => $this->getOverview($company, $today, $startOfMonth, $endOfMonth),
                 'company_total' => $companyTotal,
                 'revenue' => $this->getRevenueMetrics($company, $today, $startOfMonth, $endOfMonth),
@@ -64,6 +74,10 @@ class CompanyDashboardController extends Controller
             ->whereBetween('payment_date', [$startOfMonth, $endOfMonth])
             ->sum('payment_amount');
 
+        $periodExpenses = (float)$company->expenses()
+            ->whereBetween('expense_date', [$startOfMonth, $endOfMonth])
+            ->sum('amount');
+
         $totalCustomers = $company->customers()->count();
         $activeCustomers = $company->customers()
             ->where('status', 'in_progress')
@@ -88,6 +102,8 @@ class CompanyDashboardController extends Controller
         return [
             'today_revenue' => $todayPayments,
             'month_revenue' => $monthPayments,
+            'period_revenue' => $monthPayments,
+            'period_expense' => round($periodExpenses, 2),
             'total_customers' => $totalCustomers,
             'active_customers' => $activeCustomers,
             'served_customers' => $servedCustomersCount,

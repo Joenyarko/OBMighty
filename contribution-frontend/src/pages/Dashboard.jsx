@@ -7,18 +7,21 @@ import '../styles/Dashboard.css';
 
 function Dashboard() {
     const { user, isCEO, isSecretary, isManager, isWorker, hasRole } = useAuth();
+    const currentYear = new Date().getFullYear();
+    const currentMonthStr = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const years = Array.from({ length: 7 }, (_, i) => currentYear - i);
+
     const [dailyData, setDailyData] = useState(null);
-    const [trendPeriod, setTrendPeriod] = useState('weekly');
+    const [trendPeriod, setTrendPeriod] = useState('monthly');
+    const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
+    const [selectedYear, setSelectedYear] = useState(String(currentYear));
     const [trendData, setTrendData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchDailyReport();
-    }, []);
-
-    useEffect(() => {
         fetchTrendData();
-    }, [trendPeriod]);
+    }, [trendPeriod, selectedMonth, selectedYear]);
 
     const fetchTrendData = async () => {
         try {
@@ -33,19 +36,22 @@ function Dashboard() {
                     }))
                 });
             } else if (trendPeriod === 'monthly') {
-                response = await reportAPI.monthly();
+                response = await reportAPI.monthly({ month: selectedMonth });
+                const [yStr, mStr] = (selectedMonth || '').split('-');
+                const monthDate = yStr && mStr ? new Date(parseInt(yStr), parseInt(mStr) - 1, 1) : new Date();
+                const monthName = !isNaN(monthDate) ? monthDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : selectedMonth;
                 setTrendData({
-                    label: 'Monthly Collections Trend',
+                    label: `${monthName} Collections Trend`,
                     items: (response.data.daily_breakdown || []).map(d => ({
                         date: new Date(d.date).getDate().toString(),
                         amount: d.total_collections
                     }))
                 });
             } else {
-                response = await reportAPI.yearly();
+                response = await reportAPI.yearly({ year: selectedYear });
                 const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 setTrendData({
-                    label: 'Yearly Collections Trend',
+                    label: `${selectedYear} Yearly Collections Trend`,
                     items: (response.data.monthly_breakdown || []).map(d => ({
                         date: months[parseInt(d.date.split('-')[1]) - 1] || d.date,
                         amount: d.total_collections
@@ -61,7 +67,13 @@ function Dashboard() {
         try {
             let response;
             if (isCEO) {
-                response = await reportAPI.ceoDashboard();
+                const params = {};
+                if (trendPeriod === 'monthly' && selectedMonth) {
+                    params.month = selectedMonth;
+                } else if (trendPeriod === 'yearly' && selectedYear) {
+                    params.year = selectedYear;
+                }
+                response = await reportAPI.ceoDashboard(params);
             } else {
                 response = await reportAPI.daily();
             }
@@ -79,26 +91,88 @@ function Dashboard() {
 
     return (
         <div className="dashboard">
-            <div className="dashboard-header">
-                <h1>Welcome, {user?.name}</h1>
-                <p className="role-badge">{user?.roles?.[0]?.toUpperCase()}</p>
+            <div className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                    <h1>Welcome, {user?.name}</h1>
+                    <p className="role-badge">{user?.roles?.[0]?.toUpperCase()}</p>
+                </div>
+                {dailyData?.period_label && (
+                    <div style={{
+                        background: '#1a1a1a',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        color: 'var(--text-secondary)'
+                    }}>
+                        Period: <span style={{ color: 'var(--primary-color, #00d2d3)', fontWeight: 600 }}>{dailyData.period_label}</span>
+                    </div>
+                )}
             </div>
 
             {/* Trend Chart with period selector */}
             <div className="dashboard-chart-section" style={{ marginBottom: '24px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                     <h3 style={{ fontSize: '16px', color: 'var(--text-secondary)', margin: 0 }}>
                         {trendData?.label || 'Collections Trend'}
                     </h3>
-                    <select
-                        value={trendPeriod}
-                        onChange={(e) => setTrendPeriod(e.target.value)}
-                        style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--card-bg)', color: 'var(--text-primary)', fontSize: '13px' }}
-                    >
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <select
+                            value={trendPeriod}
+                            onChange={(e) => setTrendPeriod(e.target.value)}
+                            style={{
+                                padding: '6px 12px',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-color)',
+                                background: '#2a2a2a',
+                                color: 'var(--text-primary)',
+                                fontSize: '13px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+
+                        {trendPeriod === 'monthly' && (
+                            <input
+                                type="month"
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: '#2a2a2a',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '13px',
+                                    cursor: 'pointer',
+                                    colorScheme: 'dark'
+                                }}
+                            />
+                        )}
+
+                        {trendPeriod === 'yearly' && (
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                                style={{
+                                    padding: '6px 12px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: '#2a2a2a',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '13px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                {years.map((y) => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
                 </div>
                 {trendData && trendData.items && trendData.items.length > 0 ? (
                     <div style={{ height: '250px' }}>
@@ -305,10 +379,15 @@ function CEODashboard({ data }) {
 
             <div className="stats-grid">
                 <div className="stat-card highlight">
-                    <h3>Today Collections</h3>
+                    <h3>{data?.period_label ? `${data.period_label} Collections` : 'Today Collections'}</h3>
                     <p className="stat-value">
-                        GHS {formatGHS(overview.today_revenue)}
+                        GHS {formatGHS(data?.period_label ? (overview.period_revenue ?? overview.month_revenue) : overview.today_revenue)}
                     </p>
+                    {data?.period_label && (
+                        <span style={{ fontSize: '11px', color: '#1a1a1a', marginTop: '4px', fontWeight: 600 }}>
+                            Today: GHS {formatGHS(overview.today_revenue)}
+                        </span>
+                    )}
                 </div>
                 <div className="stat-card highlight" style={{ background: '#2c3e50', color: 'white' }}>
                     <h3 style={{ color: 'white' }}>Total Customers</h3>
@@ -352,7 +431,7 @@ function CEODashboard({ data }) {
                                         <span className="bac-stat-value week">GHS{parseFloat(branch.week_revenue || 0).toLocaleString()}</span>
                                     </div>
                                     <div className="bac-stat">
-                                        <span className="bac-stat-label">This Month</span>
+                                        <span className="bac-stat-label">{data?.period_label || 'This Month'}</span>
                                         <span className="bac-stat-value month">GHS{parseFloat(branch.month_revenue || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
