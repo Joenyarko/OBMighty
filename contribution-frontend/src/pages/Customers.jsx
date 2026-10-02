@@ -39,6 +39,7 @@ function Customers() {
     const [cardPage, setCardPage] = useState(1);
     const cardsPerPage = 12;
     const [cardSearchTerm, setCardSearchTerm] = useState('');
+    const [formCardSearch, setFormCardSearch] = useState('');
 
     useEffect(() => {
         // console.log('Customers.jsx: useEffect triggered', { user });
@@ -249,10 +250,64 @@ function Customers() {
         }
     };
 
-    const filteredCards = cards.filter(c =>
-        c.card_name.toLowerCase().includes(cardSearchTerm.toLowerCase()) ||
-        c.card_code?.toLowerCase().includes(cardSearchTerm.toLowerCase())
-    );
+    const matchesCardSearch = (c, search) => {
+        if (!search || !search.trim()) return true;
+        const term = search.trim().toLowerCase();
+
+        // 1. Check card name or code
+        if (c.card_name?.toLowerCase().includes(term)) return true;
+        if (c.card_code?.toLowerCase().includes(term)) return true;
+
+        // 2. Numeric checks (price, boxes, box_price)
+        const cleanNumStr = term.replace(/[^0-9.]/g, '');
+        const numVal = parseFloat(cleanNumStr);
+
+        const totalBoxes = parseInt(c.number_of_boxes, 10);
+        const totalAmount = parseFloat(c.amount);
+        const boxPrice = totalBoxes > 0 ? (totalAmount / totalBoxes) : 0;
+
+        // Check if number of boxes matches
+        if (totalBoxes && (
+            totalBoxes.toString().includes(term) ||
+            (cleanNumStr && totalBoxes.toString().includes(cleanNumStr))
+        )) {
+            return true;
+        }
+
+        // Check if total amount matches
+        if (!isNaN(totalAmount) && (
+            totalAmount.toString().includes(term) ||
+            totalAmount.toFixed(2).includes(term) ||
+            (cleanNumStr && totalAmount.toString().includes(cleanNumStr)) ||
+            (cleanNumStr && totalAmount.toFixed(2).includes(cleanNumStr))
+        )) {
+            return true;
+        }
+
+        // Check if box price matches (e.g. 1 cedi, 1.00, 2, 5, 10, etc.)
+        if (!isNaN(boxPrice) && boxPrice > 0) {
+            const boxPriceStr = boxPrice.toString();
+            const boxPriceFixed = boxPrice.toFixed(2);
+            const boxPriceRounded = Math.round(boxPrice).toString();
+
+            if (boxPriceStr === term || boxPriceFixed === term || boxPriceRounded === term) {
+                return true;
+            }
+
+            if (cleanNumStr && (
+                boxPriceStr === cleanNumStr ||
+                boxPriceFixed === cleanNumStr ||
+                boxPriceRounded === cleanNumStr ||
+                Math.abs(boxPrice - numVal) < 0.05
+            )) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+    const filteredCards = cards.filter(c => matchesCardSearch(c, cardSearchTerm));
     const indexOfLastCard = cardPage * cardsPerPage;
     const indexOfFirstCard = indexOfLastCard - cardsPerPage;
     const currentCards = filteredCards.slice(indexOfFirstCard, indexOfLastCard);
@@ -476,7 +531,7 @@ function Customers() {
                 <div style={{ marginBottom: '16px' }}>
                     <input
                         type="text"
-                        placeholder="🔍 Search cards by name or code..."
+                        placeholder="🔍 Search cards by name, code, boxes (e.g. 850), or price (e.g. 1 cedi)..."
                         value={cardSearchTerm}
                         onChange={e => { setCardSearchTerm(e.target.value); setCardPage(1); }}
                         style={{
@@ -791,22 +846,46 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
 
                     <div className="form-group">
                         <label>Card</label>
+                        <input
+                            type="text"
+                            placeholder="🔍 Filter cards by name, boxes (e.g. 850), or price (e.g. 1 cedi)..."
+                            value={formCardSearch}
+                            onChange={(e) => setFormCardSearch(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                marginBottom: '8px',
+                                background: 'var(--card-bg)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '6px',
+                                color: 'var(--text-primary)',
+                                fontSize: '13px',
+                                boxSizing: 'border-box'
+                            }}
+                        />
                         <select
                             value={formData.card_id}
                             onChange={handleCardChange}
                             required
                         >
-                            <option value="">Select a card</option>
-                            {cards.map((card) => {
-                                const boxPrice = card.number_of_boxes > 0
-                                    ? (parseFloat(card.amount) / card.number_of_boxes).toFixed(2)
-                                    : '0.00';
-                                return (
-                                    <option key={card.id} value={card.id}>
-                                        {card.card_name} ({card.card_code}) - {card.number_of_boxes} boxes @ GHS{boxPrice}/box
-                                    </option>
-                                );
-                            })}
+                            <option value="">
+                                {formCardSearch 
+                                    ? `Select matching card (${cards.filter(c => matchesCardSearch(c, formCardSearch)).length} found)`
+                                    : 'Select a card'
+                                }
+                            </option>
+                            {cards
+                                .filter(card => matchesCardSearch(card, formCardSearch))
+                                .map((card) => {
+                                    const boxPrice = card.number_of_boxes > 0
+                                        ? (parseFloat(card.amount) / card.number_of_boxes).toFixed(2)
+                                        : '0.00';
+                                    return (
+                                        <option key={card.id} value={card.id}>
+                                            {card.card_name} ({card.card_code}) - {card.number_of_boxes} boxes @ GHS{boxPrice}/box (Total: GHS{parseFloat(card.amount).toFixed(2)})
+                                        </option>
+                                    );
+                                })}
                         </select>
                     </div>
 

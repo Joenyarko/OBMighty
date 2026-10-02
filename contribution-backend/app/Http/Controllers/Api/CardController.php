@@ -22,9 +22,18 @@ class CardController extends Controller
 
         // Server-side search — searches all pages, not just the current one
         if ($search = $request->query('search')) {
-            $query->where(function ($q) use ($search) {
+            $cleanNum = preg_replace('/[^0-9.]/', '', $search);
+            $query->where(function ($q) use ($search, $cleanNum) {
                 $q->where('card_name', 'like', '%' . $search . '%')
                   ->orWhere('card_code', 'like', '%' . $search . '%');
+
+                if ($cleanNum !== '' && is_numeric($cleanNum)) {
+                    $numVal = (float)$cleanNum;
+                    $q->orWhere('number_of_boxes', 'like', '%' . $cleanNum . '%')
+                      ->orWhere('amount', 'like', '%' . $cleanNum . '%')
+                      ->orWhereRaw('number_of_boxes > 0 AND ABS((amount / number_of_boxes) - ?) < 0.05', [$numVal])
+                      ->orWhereRaw('number_of_boxes > 0 AND ROUND(amount / number_of_boxes, 2) = ?', [$numVal]);
+                }
             });
         }
 

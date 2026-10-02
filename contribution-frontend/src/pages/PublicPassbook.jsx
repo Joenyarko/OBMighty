@@ -186,6 +186,31 @@ function PublicPassbook() {
                             </span>
                         )}
                     </div>
+
+                    {/* Start Date & Due Date Timeline */}
+                    <div className="hero-timeline-row">
+                        <div className="timeline-item start">
+                            <span className="timeline-icon">📅</span>
+                            <div className="timeline-info">
+                                <span className="timeline-label">START DATE</span>
+                                <strong className="timeline-value">
+                                    {customer?.start_date ? new Date(customer.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not specified'}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div className="timeline-arrow">➔</div>
+
+                        <div className="timeline-item due">
+                            <span className="timeline-icon">⏰</span>
+                            <div className="timeline-info">
+                                <span className="timeline-label">DUE / MATURITY DATE</span>
+                                <strong className="timeline-value">
+                                    {customer?.due_date ? new Date(customer.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not specified'}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Key Card Statistics */}

@@ -82,6 +82,13 @@ class PublicPortalController extends Controller
 
         $company = $customer->company;
 
+        // Calculate start and due dates with card duration fallback
+        $startDate = $customer->start_date ? $customer->start_date->toDateString() : ($customerCard?->assigned_date ? $customerCard->assigned_date->toDateString() : null);
+        $dueDate = $customer->due_date ? $customer->due_date->toDateString() : null;
+        if (!$dueDate && $startDate && $customerCard?->card?->duration_months) {
+            $dueDate = \Carbon\Carbon::parse($startDate)->addMonths((int)$customerCard->card->duration_months)->toDateString();
+        }
+
         return response()->json([
             'company' => [
                 'name' => $company ? $company->name : config('app.company_name', 'Contribution Manager'),
@@ -97,8 +104,8 @@ class PublicPortalController extends Controller
                 'location' => $customer->location,
                 'branch_name' => $customer->branch ? $customer->branch->name : null,
                 'worker_name' => $customer->worker ? $customer->worker->name : null,
-                'start_date' => $customer->start_date ? $customer->start_date->toDateString() : null,
-                'due_date' => $customer->due_date ? $customer->due_date->toDateString() : null,
+                'start_date' => $startDate,
+                'due_date' => $dueDate,
                 'status' => $customer->status,
                 'is_served' => (bool)$customer->is_served,
             ],

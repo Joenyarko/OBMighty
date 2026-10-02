@@ -226,6 +226,74 @@
     color: #fff;
 }
 
+/* Hero Timeline Row */
+.hero-timeline-row {
+    width: 100%;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #15181e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 10px 16px;
+    border-radius: 10px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.timeline-icon {
+    font-size: 20px;
+}
+
+.timeline-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.timeline-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+}
+
+.timeline-value {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 700;
+}
+
+.timeline-item.start .timeline-value {
+    color: #60a5fa;
+}
+
+.timeline-item.due .timeline-value {
+    color: #fdbe12;
+}
+
+.timeline-arrow {
+    color: #4b5563;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    .timeline-arrow {
+        display: none;
+    }
+}
+
 /* KPI Grid */
 .card-kpi-grid {
     display: grid;

@@ -222,7 +222,7 @@ function Cards() {
             <div style={{ marginBottom: '24px' }}>
                 <input
                     type="text"
-                    placeholder="🔍 Search cards by name or code..."
+                    placeholder="🔍 Search cards by name, code, boxes (e.g. 850), or price (e.g. 1 cedi)..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     style={{
