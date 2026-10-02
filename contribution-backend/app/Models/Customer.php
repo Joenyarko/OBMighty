@@ -58,20 +58,11 @@ class Customer extends Model
     }
 
     /**
-     * Accessor for share_token (generates and saves one if null for backward compatibility)
+     * Accessor for share_token
      */
-    public function getShareTokenAttribute($value)
+    public function getShareTokenAttribute($value = null)
     {
-        if (empty($value)) {
-            $value = bin2hex(random_bytes(16));
-            $this->attributes['share_token'] = $value;
-            if ($this->exists) {
-                \Illuminate\Support\Facades\DB::table('customers')
-                    ->where('id', $this->id)
-                    ->update(['share_token' => $value]);
-            }
-        }
-        return $value;
+        return $value ?? ($this->attributes['share_token'] ?? null);
     }
 
     /**

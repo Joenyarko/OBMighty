@@ -16,7 +16,10 @@ class PublicPortalController extends Controller
     public function getPassbook($token)
     {
         $customer = Customer::withoutGlobalScope('company')
-            ->where('share_token', $token)
+            ->where(function ($q) use ($token) {
+                $q->where('share_token', $token)
+                  ->orWhere('id', $token);
+            })
             ->with(['company', 'branch', 'worker', 'card'])
             ->first();
 
