@@ -27,6 +27,7 @@ import CompanyManagement from './pages/admin/CompanyManagement';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminManagers from './pages/admin/AdminManagers';
+import PublicPassbook from './pages/PublicPassbook';
 import './styles/App.css';
 import './styles/TextColorFix.css';
 
@@ -76,6 +77,10 @@ function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/login" element={<Login />} />
+                    
+                    {/* Public Customer Digital Passbook routes */}
+                    <Route path="/passbook/:token" element={<PublicPassbook />} />
+                    <Route path="/track/:token" element={<PublicPassbook />} />
 
                     <Route
                         path="/dashboard"

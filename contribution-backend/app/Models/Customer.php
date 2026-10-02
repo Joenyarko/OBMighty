@@ -29,6 +29,7 @@ class Customer extends Model
         'status',
         'is_served',
         'last_payment_date',
+        'share_token',
     ];
 
     protected $casts = [
@@ -43,7 +44,35 @@ class Customer extends Model
         'is_served' => 'boolean',
     ];
 
-    protected $appends = ['balance', 'completion_percentage', 'active_card', 'is_due'];
+    protected $appends = ['balance', 'completion_percentage', 'active_card', 'is_due', 'share_token'];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($customer) {
+            if (empty($customer->share_token)) {
+                $customer->share_token = bin2hex(random_bytes(16));
+            }
+        });
+    }
+
+    /**
+     * Accessor for share_token (generates and saves one if null for backward compatibility)
+     */
+    public function getShareTokenAttribute($value)
+    {
+        if (empty($value)) {
+            $value = bin2hex(random_bytes(16));
+            $this->attributes['share_token'] = $value;
+            if ($this->exists) {
+                \Illuminate\Support\Facades\DB::table('customers')
+                    ->where('id', $this->id)
+                    ->update(['share_token' => $value]);
+            }
+        }
+        return $value;
+    }
 
     /**
      * Get the branch this customer belongs to

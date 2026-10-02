@@ -226,11 +226,36 @@ function CustomerBoxTracking() {
                     ← Back to Management
                 </button>
                 <h1>📦 Box Payment Tracking</h1>
-                {(isCEO || user?.roles?.includes('super_admin')) && customerCard?.status === 'active' && (
-                    <button className="btn-close-card" onClick={handleCloseCard}>
-                        🔒 Close Card
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button 
+                        className="btn-secondary" 
+                        onClick={() => {
+                            const shareToken = customerCard?.customer?.share_token || customerId;
+                            const url = `${window.location.origin}/passbook/${shareToken}`;
+                            navigator.clipboard.writeText(url);
+                            showSuccess('Digital Passbook link copied to clipboard!');
+                        }}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: '#25d366',
+                            color: '#000',
+                            padding: '8px 14px',
+                            borderRadius: '8px',
+                            fontWeight: 700,
+                            border: 'none',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        📱 Share Passbook
                     </button>
-                )}
+                    {(isCEO || user?.roles?.includes('super_admin')) && customerCard?.status === 'active' && (
+                        <button className="btn-close-card" onClick={handleCloseCard}>
+                            🔒 Close Card
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Customer Details */}

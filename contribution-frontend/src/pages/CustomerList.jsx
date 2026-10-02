@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { customerAPI, userAPI, branchAPI } from '../services/api';
 import { showSuccess, showError, showConfirm, showWarning } from '../utils/sweetalert';
 import { useAuth } from '../context/AuthContext';
-import { Search, Trash2, ArrowRightLeft, Eye, Edit, CheckCircle2, AlertTriangle, Clock, Layers } from 'lucide-react';
+import { Search, Trash2, ArrowRightLeft, Eye, Edit, CheckCircle2, AlertTriangle, Clock, Layers, Share2, Copy } from 'lucide-react';
 import TransferCustomerModal from '../components/TransferCustomerModal';
 import '../styles/CustomerList.css';
 
@@ -25,6 +25,33 @@ function CustomerList() {
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [customerToTransfer, setCustomerToTransfer] = useState(null);
+    const [shareCustomer, setShareCustomer] = useState(null);
+    const [copiedLink, setCopiedLink] = useState(false);
+
+    const getShareUrl = (c) => {
+        const origin = window.location.origin;
+        return `${origin}/passbook/${c.share_token || c.id}`;
+    };
+
+    const handleCopyShareLink = (c) => {
+        const url = getShareUrl(c);
+        navigator.clipboard.writeText(url);
+        setCopiedLink(true);
+        showSuccess('Passbook link copied to clipboard!');
+        setTimeout(() => setCopiedLink(false), 2500);
+    };
+
+    const handleWhatsAppShare = (c) => {
+        const url = getShareUrl(c);
+        const text = `Hello ${c.name}, here is your live digital passbook for your savings: ${url}`;
+        let phone = c.phone || '';
+        phone = phone.replace(/[^0-9]/g, '');
+        if (phone.startsWith('0') && phone.length === 10) {
+            phone = '233' + phone.substring(1);
+        }
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, '_blank');
+    };
 
     const [pagination, setPagination] = useState({
         current_page: 1,
@@ -471,6 +498,14 @@ function CustomerList() {
                                                 >
                                                     <Eye size={14} /> View
                                                 </button>
+                                                <button
+                                                    className="btn-action-view"
+                                                    onClick={() => setShareCustomer(c)}
+                                                    title="Share Digital Passbook"
+                                                    style={{ background: 'rgba(37, 211, 102, 0.15)', color: '#25d366', border: '1px solid rgba(37, 211, 102, 0.3)' }}
+                                                >
+                                                    <Share2 size={14} /> Share
+                                                </button>
                                                 {(isCEO || isSecretary || isManager) && (
                                                     <button
                                                         className="btn-action-delete"
@@ -562,6 +597,15 @@ function CustomerList() {
                                     title="View Boxes"
                                 >
                                     📦 View
+                                </button>
+
+                                <button
+                                    className="btn-icon"
+                                    onClick={() => setShareCustomer(customer)}
+                                    title="Share Digital Passbook Link"
+                                    style={{ color: '#25d366', border: '1px solid rgba(37, 211, 102, 0.3)', padding: '6px', borderRadius: '6px' }}
+                                >
+                                    <Share2 size={16} />
                                 </button>
 
                                 {/* Mark as Served Button - For Completed Unserved customers */}
@@ -675,6 +719,94 @@ function CustomerList() {
                     onClose={() => setCustomerToTransfer(null)}
                     onSuccess={fetchCustomers}
                 />
+            )}
+
+            {/* Share Digital Passbook Modal */}
+            {shareCustomer && (
+                <div className="modal-overlay" onClick={() => setShareCustomer(null)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h2 style={{ margin: 0, fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                📱 Customer Digital Passbook
+                            </h2>
+                            <button 
+                                onClick={() => setShareCustomer(null)}
+                                style={{ background: 'transparent', border: 'none', color: '#9ca3af', fontSize: '18px', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px', lineHeight: 1.5 }}>
+                            Share this live, read-only link with <strong>{shareCustomer.name}</strong> so they can view their card progress, boxes, and payments on their phone anytime.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                            <input
+                                type="text"
+                                readOnly
+                                value={getShareUrl(shareCustomer)}
+                                style={{
+                                    flex: 1,
+                                    padding: '10px 12px',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--border-color)',
+                                    background: '#1a1a1a',
+                                    color: '#fff',
+                                    fontSize: '13px'
+                                }}
+                            />
+                            <button
+                                className="btn-primary"
+                                onClick={() => handleCopyShareLink(shareCustomer)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                            >
+                                <Copy size={15} />
+                                {copiedLink ? 'Copied!' : 'Copy'}
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <button
+                                onClick={() => handleWhatsAppShare(shareCustomer)}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    padding: '12px',
+                                    background: '#25d366',
+                                    color: '#000',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Share2 size={16} /> Send via WhatsApp
+                            </button>
+
+                            <button
+                                onClick={() => window.open(getShareUrl(shareCustomer), '_blank')}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    padding: '10px',
+                                    background: '#2a2e36',
+                                    color: '#fff',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '8px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <Eye size={16} /> Preview Digital Passbook
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -1,0 +1,702 @@
+/* Public Digital Passbook Styles */
+.public-passbook-page {
+    min-height: 100vh;
+    background-color: #0f1115;
+    color: #e5e7eb;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    padding-bottom: 40px;
+}
+
+/* Header */
+.passbook-header {
+    background: #181b20;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+}
+
+.passbook-header-content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.company-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.company-logo {
+    height: 40px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    border-radius: 6px;
+}
+
+.company-logo-placeholder {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #fdbe12, #e0a304);
+    color: #000;
+    font-weight: 800;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.company-text h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 2px 0;
+}
+
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #10b981;
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn {
+    background: #2a2e36;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.copy-btn:hover {
+    background: #363b46;
+}
+
+.whatsapp-btn {
+    background: #25d366;
+    color: #000;
+}
+
+.whatsapp-btn:hover {
+    background: #20bd5a;
+    transform: translateY(-1px);
+}
+
+.btn-action-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #2a2e36;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-action-icon:hover {
+    color: #fff;
+    background: #363b46;
+}
+
+/* Main Container */
+.passbook-main-container {
+    max-width: 900px;
+    margin: 20px auto 0;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Customer Hero Card */
+.customer-hero-card {
+    background: linear-gradient(145deg, #1c2027 0%, #15181e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.hero-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatar-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fdbe12, #f59e0b);
+    color: #000;
+    font-size: 24px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.hero-details h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px 0;
+}
+
+.hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.hero-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hero-status {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pill.in_progress {
+    background: rgba(253, 190, 18, 0.15);
+    color: #fdbe12;
+    border: 1px solid rgba(253, 190, 18, 0.3);
+}
+
+.status-pill.completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pill.served {
+    background: #10b981;
+    color: #fff;
+}
+
+/* KPI Grid */
+.card-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+
+.kpi-card {
+    background: #181b20;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.kpi-card.highlight-gold {
+    background: linear-gradient(145deg, #222014 0%, #1a1a15 100%);
+    border-color: rgba(253, 190, 18, 0.3);
+}
+
+.kpi-card.highlight-gold .kpi-value {
+    color: #fdbe12;
+}
+
+.kpi-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #9ca3af;
+}
+
+.kpi-value {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+}
+
+.kpi-sub {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Progress Bar Card */
+.progress-container-card {
+    background: #181b20;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.progress-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.progress-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #fff;
+}
+
+.progress-pct {
+    color: #fdbe12;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 12px;
+    background: #2a2e36;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fdbe12, #10b981);
+    border-radius: 8px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-footer-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* Sections */
+.passbook-section {
+    background: #181b20;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 22px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.section-header h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px 0;
+}
+
+.section-header p {
+    font-size: 13px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.grid-legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.dot-paid-blue {
+    background: #2563eb;
+}
+
+.dot-paid-red {
+    background: #dc2626;
+}
+
+.dot-unpaid {
+    background: #374151;
+}
+
+.records-count {
+    background: #2a2e36;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+/* Box Grid */
+.box-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+    gap: 8px;
+}
+
+.grid-box {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    position: relative;
+    user-select: none;
+    transition: transform 0.15s ease;
+}
+
+.grid-box:hover {
+    transform: scale(1.08);
+    z-index: 2;
+}
+
+.grid-box.box-unpaid {
+    background: #252830;
+    color: #6b7280;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.grid-box.box-paid-blue {
+    background: linear-gradient(135deg, #1d4ed8, #2563eb);
+    color: #fff;
+    border: 1px solid #3b82f6;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.grid-box.box-paid-red {
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
+    color: #fff;
+    border: 1px solid #ef4444;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+.box-num {
+    line-height: 1;
+}
+
+.box-check {
+    font-size: 10px;
+    margin-top: 2px;
+    opacity: 0.9;
+}
+
+/* Payments List */
+.payments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.payment-item-card {
+    background: #1f232b;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    transition: border-color 0.2s ease;
+}
+
+.payment-item-card:hover {
+    border-color: rgba(253, 190, 18, 0.2);
+}
+
+.payment-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.payment-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.payment-date-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.payment-date, .payment-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.payment-time {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: normal;
+}
+
+.payment-details-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+}
+
+.method-tag {
+    background: #2a2e36;
+    color: #9ca3af;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.boxes-checked-tag {
+    background: rgba(37, 99, 235, 0.2);
+    color: #60a5fa;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.worker-tag {
+    color: #6b7280;
+}
+
+.payment-notes {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.payment-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.payment-amount {
+    font-size: 18px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.confirmed-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #10b981;
+    letter-spacing: 0.5px;
+}
+
+/* Footer */
+.passbook-footer {
+    text-align: center;
+    padding: 24px 16px;
+    color: #6b7280;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.security-notice {
+    margin: 0;
+    color: #9ca3af;
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+.contact-notice {
+    margin: 0;
+    color: #9ca3af;
+}
+
+.contact-notice strong {
+    color: #fdbe12;
+}
+
+.footer-credits {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.footer-credits span {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Loading & Error States */
+.passbook-loading-container,
+.passbook-error-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    background: #0f1115;
+    color: #fff;
+}
+
+.passbook-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(253, 190, 18, 0.2);
+    border-top-color: #fdbe12;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.error-card {
+    background: #181b20;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 440px;
+    width: 100%;
+}
+
+.error-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.btn-retry {
+    margin-top: 20px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    background: #fdbe12;
+    color: #000;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 600px) {
+    .passbook-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .box-grid {
+        grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+        gap: 6px;
+    }
+
+    .grid-box {
+        font-size: 11px;
+    }
+
+    .payment-item-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .payment-right {
+        align-items: flex-start;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 8px;
+        width: 100%;
+    }
+}

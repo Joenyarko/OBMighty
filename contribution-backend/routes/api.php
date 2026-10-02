@@ -46,6 +46,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::get('/config', [App\Http\Controllers\Api\ConfigController::class, 'index']);
 Route::get('/manifest.json', [ManifestController::class, 'getPublicManifest']); // Public PWA manifest (fallback)
 Route::get('/pwa-manifest/{id}', [ManifestController::class, 'getCompanyManifest']); // Public branded manifest
+Route::get('/public/passbook/{token}', [\App\Http\Controllers\Api\PublicPortalController::class, 'getPassbook'])->middleware('throttle:60,1');
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
