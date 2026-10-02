@@ -16,7 +16,8 @@ const cardAPI = {
 
 function Cards() {
     const [cards, setCards] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [searchLoading, setSearchLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -41,9 +42,13 @@ function Cards() {
         to: 0
     });
 
-    const fetchCards = async (page = 1, search = '') => {
+    const fetchCards = async (page = 1, search = '', isInitial = false) => {
         try {
-            setLoading(true);
+            if (isInitial) {
+                setInitialLoading(true);
+            } else {
+                setSearchLoading(true);
+            }
             const params = new URLSearchParams({ page });
             if (search) params.append('search', search);
             const response = await api.get(`/cards?${params.toString()}`);
@@ -61,15 +66,21 @@ function Cards() {
             showError('Failed to fetch cards');
             console.error(error);
         } finally {
-            setLoading(false);
+            setInitialLoading(false);
+            setSearchLoading(false);
         }
     };
 
-    // Reset to page 1 and search server-side when searchTerm changes
+    // Initial load
+    useEffect(() => {
+        fetchCards(1, '', true);
+    }, []);
+
+    // Reset to page 1 and search server-side when searchTerm changes without unmounting page
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchCards(1, searchTerm);
-        }, 400);
+            fetchCards(1, searchTerm, false);
+        }, 350);
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
@@ -158,7 +169,7 @@ function Cards() {
             }
             setShowModal(false);
             resetForm();
-            fetchCards();
+            fetchCards(pagination.current_page, searchTerm);
         } catch (error) {
             showError(error.response?.data?.message || 'Failed to save card');
         }
@@ -193,7 +204,7 @@ function Cards() {
             try {
                 await cardAPI.delete(id);
                 showSuccess('Card deactivated successfully!');
-                fetchCards();
+                fetchCards(pagination.current_page, searchTerm);
             } catch (error) {
                 showError('Failed to deactivate card');
             }
@@ -205,7 +216,7 @@ function Cards() {
         setShowImageModal(true);
     };
 
-    if (loading) {
+    if (initialLoading) {
         return <div className="loading">Loading cards...</div>;
     }
 
@@ -219,7 +230,7 @@ function Cards() {
             </div>
 
             {/* Search Bar */}
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '24px', position: 'relative' }}>
                 <input
                     type="text"
                     placeholder="🔍 Search cards by name, code, boxes (e.g. 850), or price (e.g. 1 cedi)..."
@@ -227,7 +238,7 @@ function Cards() {
                     onChange={e => setSearchTerm(e.target.value)}
                     style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: '12px 40px 12px 16px',
                         background: 'var(--card-bg)',
                         border: '1px solid var(--border-color)',
                         borderRadius: '8px',
@@ -237,10 +248,43 @@ function Cards() {
                         boxSizing: 'border-box'
                     }}
                 />
+                {searchLoading ? (
+                    <span style={{
+                        position: 'absolute',
+                        right: '14px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        fontSize: '12px',
+                        color: 'var(--text-secondary, #94a3b8)',
+                        pointerEvents: 'none'
+                    }}>
+                        Searching...
+                    </span>
+                ) : searchTerm ? (
+                    <button
+                        type="button"
+                        onClick={() => setSearchTerm('')}
+                        style={{
+                            position: 'absolute',
+                            right: '12px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'var(--text-secondary, #94a3b8)',
+                            cursor: 'pointer',
+                            fontSize: '16px',
+                            padding: '4px'
+                        }}
+                        title="Clear search"
+                    >
+                        ✕
+                    </button>
+                ) : null}
             </div>
 
             {/* Cards Grid */}
-            <div className="cards-grid">
+            <div className="cards-grid" style={{ opacity: searchLoading ? 0.6 : 1, transition: 'opacity 0.2s ease' }}>
                 {cards.length === 0 ? (
                     <div className="no-data">
                         <p>{searchTerm ? `No cards matching "${searchTerm}"` : 'No cards found. Create your first card!'}</p>
