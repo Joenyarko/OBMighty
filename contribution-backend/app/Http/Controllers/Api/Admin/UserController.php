@@ -111,12 +111,19 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6',
             'role' => 'sometimes|string|exists:roles,name',
             'company_id' => 'nullable|exists:companies,id',
+            'status' => 'sometimes|string|in:active,inactive,suspended',
         ]);
 
         $updateData = [];
         if (isset($validated['name'])) $updateData['name'] = $validated['name'];
         if (isset($validated['email'])) $updateData['email'] = $validated['email'];
         if (!empty($validated['password'])) $updateData['password'] = Hash::make($validated['password']);
+        if (isset($validated['status'])) {
+            $updateData['status'] = $validated['status'];
+            if ($validated['status'] === 'suspended') {
+                $user->tokens()->delete();
+            }
+        }
         
         // Only super admin can change company_id globally
         if (array_key_exists('company_id', $validated)) {
@@ -129,6 +136,93 @@ class UserController extends Controller
             $user->syncRoles([$validated['role']]);
         }
 
+        $user->load(['company', 'roles']);
+
+        return response()->json($user);
+    }
+
+    /**
+     * Suspend a user.
+     */
+    public function suspend($id)
+    {
+        $authUser = auth()->user();
+        $user = User::findOrFail($id);
+
+        // Ensure Super Admin doesn't accidentally suspend themselves
+        if ($user->id === $authUser->id) {
+            return response()->json(['message' => 'You cannot suspend your own account.'], 422);
+        }
+
+        // Cannot suspend super_admin accounts
+        if ($user->hasRole('super_admin')) {
+            return response()->json(['message' => 'Super admin accounts cannot be suspended.'], 422);
+        }
+
+        // Admin managers can only suspend users from their assigned companies
+        if ($authUser->hasRole('admin_manager')) {
+            $assignedIds = $authUser->managedCompanies()->pluck('companies.id')->toArray();
+            if (!in_array((int)$user->company_id, $assignedIds)) {
+                return response()->json(['message' => 'Unauthorized. This user does not belong to your assigned companies.'], 403);
+            }
+        }
+
+        $oldStatus = $user->status;
+        $user->status = 'suspended';
+        $user->save();
+
+        // Revoke active sessions
+        $user->tokens()->delete();
+
+        // Audit log
+        \App\Models\AuditLog::log('user_suspended', $user, ['status' => $oldStatus], ['status' => 'suspended']);
+
+        return response()->json([
+            'message' => "User {$user->name} has been suspended.",
+            'user' => $user->fresh(['company', 'roles'])
+        ]);
+    }
+
+    /**
+     * Activate / unsuspend a user.
+     */
+    public function activate($id)
+    {
+        $authUser = auth()->user();
+        $user = User::findOrFail($id);
+
+        // Admin managers can only activate users from their assigned companies
+        if ($authUser->hasRole('admin_manager')) {
+            $assignedIds = $authUser->managedCompanies()->pluck('companies.id')->toArray();
+            if (!in_array((int)$user->company_id, $assignedIds)) {
+                return response()->json(['message' => 'Unauthorized. This user does not belong to your assigned companies.'], 403);
+            }
+        }
+
+        $oldStatus = $user->status;
+        $user->status = 'active';
+        $user->save();
+
+        // Audit log
+        \App\Models\AuditLog::log('user_activated', $user, ['status' => $oldStatus], ['status' => 'active']);
+
+        return response()->json([
+            'message' => "User {$user->name} has been activated.",
+            'user' => $user->fresh(['company', 'roles'])
+        ]);
+    }
+
+    /**
+     * Assign role to user.
+     */
+    public function assignRole(Request $request, $id)
+    {
+        $request->validate([
+            'role' => 'required|string|exists:roles,name',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->syncRoles([$request->role]);
         $user->load(['company', 'roles']);
 
         return response()->json($user);

@@ -67,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/metrics', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'metrics']);
             Route::apiResource('users', \App\Http\Controllers\Api\Admin\UserController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
             Route::post('/users/{id}/roles', [\App\Http\Controllers\Api\Admin\UserController::class, 'assignRole']);
+            Route::post('/users/{id}/suspend', [\App\Http\Controllers\Api\Admin\UserController::class, 'suspend']);
+            Route::post('/users/{id}/activate', [\App\Http\Controllers\Api\Admin\UserController::class, 'activate']);
 
             // Admin Manager Management (only main super_admin can manage these)
             Route::middleware('role:super_admin')->group(function () {

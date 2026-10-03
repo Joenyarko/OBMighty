@@ -26,7 +26,8 @@ function AdminUsers() {
         password: '',
         company_id: '',
         role: 'worker', // Default
-        phone: ''
+        phone: '',
+        status: 'active'
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -121,7 +122,7 @@ function AdminUsers() {
             setShowAddUserModal(false);
             setIsEditing(false);
             setEditingUserId(null);
-            setNewUserData({ name: '', email: '', password: '', company_id: '', role: 'worker', phone: '' });
+            setNewUserData({ name: '', email: '', password: '', company_id: '', role: 'worker', phone: '', status: 'active' });
             setShowPassword(false);
             fetchUsers();
 
@@ -149,7 +150,8 @@ function AdminUsers() {
             password: '', // Leave blank, only update if provided
             company_id: user.company_id || '',
             role: user.roles && user.roles.length > 0 ? user.roles[0].name : 'worker',
-            phone: user.phone || ''
+            phone: user.phone || '',
+            status: user.status || 'active'
         });
         setShowAddUserModal(true);
     };
@@ -195,25 +197,46 @@ function AdminUsers() {
         }
     };
 
-    const handleSuspendUser = async (userId) => {
+    const handleToggleSuspendUser = async (user) => {
         setActiveDropdown(null);
         const Swal = (await import('sweetalert2')).default;
+        const isSuspended = user.status === 'suspended';
+
         Swal.fire({
-            title: 'Suspend User?',
-            text: 'Are you sure you want to suspend this user?',
+            title: isSuspended ? 'Activate User?' : 'Suspend User?',
+            text: isSuspended
+                ? `Are you sure you want to reactivate ${user.name}? They will be able to log in again.`
+                : `Are you sure you want to suspend ${user.name}? Their active sessions will be terminated and they will not be able to log in.`,
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, suspend',
+            confirmButtonText: isSuspended ? 'Yes, activate' : 'Yes, suspend',
+            confirmButtonColor: isSuspended ? '#10b981' : '#f59e0b',
             background: '#161920',
             color: '#ffffff'
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    await api.post(`/admin/users/${userId}/suspend`);
+                    const endpoint = isSuspended
+                        ? `/admin/users/${user.id}/activate`
+                        : `/admin/users/${user.id}/suspend`;
+                    await api.post(endpoint);
                     fetchUsers();
-                    Swal.fire({ icon: 'success', title: 'Suspended!', timer: 1500, showConfirmButton: false, background: '#161920', color: '#fff' });
+                    Swal.fire({
+                        icon: 'success',
+                        title: isSuspended ? 'Activated!' : 'Suspended!',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#161920',
+                        color: '#fff'
+                    });
                 } catch (error) {
-                    Swal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'Failed to suspend user', background: '#161920', color: '#fff' });
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: error.response?.data?.message || `Failed to ${isSuspended ? 'activate' : 'suspend'} user`,
+                        background: '#161920',
+                        color: '#fff'
+                    });
                 }
             }
         });
@@ -378,12 +401,22 @@ function AdminUsers() {
                                                     Edit User
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleSuspendUser(user.id)}
-                                                    style={{ background: 'transparent', border: 'none', color: '#fff', padding: '8px 12px', textAlign: 'left', cursor: 'pointer', borderRadius: '4px', fontSize: '13px' }}
+                                                    onClick={() => handleToggleSuspendUser(user)}
+                                                    style={{ 
+                                                        background: 'transparent', 
+                                                        border: 'none', 
+                                                        color: user.status === 'suspended' ? '#10b981' : '#f59e0b', 
+                                                        padding: '8px 12px', 
+                                                        textAlign: 'left', 
+                                                        cursor: 'pointer', 
+                                                        borderRadius: '4px', 
+                                                        fontSize: '13px',
+                                                        fontWeight: 500
+                                                    }}
                                                     onMouseOver={e => e.currentTarget.style.background = '#2a2a2a'}
                                                     onMouseOut={e => e.currentTarget.style.background = 'transparent'}
                                                 >
-                                                    Suspend User
+                                                    {user.status === 'suspended' ? '✓ Activate User' : '⊘ Suspend User'}
                                                 </button>
                                                 <button 
                                                     onClick={() => handleDeleteUser(user.id)}
@@ -517,6 +550,21 @@ function AdminUsers() {
                                     </select>
                                 </div>
                             </div>
+
+                            {isEditing && (
+                                <div className="form-group" style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', color: '#9ca3af', marginBottom: '8px' }}>Account Status</label>
+                                    <select
+                                        value={newUserData.status}
+                                        onChange={e => setNewUserData({ ...newUserData, status: e.target.value })}
+                                        style={{ width: '100%', padding: '10px', backgroundColor: '#0f1115', border: '1px solid #242830', color: 'white', borderRadius: '6px' }}
+                                    >
+                                        <option value="active">Active</option>
+                                        <option value="suspended">Suspended</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="nex-modal-footer" style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                                 <button type="button" onClick={() => setShowAddUserModal(false)} style={{ backgroundColor: '#242830', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer' }}>
