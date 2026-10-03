@@ -7,6 +7,63 @@ import TransferCustomerModal from '../components/TransferCustomerModal';
 import '../styles/Customers.css';
 
 
+const matchesCardSearch = (c, search) => {
+    if (!search || !search.trim()) return true;
+    const term = search.trim().toLowerCase();
+
+    // 1. Check card name or code
+    if (c.card_name?.toLowerCase().includes(term)) return true;
+    if (c.card_code?.toLowerCase().includes(term)) return true;
+
+    // 2. Numeric checks (price, boxes, box_price)
+    const cleanNumStr = term.replace(/[^0-9.]/g, '');
+    const numVal = parseFloat(cleanNumStr);
+
+    const totalBoxes = parseInt(c.number_of_boxes, 10);
+    const totalAmount = parseFloat(c.amount);
+    const boxPrice = totalBoxes > 0 ? (totalAmount / totalBoxes) : 0;
+
+    // Check if number of boxes matches
+    if (totalBoxes && (
+        totalBoxes.toString().includes(term) ||
+        (cleanNumStr && totalBoxes.toString().includes(cleanNumStr))
+    )) {
+        return true;
+    }
+
+    // Check if total amount matches
+    if (!isNaN(totalAmount) && (
+        totalAmount.toString().includes(term) ||
+        totalAmount.toFixed(2).includes(term) ||
+        (cleanNumStr && totalAmount.toString().includes(cleanNumStr)) ||
+        (cleanNumStr && totalAmount.toFixed(2).includes(cleanNumStr))
+    )) {
+        return true;
+    }
+
+    // Check if box price matches (e.g. 1 cedi, 1.00, 2, 5, 10, etc.)
+    if (!isNaN(boxPrice) && boxPrice > 0) {
+        const boxPriceStr = boxPrice.toString();
+        const boxPriceFixed = boxPrice.toFixed(2);
+        const boxPriceRounded = Math.round(boxPrice).toString();
+
+        if (boxPriceStr === term || boxPriceFixed === term || boxPriceRounded === term) {
+            return true;
+        }
+
+        if (cleanNumStr && (
+            boxPriceStr === cleanNumStr ||
+            boxPriceFixed === cleanNumStr ||
+            boxPriceRounded === cleanNumStr ||
+            Math.abs(boxPrice - numVal) < 0.05
+        )) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
 function Customers() {
     const [customers, setCustomers] = useState([]);
     const [cards, setCards] = useState([]);
@@ -39,7 +96,6 @@ function Customers() {
     const [cardPage, setCardPage] = useState(1);
     const cardsPerPage = 12;
     const [cardSearchTerm, setCardSearchTerm] = useState('');
-    const [formCardSearch, setFormCardSearch] = useState('');
 
     useEffect(() => {
         // console.log('Customers.jsx: useEffect triggered', { user });
@@ -248,63 +304,6 @@ function Customers() {
             console.error('Failed to record payment:', error);
             showError(error.response?.data?.message || 'Failed to record payment');
         }
-    };
-
-    const matchesCardSearch = (c, search) => {
-        if (!search || !search.trim()) return true;
-        const term = search.trim().toLowerCase();
-
-        // 1. Check card name or code
-        if (c.card_name?.toLowerCase().includes(term)) return true;
-        if (c.card_code?.toLowerCase().includes(term)) return true;
-
-        // 2. Numeric checks (price, boxes, box_price)
-        const cleanNumStr = term.replace(/[^0-9.]/g, '');
-        const numVal = parseFloat(cleanNumStr);
-
-        const totalBoxes = parseInt(c.number_of_boxes, 10);
-        const totalAmount = parseFloat(c.amount);
-        const boxPrice = totalBoxes > 0 ? (totalAmount / totalBoxes) : 0;
-
-        // Check if number of boxes matches
-        if (totalBoxes && (
-            totalBoxes.toString().includes(term) ||
-            (cleanNumStr && totalBoxes.toString().includes(cleanNumStr))
-        )) {
-            return true;
-        }
-
-        // Check if total amount matches
-        if (!isNaN(totalAmount) && (
-            totalAmount.toString().includes(term) ||
-            totalAmount.toFixed(2).includes(term) ||
-            (cleanNumStr && totalAmount.toString().includes(cleanNumStr)) ||
-            (cleanNumStr && totalAmount.toFixed(2).includes(cleanNumStr))
-        )) {
-            return true;
-        }
-
-        // Check if box price matches (e.g. 1 cedi, 1.00, 2, 5, 10, etc.)
-        if (!isNaN(boxPrice) && boxPrice > 0) {
-            const boxPriceStr = boxPrice.toString();
-            const boxPriceFixed = boxPrice.toFixed(2);
-            const boxPriceRounded = Math.round(boxPrice).toString();
-
-            if (boxPriceStr === term || boxPriceFixed === term || boxPriceRounded === term) {
-                return true;
-            }
-
-            if (cleanNumStr && (
-                boxPriceStr === cleanNumStr ||
-                boxPriceFixed === cleanNumStr ||
-                boxPriceRounded === cleanNumStr ||
-                Math.abs(boxPrice - numVal) < 0.05
-            )) {
-                return true;
-            }
-        }
-
-        return false;
     };
 
     const filteredCards = cards.filter(c => matchesCardSearch(c, cardSearchTerm));
@@ -688,6 +687,7 @@ function AddCustomerModal({ cards, branches, workers, onClose, onSubmit, preSele
         worker_id: '',
     });
     const [selectedCard, setSelectedCard] = useState(null);
+    const [formCardSearch, setFormCardSearch] = useState('');
 
     // Initialize fields based on role
     useEffect(() => {
