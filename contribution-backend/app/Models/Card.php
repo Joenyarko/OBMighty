@@ -18,6 +18,7 @@ class Card extends Model
         'amount',
         'duration_months',
         'terms_and_conditions',
+        'penalty_percentage',
         'front_image',
         'back_image',
         'status',
@@ -27,6 +28,7 @@ class Card extends Model
         'number_of_boxes' => 'integer',
         'amount' => 'decimal:2',
         'duration_months' => 'integer',
+        'penalty_percentage' => 'decimal:2',
     ];
 
     protected $appends = ['front_image_url', 'back_image_url'];

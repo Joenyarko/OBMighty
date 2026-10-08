@@ -239,7 +239,7 @@ function CustomerBoxTracking() {
         extendedDate.setMonth(extendedDate.getMonth() + 1);
         const dateStr = extendedDate.toISOString().split('T')[0];
 
-        const defaultPct = customerCard?.customer?.company?.default_penalty_percentage ?? 10;
+        const defaultPct = customerCard?.card?.penalty_percentage ?? customerCard?.customer?.company?.default_penalty_percentage ?? 10;
         const total = customerCard?.total_boxes || 0;
         const defaultExtra = Math.max(1, Math.ceil(total * (defaultPct / 100)));
 

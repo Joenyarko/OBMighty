@@ -27,6 +27,7 @@ function Cards() {
         amount: '',
         duration_months: 6,
         terms_and_conditions: '',
+        penalty_percentage: '',
         status: 'active'
     });
     const [frontImagePreview, setFrontImagePreview] = useState(null);
@@ -127,6 +128,7 @@ function Cards() {
             amount: '',
             duration_months: 6,
             terms_and_conditions: '',
+            penalty_percentage: '',
             status: 'active'
         });
         setFrontImagePreview(null);
@@ -155,6 +157,7 @@ function Cards() {
         data.append('amount', totalAmount); // Send total, not per-box price
         data.append('duration_months', formData.duration_months || 6);
         data.append('terms_and_conditions', formData.terms_and_conditions || '');
+        data.append('penalty_percentage', formData.penalty_percentage || '');
         data.append('status', formData.status);
 
         if (frontImageFile) {
@@ -191,6 +194,7 @@ function Cards() {
             amount: perBoxPrice, // Show per-box price, not total
             duration_months: card.duration_months || 6,
             terms_and_conditions: card.terms_and_conditions || '',
+            penalty_percentage: card.penalty_percentage !== null && card.penalty_percentage !== undefined ? card.penalty_percentage : '',
             status: card.status
         });
         setFrontImagePreview(card.front_image_url);
@@ -333,6 +337,14 @@ function Cards() {
                                         <span className="label">Terms:</span>
                                         <span className="value" style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>
                                             📜 Custom Terms
+                                        </span>
+                                    </div>
+                                )}
+                                {card.penalty_percentage && (
+                                    <div className="detail-row">
+                                        <span className="label">Penalty:</span>
+                                        <span className="value" style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 600 }}>
+                                            ⚠️ {card.penalty_percentage}% Override
                                         </span>
                                     </div>
                                 )}
@@ -491,6 +503,32 @@ function Cards() {
                                 />
                                 <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '4px', fontSize: '12px' }}>
                                     ℹ️ Visible to customers directly on their live digital passbook.
+                                </small>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Card Overdue Penalty Rate (%) (Optional)</label>
+                                <input
+                                    type="number"
+                                    name="penalty_percentage"
+                                    min="0"
+                                    max="100"
+                                    step="0.5"
+                                    value={formData.penalty_percentage}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g., 5 for 2-3 months cards, 10 for 6+ months"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        background: 'var(--bg-color)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '14px'
+                                    }}
+                                />
+                                <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '4px', fontSize: '12px' }}>
+                                    ℹ️ Custom penalty % for this card. If blank, company default % from Settings will apply.
                                 </small>
                             </div>
 

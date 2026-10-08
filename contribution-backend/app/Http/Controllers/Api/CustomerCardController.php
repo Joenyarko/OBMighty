@@ -1008,9 +1008,9 @@ class CustomerCardController extends Controller
             } elseif (!empty($validated['percentage'])) {
                 $extraBoxes = (int)ceil($customerCard->total_boxes * ($validated['percentage'] / 100));
             } else {
-                // Fall back to company default percentage
+                // Fall back to card-specific penalty percentage, then company default percentage
                 $company = $customerCard->customer?->company ?? $user->company;
-                $pct = $company?->default_penalty_percentage ?? 10.0;
+                $pct = $customerCard->card?->penalty_percentage ?? ($company?->default_penalty_percentage ?? 10.0);
                 $extraBoxes = (int)ceil($customerCard->total_boxes * ($pct / 100));
             }
 
