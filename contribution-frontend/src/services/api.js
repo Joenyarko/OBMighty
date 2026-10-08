@@ -167,6 +167,7 @@ export const customerCardAPI = {
     getDailySales: (id, date) => api.get(`/customer-cards/${id}/daily-sales`, { params: { date } }),
     getWorkerDailySales: (date) => api.get('/customer-cards/worker/daily-sales', { params: { date } }),
     closeCard: (id) => api.patch(`/customer-cards/${id}/close`),
+    applyPenalty: (id, data) => api.post(`/customer-cards/${id}/apply-penalty`, data),
 };
 
 export const permissionAPI = {
@@ -185,6 +186,7 @@ export const auditLogAPI = {
 };
 
 export const companyAPI = {
+    getSettings: () => api.get('/company/settings'),
     updateSettings: (data) => api.post('/company/settings', data),
 };
 

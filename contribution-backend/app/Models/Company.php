@@ -20,6 +20,9 @@ class Company extends Model
         'payment_methods',
         'currency',
         'timezone',
+        'terms_and_conditions',
+        'enable_overdue_penalty',
+        'default_penalty_percentage',
         'is_active',
     ];
  
@@ -51,6 +54,8 @@ class Company extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'enable_overdue_penalty' => 'boolean',
+        'default_penalty_percentage' => 'decimal:2',
         'payment_methods' => 'array',
     ];
 

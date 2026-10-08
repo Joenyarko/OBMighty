@@ -392,3 +392,56 @@
 .btn-close-card:active {
     transform: translateY(0);
 }
+
+/* Time Extension & Penalty Button */
+.btn-penalty-card {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    color: #000000 !important;
+    border: none !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-penalty-card:hover {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.btn-penalty-card:active {
+    transform: translateY(0);
+}
+
+/* Penalty Box Highlights in Grid */
+.box.penalty-box {
+    position: relative;
+    border: 2px dashed #f59e0b !important;
+}
+
+.box.penalty-box.unchecked {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+}
+
+.box.penalty-box::after {
+    content: "P";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    color: #f59e0b;
+}
+
+.box.penalty-box.red::after,
+.box.penalty-box.blue::after,
+.box.penalty-box.checked::after {
+    color: #ffffff;
+}

@@ -32,6 +32,9 @@ class CompanySettingsController extends Controller
                 'card_prefix' => $company->card_prefix,
                 'currency' => $company->currency,
                 'timezone' => $company->timezone,
+                'terms_and_conditions' => $company->terms_and_conditions,
+                'enable_overdue_penalty' => (bool)$company->enable_overdue_penalty,
+                'default_penalty_percentage' => (float)($company->default_penalty_percentage ?? 10),
             ]
         ]);
     }
@@ -82,6 +85,9 @@ class CompanySettingsController extends Controller
                 'payment_methods' => 'sometimes|array',
                 'currency' => 'sometimes|string|size:3',
                 'timezone' => 'sometimes|string|timezone',
+                'terms_and_conditions' => 'sometimes|nullable|string',
+                'enable_overdue_penalty' => 'sometimes|boolean',
+                'default_penalty_percentage' => 'sometimes|numeric|min:0|max:100',
             ]);
 
             // Convert card_prefix to uppercase

@@ -51,6 +51,7 @@ class CardController extends Controller
             'number_of_boxes' => 'required|integer|min:1',
             'amount' => 'required|numeric|min:0',
             'duration_months' => 'nullable|integer|min:1',
+            'terms_and_conditions' => 'nullable|string',
             'front_image' => 'required|image|mimes:jpeg,jpg,png|max:5120', // 5MB max
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'nullable|in:active,inactive',
@@ -107,6 +108,7 @@ class CardController extends Controller
             'number_of_boxes' => 'sometimes|integer|min:1',
             'amount' => 'sometimes|numeric|min:0',
             'duration_months' => 'sometimes|integer|min:1',
+            'terms_and_conditions' => 'sometimes|nullable|string',
             'front_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'back_image' => 'nullable|image|mimes:jpeg,jpg,png|max:5120',
             'status' => 'sometimes|in:active,inactive',

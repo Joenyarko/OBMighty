@@ -187,7 +187,7 @@ function PublicPassbook() {
                         )}
                     </div>
 
-                    {/* Start Date & Due Date Timeline */}
+                    {/* Start Date, Duration & Due Date Timeline */}
                     <div className="hero-timeline-row">
                         <div className="timeline-item start">
                             <span className="timeline-icon">📅</span>
@@ -195,6 +195,16 @@ function PublicPassbook() {
                                 <span className="timeline-label">START DATE</span>
                                 <strong className="timeline-value">
                                     {customer?.start_date ? new Date(customer.start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not specified'}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div className="timeline-item duration">
+                            <span className="timeline-icon">⏳</span>
+                            <div className="timeline-info">
+                                <span className="timeline-label">CARD DURATION</span>
+                                <strong className="timeline-value highlight-duration">
+                                    {card?.duration_months ? `${card.duration_months} Months` : '6 Months'}
                                 </strong>
                             </div>
                         </div>
@@ -212,6 +222,27 @@ function PublicPassbook() {
                         </div>
                     </div>
                 </div>
+
+                {/* Overdue Penalty Banner if active on this card */}
+                {card?.penalty_boxes > 0 && (
+                    <div className="passbook-penalty-banner">
+                        <div className="passbook-penalty-banner-left">
+                            <span className="passbook-penalty-icon">⚠️</span>
+                            <div>
+                                <div className="passbook-penalty-title">
+                                    Overdue Time Extension Applied (+{card.penalty_boxes} Extra Boxes)
+                                </div>
+                                <p className="passbook-penalty-desc">
+                                    Due date has been extended to <strong>{customer?.due_date}</strong> with an overdue penalty requirement of <strong>GHS {parseFloat(card.penalty_amount || 0).toFixed(2)}</strong>.
+                                    {card.penalty_notes && <span> Note: "{card.penalty_notes}"</span>}
+                                </p>
+                            </div>
+                        </div>
+                        <span className="passbook-penalty-badge">
+                            +{card.penalty_boxes} BOXES EXTENSION
+                        </span>
+                    </div>
+                )}
 
                 {/* Key Card Statistics */}
                 {card ? (
@@ -289,6 +320,9 @@ function PublicPassbook() {
                                     <span className="legend-item"><span className="dot dot-paid-blue"></span> Deposit A</span>
                                     <span className="legend-item"><span className="dot dot-paid-red"></span> Deposit B</span>
                                     <span className="legend-item"><span className="dot dot-unpaid"></span> Remaining</span>
+                                    {box_states.some(b => b.is_penalty) && (
+                                        <span className="legend-item"><span className="dot dot-penalty"></span> ⚠️ Penalty Box</span>
+                                    )}
                                 </div>
                             </div>
 
@@ -307,11 +341,15 @@ function PublicPassbook() {
                                         }
                                     }
 
+                                    const isPenalty = !!box.is_penalty;
+
                                     return (
                                         <div
                                             key={box.id}
-                                            className={`grid-box ${colorClass}`}
-                                            title={box.is_checked ? `Box #${box.box_number} • Paid on ${box.checked_date || 'N/A'}` : `Box #${box.box_number} • Remaining`}
+                                            className={`grid-box ${colorClass} ${isPenalty ? 'box-penalty' : ''}`}
+                                            title={isPenalty
+                                                ? `Penalty Box #${box.box_number} • ${box.is_checked ? `Paid on ${box.checked_date || 'N/A'}` : 'Remaining'}`
+                                                : (box.is_checked ? `Box #${box.box_number} • Paid on ${box.checked_date || 'N/A'}` : `Box #${box.box_number} • Remaining`)}
                                         >
                                             <span className="box-num">{box.box_number}</span>
                                             {box.is_checked && <span className="box-check">✓</span>}
@@ -394,6 +432,34 @@ function PublicPassbook() {
                         </div>
                     )}
                 </section>
+
+                {/* Terms and Conditions Section */}
+                {(card?.terms_and_conditions || company?.terms_and_conditions) && (
+                    <section className="passbook-section terms-section">
+                        <div className="section-header">
+                            <div>
+                                <h3>📜 Terms & Conditions</h3>
+                                <p>Rules, maturity terms, and redemption policies</p>
+                            </div>
+                            {card?.card_terms && (
+                                <span className="card-specific-badge">Card Specific</span>
+                            )}
+                        </div>
+                        <div className="terms-content-card">
+                            <div className="terms-text">
+                                {(card?.terms_and_conditions || company?.terms_and_conditions)
+                                    .split('\n')
+                                    .filter(line => line.trim())
+                                    .map((line, idx) => (
+                                        <p key={idx} className="terms-line">
+                                            {line}
+                                        </p>
+                                    ))
+                                }
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 {/* Footer Assurance & Branding */}
                 <footer className="passbook-footer">

@@ -18,6 +18,11 @@ class CustomerCard extends Model
         'total_amount',
         'amount_paid',
         'amount_remaining',
+        'penalty_boxes',
+        'penalty_amount',
+        'penalty_percentage',
+        'penalty_applied_at',
+        'penalty_notes',
         'status',
         'assigned_by',
     ];
@@ -29,6 +34,10 @@ class CustomerCard extends Model
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'amount_remaining' => 'decimal:2',
+        'penalty_boxes' => 'integer',
+        'penalty_amount' => 'decimal:2',
+        'penalty_percentage' => 'decimal:2',
+        'penalty_applied_at' => 'datetime',
     ];
 
     protected $appends = ['boxes_remaining', 'completion_percentage', 'box_price'];

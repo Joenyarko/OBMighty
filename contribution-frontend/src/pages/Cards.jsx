@@ -26,6 +26,7 @@ function Cards() {
         number_of_boxes: '',
         amount: '',
         duration_months: 6,
+        terms_and_conditions: '',
         status: 'active'
     });
     const [frontImagePreview, setFrontImagePreview] = useState(null);
@@ -125,6 +126,7 @@ function Cards() {
             number_of_boxes: '',
             amount: '',
             duration_months: 6,
+            terms_and_conditions: '',
             status: 'active'
         });
         setFrontImagePreview(null);
@@ -152,6 +154,7 @@ function Cards() {
         data.append('number_of_boxes', formData.number_of_boxes);
         data.append('amount', totalAmount); // Send total, not per-box price
         data.append('duration_months', formData.duration_months || 6);
+        data.append('terms_and_conditions', formData.terms_and_conditions || '');
         data.append('status', formData.status);
 
         if (frontImageFile) {
@@ -187,6 +190,7 @@ function Cards() {
             number_of_boxes: card.number_of_boxes,
             amount: perBoxPrice, // Show per-box price, not total
             duration_months: card.duration_months || 6,
+            terms_and_conditions: card.terms_and_conditions || '',
             status: card.status
         });
         setFrontImagePreview(card.front_image_url);
@@ -324,6 +328,14 @@ function Cards() {
                                         {card.duration_months || 6} Months
                                     </span>
                                 </div>
+                                {card.terms_and_conditions && (
+                                    <div className="detail-row">
+                                        <span className="label">Terms:</span>
+                                        <span className="value" style={{ fontSize: '12px', color: '#10b981', fontWeight: 600 }}>
+                                            📜 Custom Terms
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="card-actions">
@@ -456,6 +468,30 @@ function Cards() {
                                         ℹ️ Changing this duration will automatically update the due date for all customers registered on this card.
                                     </small>
                                 )}
+                            </div>
+
+                            <div className="form-group">
+                                <label>Card Terms and Conditions (Optional)</label>
+                                <textarea
+                                    name="terms_and_conditions"
+                                    value={formData.terms_and_conditions || ''}
+                                    onChange={handleInputChange}
+                                    placeholder="Card-specific terms & conditions, redemption policy, or maturity notes. If blank, company default terms will apply."
+                                    rows="3"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        background: 'var(--bg-color)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '14px',
+                                        resize: 'vertical'
+                                    }}
+                                />
+                                <small style={{ color: 'var(--text-secondary)', display: 'block', marginTop: '4px', fontSize: '12px' }}>
+                                    ℹ️ Visible to customers directly on their live digital passbook.
+                                </small>
                             </div>
 
                             <div className="form-row">

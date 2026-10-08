@@ -103,7 +103,10 @@ function Settings() {
     const [companyData, setCompanyData] = useState({
         name: '',
         card_prefix: '',
-        primary_color: '#007bff'
+        primary_color: '#007bff',
+        terms_and_conditions: '',
+        enable_overdue_penalty: false,
+        default_penalty_percentage: 10
     });
 
     // Initialize Profile Data
@@ -120,7 +123,10 @@ function Settings() {
                 setCompanyData({
                     name: user.company.name || '',
                     card_prefix: user.company.card_prefix || '',
-                    primary_color: user.company.primary_color || '#007bff'
+                    primary_color: user.company.primary_color || '#007bff',
+                    terms_and_conditions: user.company.terms_and_conditions || '',
+                    enable_overdue_penalty: !!user.company.enable_overdue_penalty,
+                    default_penalty_percentage: user.company.default_penalty_percentage !== undefined ? user.company.default_penalty_percentage : 10
                 });
             }
         }
@@ -129,8 +135,29 @@ function Settings() {
     useEffect(() => {
         if (activeTab === 'user_permissions') {
             fetchRoles();
+        } else if (activeTab === 'company') {
+            fetchCompanySettings();
         }
     }, [activeTab]);
+
+    const fetchCompanySettings = async () => {
+        try {
+            const res = await companyAPI.getSettings();
+            if (res.data?.company) {
+                const c = res.data.company;
+                setCompanyData({
+                    name: c.name || '',
+                    card_prefix: c.card_prefix || '',
+                    primary_color: c.primary_color || '#007bff',
+                    terms_and_conditions: c.terms_and_conditions || '',
+                    enable_overdue_penalty: !!c.enable_overdue_penalty,
+                    default_penalty_percentage: c.default_penalty_percentage !== undefined ? c.default_penalty_percentage : 10
+                });
+            }
+        } catch (err) {
+            console.error('Failed to fetch company settings', err);
+        }
+    };
 
     const fetchRoles = async () => {
         setLoadingRoles(true);
@@ -694,7 +721,7 @@ function Settings() {
                                 </p>
                             </div>
 
-                            <div className="form-group" style={{ marginBottom: '32px' }}>
+                            <div className="form-group" style={{ marginBottom: '24px' }}>
                                 <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>Primary Theme Color</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <input
@@ -705,6 +732,101 @@ function Settings() {
                                     />
                                     <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>{companyData.primary_color}</span>
                                 </div>
+                            </div>
+
+                            <div className="form-group" style={{ marginBottom: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-primary)', fontSize: '15px', fontWeight: 600 }}>
+                                    📜 Company Terms and Conditions
+                                </label>
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                    Default terms, contribution rules, and withdrawal conditions for your company. Cards without custom terms will automatically inherit this. Displayed on customers' digital passbook.
+                                </p>
+                                <textarea
+                                    rows="5"
+                                    value={companyData.terms_and_conditions || ''}
+                                    onChange={e => setCompanyData({ ...companyData, terms_and_conditions: e.target.value })}
+                                    placeholder="Enter company default terms and conditions (e.g. 1. Contributions must be made daily or weekly. 2. Final redemption requires completed boxes. 3. Overdue cards are subject to policy...)"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        backgroundColor: 'var(--bg-color)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        color: 'var(--text-primary)',
+                                        fontSize: '14px',
+                                        resize: 'vertical'
+                                    }}
+                                />
+                            </div>
+
+                            {/* Overdue Penalty Configuration */}
+                            <div className="form-group" style={{ marginBottom: '32px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            ⚠️ Overdue Penalty & Extension Feature
+                                        </h4>
+                                        <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                            Optional: Allow CEO and Managers to grant time extensions on overdue cards by adding extra penalty boxes.
+                                        </p>
+                                    </div>
+                                    <label style={{ position: 'relative', display: 'inline-block', width: '48px', height: '26px' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={companyData.enable_overdue_penalty}
+                                            onChange={e => setCompanyData({ ...companyData, enable_overdue_penalty: e.target.checked })}
+                                            style={{ opacity: 0, width: 0, height: 0 }}
+                                        />
+                                        <span style={{
+                                            position: 'absolute',
+                                            cursor: 'pointer',
+                                            top: 0, left: 0, right: 0, bottom: 0,
+                                            backgroundColor: companyData.enable_overdue_penalty ? 'var(--primary-color)' : 'rgba(255,255,255,0.2)',
+                                            transition: '.3s',
+                                            borderRadius: '26px'
+                                        }}>
+                                            <span style={{
+                                                position: 'absolute',
+                                                content: '""',
+                                                height: '20px',
+                                                width: '20px',
+                                                left: companyData.enable_overdue_penalty ? '25px' : '3px',
+                                                bottom: '3px',
+                                                backgroundColor: '#fff',
+                                                transition: '.3s',
+                                                borderRadius: '50%'
+                                            }}></span>
+                                        </span>
+                                    </label>
+                                </div>
+
+                                {companyData.enable_overdue_penalty && (
+                                    <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(212, 175, 55, 0.08)', borderRadius: '8px', border: '1px solid rgba(212, 175, 55, 0.25)' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600 }}>
+                                            Default Penalty Percentage (%)
+                                        </label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                step="1"
+                                                value={companyData.default_penalty_percentage}
+                                                onChange={e => setCompanyData({ ...companyData, default_penalty_percentage: parseFloat(e.target.value) || 0 })}
+                                                style={{
+                                                    width: '120px',
+                                                    padding: '8px 12px',
+                                                    backgroundColor: 'var(--bg-color)',
+                                                    border: '1px solid var(--border-color)',
+                                                    borderRadius: '6px',
+                                                    color: 'var(--text-primary)',
+                                                    fontSize: '14px'
+                                                }}
+                                            />
+                                            <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>% of card boxes (e.g. 10% on a 100-box card adds 10 extra boxes)</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

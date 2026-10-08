@@ -15,12 +15,14 @@ class BoxState extends Model
         'is_checked',
         'checked_date',
         'payment_id',
+        'is_penalty',
     ];
 
     protected $casts = [
         'box_number' => 'integer',
         'is_checked' => 'boolean',
         'checked_date' => 'date',
+        'is_penalty' => 'boolean',
     ];
 
     /**

@@ -14,6 +14,7 @@ const customerCardAPI = {
     reversePayment: (paymentId) => api.delete(`/box-payments/${paymentId}`),
     adjustPayment: (paymentId, data) => api.patch(`/box-payments/${paymentId}`, data),
     closeCard: (id) => api.patch(`/customer-cards/${id}/close`),
+    applyPenalty: (id, data) => api.post(`/customer-cards/${id}/apply-penalty`, data),
 };
 
 function CustomerBoxTracking() {
@@ -43,6 +44,26 @@ function CustomerBoxTracking() {
         new_amount: '',
         notes: ''
     });
+
+    // Time Extension & Penalty modal state
+    const [showPenaltyModal, setShowPenaltyModal] = useState(false);
+    const [penaltyForm, setPenaltyForm] = useState({
+        extended_due_date: '',
+        percentage: '',
+        extra_boxes: '',
+        notes: ''
+    });
+    const [penaltySubmitting, setPenaltySubmitting] = useState(false);
+
+    const canManageCards = isCEO || 
+        (user?.roles && (
+            Array.isArray(user.roles) 
+                ? user.roles.some(r => {
+                    const name = typeof r === 'string' ? r : r.name;
+                    return ['super_admin', 'manager', 'secretary', 'branch_manager'].includes(name);
+                })
+                : ['super_admin', 'manager', 'secretary', 'branch_manager'].includes(user.role)
+        ));
 
     useEffect(() => {
         fetchData();
@@ -210,6 +231,81 @@ function CustomerBoxTracking() {
         }
     };
 
+    const openPenaltyModal = () => {
+        const currentDue = customerCard?.customer?.due_date 
+            ? new Date(customerCard.customer.due_date)
+            : new Date();
+        const extendedDate = new Date(currentDue);
+        extendedDate.setMonth(extendedDate.getMonth() + 1);
+        const dateStr = extendedDate.toISOString().split('T')[0];
+
+        const defaultPct = customerCard?.customer?.company?.default_penalty_percentage ?? 10;
+        const total = customerCard?.total_boxes || 0;
+        const defaultExtra = Math.max(1, Math.ceil(total * (defaultPct / 100)));
+
+        setPenaltyForm({
+            extended_due_date: dateStr,
+            percentage: defaultPct,
+            extra_boxes: defaultExtra,
+            notes: ''
+        });
+        setShowPenaltyModal(true);
+    };
+
+    const handlePenaltyChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'percentage') {
+            const pct = parseFloat(value) || 0;
+            const boxes = Math.max(1, Math.ceil((customerCard?.total_boxes || 0) * (pct / 100)));
+            setPenaltyForm(prev => ({ ...prev, percentage: value, extra_boxes: boxes }));
+        } else if (name === 'extra_boxes') {
+            const boxes = parseInt(value) || 0;
+            const total = customerCard?.total_boxes || 1;
+            const pct = ((boxes / total) * 100).toFixed(1);
+            setPenaltyForm(prev => ({ ...prev, extra_boxes: value, percentage: pct }));
+        } else {
+            setPenaltyForm(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleApplyPenalty = async (e) => {
+        e.preventDefault();
+        if (!penaltyForm.extended_due_date) {
+            showError('Please select a new extended due date');
+            return;
+        }
+        if (!penaltyForm.extra_boxes || parseInt(penaltyForm.extra_boxes) < 1) {
+            showError('Please specify at least 1 extra penalty box');
+            return;
+        }
+
+        const extraBoxes = parseInt(penaltyForm.extra_boxes);
+        const penaltyCost = (extraBoxes * customerCard.box_price).toFixed(2);
+
+        const confirmed = await showConfirm(
+            `Apply ${extraBoxes} penalty boxes (GHS ${penaltyCost}) and extend due date to ${penaltyForm.extended_due_date}?`,
+            'Confirm Overdue Time Extension'
+        );
+        if (!confirmed.isConfirmed) return;
+
+        setPenaltySubmitting(true);
+        try {
+            const res = await customerCardAPI.applyPenalty(customerCard.id, {
+                extended_due_date: penaltyForm.extended_due_date,
+                extra_boxes: extraBoxes,
+                percentage: parseFloat(penaltyForm.percentage) || null,
+                notes: penaltyForm.notes || null
+            });
+            showSuccess(res.data.message || 'Time extension applied successfully!');
+            setShowPenaltyModal(false);
+            fetchData();
+        } catch (err) {
+            showError(err.response?.data?.message || 'Failed to apply penalty extension');
+        } finally {
+            setPenaltySubmitting(false);
+        }
+    };
+
     if (loading) {
         return <div className="loading">Loading customer card...</div>;
     }
@@ -250,9 +346,14 @@ function CustomerBoxTracking() {
                     >
                         📱 Share Passbook
                     </button>
-                    {(isCEO || user?.roles?.includes('super_admin')) && customerCard?.status === 'active' && (
+                    {canManageCards && customerCard?.status === 'active' && (
                         <button className="btn-close-card" onClick={handleCloseCard}>
                             🔒 Close Card
+                        </button>
+                    )}
+                    {canManageCards && (
+                        <button className="btn-penalty-card" onClick={openPenaltyModal}>
+                            ⚠️ Time Extension & Penalty
                         </button>
                     )}
                 </div>
@@ -280,6 +381,47 @@ function CustomerBoxTracking() {
                     </div>
                 </div>
             </div>
+
+            {/* Overdue Penalty Banner if active */}
+            {customerCard.penalty_boxes > 0 && (
+                <div style={{
+                    margin: '0 0 24px 0',
+                    padding: '16px 20px',
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08))',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontSize: '24px' }}>⚠️</span>
+                        <div>
+                            <strong style={{ color: '#f59e0b', fontSize: '15px' }}>
+                                Overdue Time Extension Active (+{customerCard.penalty_boxes} Penalty Boxes)
+                            </strong>
+                            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                                Extra penalty value: <strong>GHS {parseFloat(customerCard.penalty_amount || 0).toFixed(2)}</strong>.
+                                Extended due date: <strong>{customerCard.customer?.due_date || 'N/A'}</strong>.
+                                {customerCard.penalty_notes && <span> Note: "{customerCard.penalty_notes}"</span>}
+                            </p>
+                        </div>
+                    </div>
+                    <span style={{
+                        background: 'rgba(245, 158, 11, 0.25)',
+                        color: '#f59e0b',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        letterSpacing: '0.5px'
+                    }}>
+                        PENALTY APPLIED
+                    </span>
+                </div>
+            )}
 
             {/* Summary Cards */}
             <div className="summary-cards">
@@ -415,7 +557,20 @@ function CustomerBoxTracking() {
 
             {/* Box Grid */}
             <div className="box-grid-section">
-                <h3>📋 Box Template ({customerCard.total_boxes} boxes @ GHS{customerCard.box_price} each)</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0 }}>📋 Box Template ({customerCard.total_boxes} boxes @ GHS{customerCard.box_price} each)</h3>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '12px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '12px', height: '12px', background: '#E53935', borderRadius: '2px', display: 'inline-block' }}></span> Deposit A
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '12px', height: '12px', background: '#1E88E5', borderRadius: '2px', display: 'inline-block' }}></span> Deposit B
+                        </span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '12px', height: '12px', border: '2px dashed #f59e0b', borderRadius: '2px', display: 'inline-block' }}></span> ⚠️ Penalty Box
+                        </span>
+                    </div>
+                </div>
                 <div className="box-grid">
                     {boxStates.map(box => {
                         // Calculate color based on payment sequence
@@ -444,11 +599,15 @@ function CustomerBoxTracking() {
                             }
                         }
 
+                        const isPenalty = !!box.is_penalty;
+
                         return (
                             <div
                                 key={box.id}
-                                className={`box ${colorClass}`}
-                                title={box.is_checked ? `Checked on ${box.checked_date}` : 'Unchecked'}
+                                className={`box ${colorClass} ${isPenalty ? 'penalty-box' : ''}`}
+                                title={isPenalty 
+                                    ? `Penalty Box #${box.box_number} • ${box.is_checked ? `Checked on ${box.checked_date}` : 'Unchecked'}`
+                                    : (box.is_checked ? `Checked on ${box.checked_date}` : 'Unchecked')}
                             >
                                 {box.box_number}
                             </div>
@@ -573,6 +732,145 @@ function CustomerBoxTracking() {
                                 </button>
                                 <button type="submit" className="btn-primary">
                                     Adjust Payment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Time Extension & Overdue Penalty Modal */}
+            {showPenaltyModal && (
+                <div className="modal-overlay" onClick={() => setShowPenaltyModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+                        <div className="modal-header">
+                            <h3>⚠️ Time Extension & Overdue Penalty</h3>
+                            <button className="close-btn" onClick={() => setShowPenaltyModal(false)}>×</button>
+                        </div>
+                        <form onSubmit={handleApplyPenalty}>
+                            <div className="modal-body">
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 0, marginBottom: '16px' }}>
+                                    Extend this card's due date and add extra penalty contribution boxes to the customer's completion requirement.
+                                </p>
+
+                                <div className="form-group" style={{ marginBottom: '16px' }}>
+                                    <label>New Extended Due Date *</label>
+                                    <input
+                                        type="date"
+                                        name="extended_due_date"
+                                        value={penaltyForm.extended_due_date}
+                                        onChange={handlePenaltyChange}
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            background: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)'
+                                        }}
+                                    />
+                                    <small style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'block', marginTop: '4px' }}>
+                                        Current due date: {customerCard.customer?.due_date || 'Not set'}
+                                    </small>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                                    <div className="form-group">
+                                        <label>Penalty Percentage (%)</label>
+                                        <input
+                                            type="number"
+                                            name="percentage"
+                                            min="0"
+                                            max="100"
+                                            step="0.5"
+                                            value={penaltyForm.percentage}
+                                            onChange={handlePenaltyChange}
+                                            placeholder="e.g., 10"
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                background: 'var(--bg-color)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '8px',
+                                                color: 'var(--text-primary)'
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Extra Penalty Boxes *</label>
+                                        <input
+                                            type="number"
+                                            name="extra_boxes"
+                                            min="1"
+                                            value={penaltyForm.extra_boxes}
+                                            onChange={handlePenaltyChange}
+                                            required
+                                            placeholder="e.g., 10"
+                                            style={{
+                                                width: '100%',
+                                                padding: '10px',
+                                                background: 'var(--bg-color)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '8px',
+                                                color: 'var(--text-primary)'
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{
+                                    padding: '14px 16px',
+                                    background: 'rgba(245, 158, 11, 0.1)',
+                                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                                    borderRadius: '8px',
+                                    marginBottom: '16px',
+                                    fontSize: '13px'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                        <span>Current Total Boxes:</span>
+                                        <strong>{customerCard.total_boxes} boxes</strong>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                        <span>New Target Boxes:</span>
+                                        <strong style={{ color: '#f59e0b' }}>
+                                            {(customerCard.total_boxes || 0) + (parseInt(penaltyForm.extra_boxes) || 0)} boxes (+{penaltyForm.extra_boxes || 0})
+                                        </strong>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Additional Penalty Amount:</span>
+                                        <strong style={{ color: '#f59e0b' }}>
+                                            GHS {((parseInt(penaltyForm.extra_boxes) || 0) * customerCard.box_price).toFixed(2)}
+                                        </strong>
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Reason / Notes (Optional)</label>
+                                    <textarea
+                                        name="notes"
+                                        value={penaltyForm.notes}
+                                        onChange={handlePenaltyChange}
+                                        placeholder="Reason for extension (e.g., Customer requested 30-day extension with 10% penalty)..."
+                                        rows="3"
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px',
+                                            background: 'var(--bg-color)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '8px',
+                                            color: 'var(--text-primary)',
+                                            resize: 'vertical'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-secondary" onClick={() => setShowPenaltyModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary" disabled={penaltySubmitting} style={{ background: '#f59e0b', color: '#000', fontWeight: 700 }}>
+                                    {penaltySubmitting ? 'Applying...' : 'Apply Extension & Penalty'}
                                 </button>
                             </div>
                         </form>

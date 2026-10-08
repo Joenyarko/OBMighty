@@ -17,6 +17,7 @@ class Card extends Model
         'number_of_boxes',
         'amount',
         'duration_months',
+        'terms_and_conditions',
         'front_image',
         'back_image',
         'status',

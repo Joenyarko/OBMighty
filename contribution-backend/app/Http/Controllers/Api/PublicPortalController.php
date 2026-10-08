@@ -33,12 +33,14 @@ class PublicPortalController extends Controller
         $customerCard = CustomerCard::withoutGlobalScope('company')
             ->where('customer_id', $customer->id)
             ->where('status', 'active')
+            ->with('card')
             ->latest('id')
             ->first();
 
         if (!$customerCard) {
             $customerCard = CustomerCard::withoutGlobalScope('company')
                 ->where('customer_id', $customer->id)
+                ->with('card')
                 ->latest('id')
                 ->first();
         }
@@ -57,6 +59,7 @@ class PublicPortalController extends Controller
                         'is_checked' => (bool)$box->is_checked,
                         'checked_date' => $box->checked_date ? $box->checked_date->toDateString() : null,
                         'payment_id' => $box->payment_id,
+                        'is_penalty' => (bool)$box->is_penalty,
                     ];
                 });
 
@@ -97,6 +100,7 @@ class PublicPortalController extends Controller
                 'email' => $company ? $company->email : null,
                 'address' => $company ? $company->address : null,
                 'primary_color' => $company ? $company->primary_color : '#fdbe12',
+                'terms_and_conditions' => $company ? $company->terms_and_conditions : null,
             ],
             'customer' => [
                 'name' => $customer->name,
@@ -112,6 +116,16 @@ class PublicPortalController extends Controller
             'card' => $customerCard ? [
                 'id' => $customerCard->id,
                 'card_name' => $customerCard->card ? $customerCard->card->card_name : ($customer->card ? $customer->card->card_name : 'Savings Card'),
+                'duration_months' => $customerCard->card ? $customerCard->card->duration_months : ($customer->card ? $customer->card->duration_months : null),
+                'terms_and_conditions' => $customerCard->card?->terms_and_conditions ?: ($company?->terms_and_conditions ?: null),
+                'card_terms' => $customerCard->card?->terms_and_conditions,
+                'company_terms' => $company?->terms_and_conditions,
+                'penalty_boxes' => (int)($customerCard->penalty_boxes ?? 0),
+                'penalty_amount' => (float)($customerCard->penalty_amount ?? 0),
+                'penalty_percentage' => $customerCard->penalty_percentage ? (float)$customerCard->penalty_percentage : null,
+                'penalty_applied_at' => $customerCard->penalty_applied_at ? $customerCard->penalty_applied_at->toDateString() : null,
+                'penalty_notes' => $customerCard->penalty_notes,
+                'has_penalty' => (int)($customerCard->penalty_boxes ?? 0) > 0,
                 'status' => $customerCard->status,
                 'total_boxes' => (int)$customerCard->total_boxes,
                 'boxes_checked' => (int)$customerCard->boxes_checked,

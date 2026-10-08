@@ -493,7 +493,7 @@ class CustomerCardController extends Controller
      */
     public function getBoxStates($id)
     {
-        $customerCard = CustomerCard::with('customer')->findOrFail($id);
+        $customerCard = CustomerCard::with(['customer.company', 'card'])->findOrFail($id);
         $this->authorizeCustomerAccess($customerCard->customer);
 
         $boxStates = BoxState::where('customer_card_id', $id)
@@ -927,8 +927,8 @@ class CustomerCardController extends Controller
     public function close(Request $request, $id)
     {
         $user = $request->user();
-        if (!$user->hasRole('ceo') && !$user->hasRole('super_admin')) {
-            return response()->json(['message' => 'Only CEO can close cards manually'], 403);
+        if (!$user->hasRole('ceo') && !$user->hasRole('super_admin') && !$user->hasRole('manager') && !$user->hasRole('secretary') && !$user->hasRole('branch_manager')) {
+            return response()->json(['message' => 'Unauthorized: Only CEO or Managers can close cards'], 403);
         }
 
         $customerCard = CustomerCard::with('customer')->findOrFail($id);
@@ -949,7 +949,7 @@ class CustomerCardController extends Controller
                     'card_manually_closed',
                     $customerCard,
                     ['previous_status' => 'active'],
-                    ['reason' => 'CEO manual closure']
+                    ['reason' => 'CEO / Manager manual closure']
                 );
             } catch (\Exception $auditError) {
                 \Log::warning('Manual Card Closure Audit Log Failed', [
@@ -974,6 +974,140 @@ class CustomerCardController extends Controller
             ]);
             return response()->json([
                 'message' => 'Failed to close card',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Apply time extension and penalty boxes to a customer card
+     */
+    public function applyPenalty(Request $request, $id)
+    {
+        $user = $request->user();
+        if (!$user->hasRole('ceo') && !$user->hasRole('super_admin') && !$user->hasRole('manager') && !$user->hasRole('secretary') && !$user->hasRole('branch_manager')) {
+            return response()->json(['message' => 'Unauthorized: Only CEO or Managers can grant extensions with penalty'], 403);
+        }
+
+        $validated = $request->validate([
+            'extended_due_date' => 'required|date',
+            'percentage' => 'nullable|numeric|min:0|max:100',
+            'extra_boxes' => 'nullable|integer|min:1',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $customerCard = CustomerCard::with(['customer.company', 'card'])->findOrFail($id);
+        $this->authorizeCustomerAccess($customerCard->customer);
+
+        DB::beginTransaction();
+        try {
+            // Determine extra boxes
+            $extraBoxes = 0;
+            if (!empty($validated['extra_boxes'])) {
+                $extraBoxes = (int)$validated['extra_boxes'];
+            } elseif (!empty($validated['percentage'])) {
+                $extraBoxes = (int)ceil($customerCard->total_boxes * ($validated['percentage'] / 100));
+            } else {
+                // Fall back to company default percentage
+                $company = $customerCard->customer?->company ?? $user->company;
+                $pct = $company?->default_penalty_percentage ?? 10.0;
+                $extraBoxes = (int)ceil($customerCard->total_boxes * ($pct / 100));
+            }
+
+            if ($extraBoxes < 1) {
+                $extraBoxes = 1;
+            }
+
+            // Box price remains unchanged
+            $boxPrice = (float)$customerCard->box_price;
+            $penaltyAmount = round($extraBoxes * $boxPrice, 2);
+
+            $currentMaxBox = (int)BoxState::where('customer_card_id', $customerCard->id)->max('box_number');
+            if ($currentMaxBox < $customerCard->total_boxes) {
+                $currentMaxBox = $customerCard->total_boxes;
+            }
+
+            $companyId = $customerCard->company_id ?: config('app.company_id');
+            $newBoxes = [];
+            for ($i = 1; $i <= $extraBoxes; $i++) {
+                $newBoxes[] = [
+                    'customer_card_id' => $customerCard->id,
+                    'box_number' => $currentMaxBox + $i,
+                    'is_checked' => false,
+                    'checked_date' => null,
+                    'payment_id' => null,
+                    'is_penalty' => true,
+                    'company_id' => $companyId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            BoxState::insert($newBoxes);
+
+            // Update CustomerCard totals
+            $customerCard->total_boxes += $extraBoxes;
+            $customerCard->penalty_boxes = ($customerCard->penalty_boxes ?? 0) + $extraBoxes;
+            $customerCard->total_amount += $penaltyAmount;
+            $customerCard->penalty_amount = ($customerCard->penalty_amount ?? 0) + $penaltyAmount;
+            $customerCard->amount_remaining += $penaltyAmount;
+            if (!empty($validated['percentage'])) {
+                $customerCard->penalty_percentage = $validated['percentage'];
+            }
+            $customerCard->penalty_applied_at = now();
+            if (!empty($validated['notes'])) {
+                $customerCard->penalty_notes = $validated['notes'];
+            }
+            if ($customerCard->status === 'closed') {
+                $customerCard->status = 'active';
+            }
+            $customerCard->save();
+
+            // Update Customer due_date and status
+            if ($customerCard->customer) {
+                $customerUpdate = [
+                    'due_date' => $validated['extended_due_date']
+                ];
+                if ($customerCard->customer->status === 'closed') {
+                    $customerUpdate['status'] = 'in_progress';
+                }
+                $customerCard->customer->update($customerUpdate);
+            }
+
+            // Audit log
+            try {
+                \App\Models\AuditLog::log(
+                    'card_penalty_extended',
+                    $customerCard,
+                    null,
+                    [
+                        'extra_boxes' => $extraBoxes,
+                        'penalty_amount' => $penaltyAmount,
+                        'extended_due_date' => $validated['extended_due_date'],
+                        'notes' => $validated['notes'] ?? null,
+                    ],
+                    $user->id
+                );
+            } catch (\Exception $auditError) {
+                \Log::warning('Penalty extension audit log failed: ' . $auditError->getMessage());
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => "Time extension applied successfully! {$extraBoxes} penalty boxes (GHS {$penaltyAmount}) added.",
+                'customer_card' => $customerCard->fresh(['customer', 'card']),
+                'penalty_boxes' => $extraBoxes,
+                'penalty_amount' => $penaltyAmount,
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Apply penalty error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => 'Failed to apply penalty extension',
                 'error' => $e->getMessage()
             ], 500);
         }

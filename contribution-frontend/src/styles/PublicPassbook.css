@@ -768,3 +768,126 @@
         width: 100%;
     }
 }
+
+/* Timeline Duration Highlight */
+.timeline-item.duration .timeline-value {
+    color: #a78bfa;
+}
+
+/* Overdue Penalty Banner */
+.passbook-penalty-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.passbook-penalty-banner-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.passbook-penalty-icon {
+    font-size: 24px;
+}
+
+.passbook-penalty-title {
+    color: #f59e0b;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.passbook-penalty-desc {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+.passbook-penalty-badge {
+    background: rgba(245, 158, 11, 0.25);
+    color: #f59e0b;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Penalty Box Grid Styling */
+.grid-box.box-penalty {
+    position: relative;
+    border: 2px dashed #f59e0b !important;
+}
+
+.grid-box.box-penalty.box-unpaid {
+    background: rgba(245, 158, 11, 0.12) !important;
+    color: #f59e0b !important;
+}
+
+.grid-box.box-penalty::after {
+    content: "P";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+    color: #f59e0b;
+}
+
+.grid-box.box-penalty.box-paid-blue::after,
+.grid-box.box-penalty.box-paid-red::after {
+    color: #ffffff;
+}
+
+.dot-penalty {
+    border: 1.5px dashed #f59e0b;
+    background: rgba(245, 158, 11, 0.3);
+}
+
+/* Terms and Conditions Section */
+.terms-section {
+    background: linear-gradient(145deg, #1c2027 0%, #15181e 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 24px;
+}
+
+.terms-content-card {
+    background: #15181e;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 14px;
+}
+
+.terms-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #d1d5db;
+}
+
+.terms-line {
+    margin: 0 0 10px 0;
+}
+
+.terms-line:last-child {
+    margin-bottom: 0;
+}
+
+.card-specific-badge {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+}

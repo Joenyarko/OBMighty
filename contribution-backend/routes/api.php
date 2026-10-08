@@ -206,6 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}/payment-history', [CustomerCardController::class, 'getPaymentHistory']);
         Route::get('/worker/daily-sales', [CustomerCardController::class, 'getWorkerDailySales']);
         Route::patch('/{id}/close', [CustomerCardController::class, 'close']);
+        Route::post('/{id}/apply-penalty', [CustomerCardController::class, 'applyPenalty']);
     });
     
         Route::delete('/box-payments/{id}', function ($id, Request $request) {
