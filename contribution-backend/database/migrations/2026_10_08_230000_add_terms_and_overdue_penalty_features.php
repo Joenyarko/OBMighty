@@ -14,46 +14,46 @@ return new class extends Migration
         // 1. Companies Table: company-level default terms and overdue penalty configuration
         Schema::table('companies', function (Blueprint $table) {
             if (!Schema::hasColumn('companies', 'terms_and_conditions')) {
-                $table->longText('terms_and_conditions')->nullable()->after('timezone');
+                $table->longText('terms_and_conditions')->nullable();
             }
             if (!Schema::hasColumn('companies', 'enable_overdue_penalty')) {
-                $table->boolean('enable_overdue_penalty')->default(false)->after('terms_and_conditions');
+                $table->boolean('enable_overdue_penalty')->default(false);
             }
             if (!Schema::hasColumn('companies', 'default_penalty_percentage')) {
-                $table->decimal('default_penalty_percentage', 5, 2)->default(10.00)->after('enable_overdue_penalty');
+                $table->decimal('default_penalty_percentage', 5, 2)->default(10.00);
             }
         });
 
         // 2. Cards Table: card-specific terms and conditions override
         Schema::table('cards', function (Blueprint $table) {
             if (!Schema::hasColumn('cards', 'terms_and_conditions')) {
-                $table->longText('terms_and_conditions')->nullable()->after('duration_months');
+                $table->longText('terms_and_conditions')->nullable();
             }
         });
 
         // 3. Customer Cards Table: penalty tracking fields
         Schema::table('customer_cards', function (Blueprint $table) {
             if (!Schema::hasColumn('customer_cards', 'penalty_boxes')) {
-                $table->integer('penalty_boxes')->default(0)->after('amount_remaining');
+                $table->integer('penalty_boxes')->default(0);
             }
             if (!Schema::hasColumn('customer_cards', 'penalty_amount')) {
-                $table->decimal('penalty_amount', 12, 2)->default(0.00)->after('penalty_boxes');
+                $table->decimal('penalty_amount', 12, 2)->default(0.00);
             }
             if (!Schema::hasColumn('customer_cards', 'penalty_percentage')) {
-                $table->decimal('penalty_percentage', 5, 2)->nullable()->after('penalty_amount');
+                $table->decimal('penalty_percentage', 5, 2)->nullable();
             }
             if (!Schema::hasColumn('customer_cards', 'penalty_applied_at')) {
-                $table->timestamp('penalty_applied_at')->nullable()->after('penalty_percentage');
+                $table->timestamp('penalty_applied_at')->nullable();
             }
             if (!Schema::hasColumn('customer_cards', 'penalty_notes')) {
-                $table->text('penalty_notes')->nullable()->after('penalty_applied_at');
+                $table->text('penalty_notes')->nullable();
             }
         });
 
         // 4. Box States Table: flag for penalty / extension boxes
         Schema::table('box_states', function (Blueprint $table) {
             if (!Schema::hasColumn('box_states', 'is_penalty')) {
-                $table->boolean('is_penalty')->default(false)->after('payment_id');
+                $table->boolean('is_penalty')->default(false);
             }
         });
     }
