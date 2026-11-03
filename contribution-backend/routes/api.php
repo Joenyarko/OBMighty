@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware(['role:super_admin|admin_manager', 'super_admin'])
         ->name('admin.')
         ->group(function () {
+            Route::post('/companies/{id}/restore', [\App\Http\Controllers\Api\Admin\CompanyController::class, 'restore']);
             Route::apiResource('companies', \App\Http\Controllers\Api\Admin\CompanyController::class);
             Route::get('/stats', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'stats']);
             Route::get('/metrics', [\App\Http\Controllers\Api\Admin\AdminDashboardController::class, 'metrics']);

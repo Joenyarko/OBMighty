@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Globe, Filter, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Globe, Filter, MoreHorizontal, RotateCcw } from 'lucide-react';
 import api from '../../services/api';
 import Swal from 'sweetalert2';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -11,6 +11,7 @@ function CompanyManagement() {
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [showModal, setShowModal] = useState(false);
     const [editingCompany, setEditingCompany] = useState(null);
     const [logoFile, setLogoFile] = useState(null);
@@ -98,6 +99,9 @@ function CompanyManagement() {
 
         if (editingCompany) {
             data.append('_method', 'PUT');
+            if (formData.is_active) {
+                data.append('restore', '1');
+            }
         }
 
         try {
@@ -162,6 +166,43 @@ function CompanyManagement() {
         }
     };
 
+    const handleReactivate = async (id) => {
+        const result = await Swal.fire({
+            title: 'Reactivate Organization?',
+            text: "This will restore the organization and reactivate full access.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#374151',
+            confirmButtonText: 'Yes, reactivate',
+            background: '#161920',
+            color: '#fff'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await api.post(`/admin/companies/${id}/restore`);
+                fetchCompanies();
+                Swal.fire({
+                    title: 'Reactivated!',
+                    text: 'Organization has been reactivated successfully.',
+                    icon: 'success',
+                    background: '#161920',
+                    color: '#fff'
+                });
+            } catch (error) {
+                console.error('Error reactivating company:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.response?.data?.message || 'Failed to reactivate organization',
+                    background: '#161920',
+                    color: '#fff'
+                });
+            }
+        }
+    };
+
     const resetForm = () => {
         setEditingCompany(null);
         setLogoFile(null);
@@ -186,13 +227,14 @@ function CompanyManagement() {
 
     const openEditModal = (company) => {
         setEditingCompany(company);
+        const isActive = Boolean(company.is_active && !company.deleted_at);
         setFormData({
             name: company.name,
             domain: company.domain || '',
             subdomain: company.subdomain || '',
             primary_color: company.primary_color || '#007bff',
             logo_url: company.logo_url || '',
-            is_active: company.is_active,
+            is_active: isActive,
             new_ceo_name: '',
             new_ceo_email: '',
             new_ceo_password: '',
@@ -204,10 +246,16 @@ function CompanyManagement() {
         setShowModal(true);
     };
 
-    const filteredCompanies = companies.filter(company =>
-        company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        company.domain?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCompanies = companies.filter(company => {
+        const matchesSearch = company.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            company.domain?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const isCompanyActive = Boolean(company.is_active && !company.deleted_at);
+
+        if (statusFilter === 'active') return matchesSearch && isCompanyActive;
+        if (statusFilter === 'deactivated') return matchesSearch && !isCompanyActive;
+        return matchesSearch;
+    });
 
     return (
         <AdminLayout>
@@ -229,15 +277,15 @@ function CompanyManagement() {
                     <select className="nex-select">
                         <option>Members</option>
                     </select>
-                    <select className="nex-select">
-                        <option>Created at</option>
+                    <select 
+                        className="nex-select"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="deactivated">Deactivated</option>
                     </select>
-                    <select className="nex-select">
-                        <option>Status</option>
-                    </select>
-                    <button className="nex-btn-purple">
-                        Apply filters
-                    </button>
                     <button className="nex-btn-primary" onClick={() => { resetForm(); setShowModal(true); }}>
                         <Plus size={18} /> Add organization
                     </button>
@@ -245,7 +293,7 @@ function CompanyManagement() {
             </div>
 
             <div className="nex-page-title" style={{ marginBottom: '20px' }}>
-                <h1>Organizations <span>({companies.length})</span></h1>
+                <h1>Organizations <span>({filteredCompanies.length})</span></h1>
                 <p style={{ color: 'var(--nex-text-secondary)', fontSize: '14px', marginTop: '4px' }}>
                     Manage all organizations, view, enable/disable
                 </p>
@@ -293,16 +341,32 @@ function CompanyManagement() {
                                 <td>{new Date(company.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</td>
                                 <td>{company.last_active_at ? new Date(company.last_active_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '-'}</td>
                                 <td>
-                                    <span className={`nex-badge ${company.is_active ? 'nex-badge-active' : 'nex-badge-inactive'}`}>
+                                    <span className={`nex-badge ${company.is_active && !company.deleted_at ? 'nex-badge-active' : 'nex-badge-inactive'}`}>
                                         <div className="nex-dot"></div>
-                                        {company.is_active ? 'Active' : 'Disabled'}
+                                        {company.is_active && !company.deleted_at ? 'Active' : 'Deactivated'}
                                     </span>
                                 </td>
                                 <td>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="nex-btn-icon" onClick={() => handleDeactivate(company.id)} title="Deactivate">
-                                            <Trash2 size={16} />
-                                        </button>
+                                        {company.deleted_at || !company.is_active ? (
+                                            <button 
+                                                className="nex-btn-icon" 
+                                                onClick={() => handleReactivate(company.id)} 
+                                                title="Reactivate Organization"
+                                                style={{ color: '#10b981' }}
+                                            >
+                                                <RotateCcw size={16} />
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                className="nex-btn-icon" 
+                                                onClick={() => handleDeactivate(company.id)} 
+                                                title="Deactivate Organization"
+                                                style={{ color: '#ef4444' }}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
                                         <button className="nex-btn-icon" onClick={() => openEditModal(company)} title="Edit">
                                             <Edit2 size={16} />
                                         </button>
@@ -318,7 +382,7 @@ function CompanyManagement() {
             </div>
 
             <div className="nex-pagination">
-                <div>Showing 1-{companies.length} of {companies.length} entries</div>
+                <div>Showing 1-{filteredCompanies.length} of {filteredCompanies.length} entries</div>
                 <div className="nex-page-controls">
                     <button className="nex-page-btn">Previous</button>
                     <button className="nex-page-btn active">1</button>
@@ -544,9 +608,9 @@ function CompanyManagement() {
                                 <div>
                                     <h3 style={{ margin: '0 0 4px 0', fontSize: '24px' }}>{viewingCompany.name}</h3>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <span className={`nex-badge ${viewingCompany.is_active ? 'nex-badge-active' : 'nex-badge-inactive'}`}>
+                                        <span className={`nex-badge ${viewingCompany.is_active && !viewingCompany.deleted_at ? 'nex-badge-active' : 'nex-badge-inactive'}`}>
                                             <div className="nex-dot"></div>
-                                            {viewingCompany.is_active ? 'Active' : 'Inactive'}
+                                            {viewingCompany.is_active && !viewingCompany.deleted_at ? 'Active' : 'Deactivated'}
                                         </span>
                                         <span style={{ fontSize: '14px', color: '#9ca3af', padding: '4px 8px', backgroundColor: '#242830', borderRadius: '4px' }}>
                                             ID: {viewingCompany.id}

@@ -14,11 +14,11 @@ class CompanyController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
-        $query = Company::withCount(['users',
+        $query = Company::withTrashed()->withCount(['users',
             'users as ceos_count' => function ($query) {
                 $query->whereHas('roles', function ($q) { $q->where('name', 'ceo'); });
             },
@@ -34,6 +34,16 @@ class CompanyController extends Controller
         if ($user->hasRole('admin_manager')) {
             $assignedIds = $user->managedCompanies()->pluck('companies.id');
             $query->whereIn('id', $assignedIds);
+        }
+
+        if ($request->has('status') && $request->status !== 'all') {
+            if ($request->status === 'active') {
+                $query->whereNull('deleted_at')->where('is_active', true);
+            } elseif ($request->status === 'deactivated' || $request->status === 'inactive') {
+                $query->where(function ($q) {
+                    $q->whereNotNull('deleted_at')->orWhere('is_active', false);
+                });
+            }
         }
 
         return response()->json($query->get());
@@ -156,9 +166,16 @@ class CompanyController extends Controller
             $companyData = collect($validated)->except(['new_ceo_name', 'new_ceo_email', 'new_ceo_password', 'new_ceo_phone', 'logo'])->toArray();
             $company->update($companyData);
             
-            // If restoring
-            if ($request->has('restore') && $request->restore) {
-                $company->restore();
+            // If restoring or activating
+            if (($request->has('restore') && $request->restore) || (isset($validated['is_active']) && $validated['is_active'])) {
+                if ($company->trashed()) {
+                    $company->restore();
+                }
+                $company->update(['is_active' => true]);
+            } elseif (isset($validated['is_active']) && !$validated['is_active']) {
+                if (!$company->trashed()) {
+                    $company->delete();
+                }
             }
 
             // Create Additional CEO if requested
@@ -188,7 +205,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (deactivate).
      */
     public function destroy($id)
     {
@@ -203,8 +220,34 @@ class CompanyController extends Controller
             }
         }
 
+        $company->update(['is_active' => false]);
         $company->delete();
 
         return response()->json(['message' => 'Company deactivated successfully']);
+    }
+
+    /**
+     * Restore / reactivate a deactivated company.
+     */
+    public function restore($id)
+    {
+        $user = auth()->user();
+        if ($user->hasRole('admin_manager')) {
+            $assignedIds = $user->managedCompanies()->pluck('companies.id')->toArray();
+            if (!in_array((int)$id, $assignedIds)) {
+                return response()->json(['message' => 'Unauthorized. This company is not assigned to you.'], 403);
+            }
+        }
+
+        $company = Company::withTrashed()->findOrFail($id);
+        if ($company->trashed()) {
+            $company->restore();
+        }
+        $company->update(['is_active' => true]);
+
+        return response()->json([
+            'message' => 'Organization reactivated successfully',
+            'company' => $company
+        ]);
     }
 }
