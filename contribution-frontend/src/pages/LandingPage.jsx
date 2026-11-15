@@ -237,19 +237,19 @@ export default function LandingPage() {
                                 </div>
                                 <div className="lp-branch-row">
                                     <span className="lp-branch-name">
-                                        <Building2 size={14} color="#D4AF37" /> Accra Central Branch
+                                        <Building2 size={14} color="#B45309" /> Accra Central Branch
                                     </span>
                                     <span className="lp-branch-val">GHS 24,150.00</span>
                                 </div>
                                 <div className="lp-branch-row">
                                     <span className="lp-branch-name">
-                                        <Building2 size={14} color="#D4AF37" /> Kumasi Regional Hub
+                                        <Building2 size={14} color="#B45309" /> Kumasi Regional Hub
                                     </span>
                                     <span className="lp-branch-val">GHS 18,920.00</span>
                                 </div>
                                 <div className="lp-branch-row">
                                     <span className="lp-branch-name">
-                                        <Building2 size={14} color="#D4AF37" /> Takoradi Market Branch
+                                        <Building2 size={14} color="#B45309" /> Takoradi Market Branch
                                     </span>
                                     <span className="lp-branch-val">GHS 9,410.00</span>
                                 </div>
@@ -261,7 +261,7 @@ export default function LandingPage() {
                                 </div>
                                 <div>
                                     <div className="lp-badge-text">Digital Customer Passbook</div>
-                                    <div style={{ fontSize: '0.72rem', color: '#94A3B8' }}>Instant balance check via QR</div>
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--lp-text-muted)' }}>Instant balance check via QR</div>
                                 </div>
                             </div>
                         </div>
@@ -270,7 +270,7 @@ export default function LandingPage() {
             </section>
 
             {/* Target Industries Section */}
-            <section id="solutions" className="lp-section">
+            <section id="solutions" className="lp-section lp-section-alt">
                 <div className="lp-section-header">
                     <span className="lp-section-tag">Tailored Solutions</span>
                     <h2 className="lp-section-title">Built for Modern Financial & Retail Enterprises</h2>
@@ -480,19 +480,19 @@ export default function LandingPage() {
                             <div className="lp-spotlight-item">
                                 <div className="lp-spotlight-check"><Check size={14} /></div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>No app download required:</strong> Works directly in any mobile web browser.
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>No app download required:</strong> Works directly in any mobile web browser.
                                 </div>
                             </div>
                             <div className="lp-spotlight-item">
                                 <div className="lp-spotlight-check"><Check size={14} /></div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>Real-time balance updates:</strong> As soon as a field agent logs a collection, the customer sees it.
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>Real-time balance updates:</strong> As soon as a field agent logs a collection, the customer sees it.
                                 </div>
                             </div>
                             <div className="lp-spotlight-item">
                                 <div className="lp-spotlight-check"><Check size={14} /></div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>Bank-grade token security:</strong> Private cryptographic tokens protect customer data.
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>Bank-grade token security:</strong> Private cryptographic tokens protect customer data.
                                 </div>
                             </div>
                         </div>
@@ -501,27 +501,27 @@ export default function LandingPage() {
                     <div className="lp-spotlight-preview">
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Smartphone size={20} color="#D4AF37" />
-                                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Customer Mobile View</span>
+                                <Smartphone size={20} color="#B45309" />
+                                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--lp-text-primary)' }}>Customer Mobile View</span>
                             </div>
                             <span className="lp-pill-badge">Verified Passbook</span>
                         </div>
-                        <div style={{ background: '#181d28', borderRadius: '12px', padding: '18px', border: '1px solid #283042' }}>
-                            <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>Customer Account</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#F8FAFC', marginBottom: '12px' }}>
+                        <div style={{ background: '#FFFFFF', borderRadius: '0px', padding: '18px', border: '1px solid var(--lp-border)' }}>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--lp-text-muted)' }}>Customer Account</div>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--lp-text-primary)', marginBottom: '12px' }}>
                                 Kwame Mensah &bull; #NZ-4091
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #283042' }}>
-                                <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Total Saved:</span>
-                                <span style={{ color: '#F4D03F', fontWeight: 700 }}>GHS 3,850.00</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--lp-border)' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.85rem' }}>Total Saved:</span>
+                                <span style={{ color: '#B45309', fontWeight: 700 }}>GHS 3,850.00</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #283042' }}>
-                                <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Current Card (31-Day):</span>
-                                <span style={{ color: '#10B981', fontWeight: 700 }}>Day 22 / 31 (Active)</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--lp-border)' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.85rem' }}>Current Card (31-Day):</span>
+                                <span style={{ color: '#059669', fontWeight: 700 }}>Day 22 / 31 (Active)</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid #283042' }}>
-                                <span style={{ color: '#94A3B8', fontSize: '0.85rem' }}>Last Recorded Deposit:</span>
-                                <span style={{ color: '#F8FAFC', fontSize: '0.85rem' }}>Today at 10:42 AM</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--lp-border)' }}>
+                                <span style={{ color: 'var(--lp-text-muted)', fontSize: '0.85rem' }}>Last Recorded Deposit:</span>
+                                <span style={{ color: 'var(--lp-text-primary)', fontSize: '0.85rem' }}>Today at 10:42 AM</span>
                             </div>
                         </div>
                     </div>
@@ -529,7 +529,7 @@ export default function LandingPage() {
             </section>
 
             {/* Pricing Section */}
-            <section id="pricing" className="lp-section" style={{ paddingTop: '0' }}>
+            <section id="pricing" className="lp-section lp-section-alt">
                 <div className="lp-section-header">
                     <span className="lp-section-tag">Flexible Subscriptions</span>
                     <h2 className="lp-section-title">Scalable Plans for Any Organization Size</h2>
@@ -627,7 +627,7 @@ export default function LandingPage() {
                                     <MessageSquare size={18} />
                                 </div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>WhatsApp / Phone:</strong>
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>WhatsApp / Phone:</strong>
                                     <div>Direct Specialist Support Available</div>
                                 </div>
                             </div>
@@ -637,7 +637,7 @@ export default function LandingPage() {
                                     <Building2 size={18} />
                                 </div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>Platform Cloud:</strong>
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>Platform Cloud:</strong>
                                     <div>neziz.cloud &bull; Dedicated Multi-Tenant Infrastructure</div>
                                 </div>
                             </div>
@@ -647,7 +647,7 @@ export default function LandingPage() {
                                     <ShieldCheck size={18} />
                                 </div>
                                 <div>
-                                    <strong style={{ color: '#F8FAFC' }}>Enterprise Security:</strong>
+                                    <strong style={{ color: 'var(--lp-text-primary)' }}>Enterprise Security:</strong>
                                     <div>Daily Automated Backups & Encrypted Data</div>
                                 </div>
                             </div>
