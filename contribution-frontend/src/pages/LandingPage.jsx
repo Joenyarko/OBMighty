@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Shield,
@@ -46,6 +46,16 @@ export default function LandingPage() {
     });
     const [formSubmitted, setFormSubmitted] = useState(false);
 
+    useEffect(() => {
+        document.body.classList.add('lp-landing-active');
+        const origBg = document.body.style.backgroundColor;
+        document.body.style.backgroundColor = '#FFFFFF';
+        return () => {
+            document.body.classList.remove('lp-landing-active');
+            document.body.style.backgroundColor = origBg;
+        };
+    }, []);
+
     const handleFormSubmit = (e) => {
         e.preventDefault();
         setFormSubmitted(true);
@@ -69,9 +79,9 @@ export default function LandingPage() {
                     <Link to="/" className="lp-brand">
                         <img
                             src="/Neziz-logo2.png"
-                            alt="Neziz Cloud ERP"
+                            alt="Neziz"
                             className="lp-brand-logo"
-                            onError={(e) => { e.target.style.display = 'none'; }}
+                            onError={(e) => { e.currentTarget.src = "/logo.jpeg"; }}
                         />
                         <div className="lp-brand-text">
                             <span className="lp-brand-name">Neziz</span>
@@ -751,7 +761,7 @@ export default function LandingPage() {
                                     src="/Neziz-logo2.png"
                                     alt="Neziz"
                                     className="lp-brand-logo"
-                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                    onError={(e) => { e.currentTarget.src = "/logo.jpeg"; }}
                                 />
                                 <div className="lp-brand-text">
                                     <span className="lp-brand-name">Neziz</span>

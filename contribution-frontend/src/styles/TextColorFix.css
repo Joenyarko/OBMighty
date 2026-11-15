@@ -1,83 +1,83 @@
 /* Global Text Color Fixes - Ensure visibility on dark backgrounds */
-/* This file fixes text visibility issues caused by SweetAlert2 */
+/* This file fixes text visibility issues caused by SweetAlert2 in Dashboard & Admin views */
 
-/* CRITICAL: Force all text to be white with maximum specificity */
-body h1,
-body h2,
-body h3,
-body h4,
-body h5,
-body h6,
-body p,
-body span,
-body div,
-body td,
-body th,
-body label,
-body .page-header h1,
-body table th,
-body table td,
-body button:not(.btn-primary),
-body .form-group label,
-body .modal-content h2,
-body .modal-content label {
+/* CRITICAL: Force all text to be white with maximum specificity for dashboard/admin */
+body:not(.lp-landing-active) h1,
+body:not(.lp-landing-active) h2,
+body:not(.lp-landing-active) h3,
+body:not(.lp-landing-active) h4,
+body:not(.lp-landing-active) h5,
+body:not(.lp-landing-active) h6,
+body:not(.lp-landing-active) p,
+body:not(.lp-landing-active) span,
+body:not(.lp-landing-active) div,
+body:not(.lp-landing-active) td,
+body:not(.lp-landing-active) th,
+body:not(.lp-landing-active) label,
+body:not(.lp-landing-active) .page-header h1,
+body:not(.lp-landing-active) table th,
+body:not(.lp-landing-active) table td,
+body:not(.lp-landing-active) button:not(.btn-primary),
+body:not(.lp-landing-active) .form-group label,
+body:not(.lp-landing-active) .modal-content h2,
+body:not(.lp-landing-active) .modal-content label {
     color: var(--text-primary) !important;
 }
 
 /* Button text colors - CRITICAL */
-body .btn-primary,
-body button.btn-primary {
+body:not(.lp-landing-active) .btn-primary,
+body:not(.lp-landing-active) button.btn-primary {
     color: var(--black) !important;
     background-color: var(--primary-color) !important;
 }
 
-body .btn-secondary,
-body button.btn-secondary {
+body:not(.lp-landing-active) .btn-secondary,
+body:not(.lp-landing-active) button.btn-secondary {
     color: var(--primary-color) !important;
 }
 
-body .btn-secondary:hover,
-body button.btn-secondary:hover {
+body:not(.lp-landing-active) .btn-secondary:hover,
+body:not(.lp-landing-active) button.btn-secondary:hover {
     color: var(--black) !important;
 }
 
-body .btn-logout,
-body button.btn-logout {
+body:not(.lp-landing-active) .btn-logout,
+body:not(.lp-landing-active) button.btn-logout {
     color: white !important;
 }
 
 /* Input and form elements */
-body input,
-body textarea,
-body select {
+body:not(.lp-landing-active) input,
+body:not(.lp-landing-active) textarea,
+body:not(.lp-landing-active) select {
     color: var(--text-primary) !important;
     background-color: var(--card-bg) !important;
 }
 
-body input::placeholder,
-body textarea::placeholder {
+body:not(.lp-landing-active) input::placeholder,
+body:not(.lp-landing-active) textarea::placeholder {
     color: var(--text-secondary) !important;
 }
 
 /* Table specific - CRITICAL */
-body table {
+body:not(.lp-landing-active) table {
     color: var(--text-primary) !important;
 }
 
-body table th {
+body:not(.lp-landing-active) table th {
     color: var(--primary-color) !important;
 }
 
-body table td {
+body:not(.lp-landing-active) table td {
     color: var(--text-primary) !important;
 }
 
 /* Links */
-body a {
+body:not(.lp-landing-active) a {
     color: var(--primary-color) !important;
 }
 
-body a:hover {
+body:not(.lp-landing-active) a:hover {
     color: var(--primary-dark) !important;
 }
 
@@ -88,12 +88,12 @@ body .loading-screen {
 }
 
 /* Page headers and titles */
-body .page-header,
-body .page-header * {
+body:not(.lp-landing-active) .page-header,
+body:not(.lp-landing-active) .page-header * {
     color: var(--text-primary) !important;
 }
 
-body .page-header h1 {
+body:not(.lp-landing-active) .page-header h1 {
     color: var(--primary-color) !important;
 }
 
