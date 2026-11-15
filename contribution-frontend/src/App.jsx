@@ -28,6 +28,8 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminManagers from './pages/admin/AdminManagers';
 import PublicPassbook from './pages/PublicPassbook';
+import LandingPage from './pages/LandingPage';
+import { isTenantSubdomain } from './utils/domain';
 import './styles/App.css';
 import './styles/TextColorFix.css';
 
@@ -69,6 +71,13 @@ function AdminRoute({ children }) {
 
     // AdminRoute does NOT wrap in <Layout> because Admin pages use <AdminLayout>
     return children;
+}
+
+function RootRoute() {
+    if (isTenantSubdomain()) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return <LandingPage />;
 }
 
 function App() {
@@ -146,7 +155,8 @@ function App() {
                     <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
                     <Route path="/admin/managers" element={<AdminRoute><AdminManagers /></AdminRoute>} />
 
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/home" element={<LandingPage />} />
+                    <Route path="/" element={<RootRoute />} />
                 </Routes>
             </BrowserRouter>
         </AuthProvider>

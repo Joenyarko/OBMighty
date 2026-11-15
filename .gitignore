@@ -4,6 +4,7 @@
 *.log
 .gemini/
 .agent/
+.agents/
 ZAP by Checkmarx Scanning Report2.html
 ZAP by Checkmarx Scanning Report2_files/
 
